@@ -1,0 +1,7 @@
+name: dherkin
+version: 0.1.0
+author: Danil Kornishev <danil.kornishev@gmail.com>
+description: Gherkin/Cucumber implementation in dart
+homepage: https://github.com/dkornishev/dherkin
+dependencies:
+dev_dependencies:
