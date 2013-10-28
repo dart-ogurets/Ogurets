@@ -2,3 +2,6 @@
 packages
 .project
 pubspec.lock
+.idea
+.settings
+*.iml
