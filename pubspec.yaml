@@ -4,4 +4,5 @@ author: Danil Kornishev <danil.kornishev@gmail.com>
 description: Gherkin/Cucumber implementation in dart
 homepage: https://github.com/dkornishev/dherkin
 dependencies:
+  log4dart: ">=1.4.10 <1.5.0"
 dev_dependencies:
