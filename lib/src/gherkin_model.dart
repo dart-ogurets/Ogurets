@@ -23,3 +23,9 @@ class Scenario {
     return "$tags $name $steps";
   }
 }
+
+class StepDef {
+  final String verbiage;
+
+  const StepDef(this.verbiage);
+}
