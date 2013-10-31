@@ -12,7 +12,6 @@ void main() {
     var future = parser.parse(new File("example/gherkin/test_feature.feature"));
 
     future.then((feature) {
-      print("MAIN: $feature");
 
       var missingSteps = "";
 
@@ -26,7 +25,7 @@ void main() {
             var chunks = stepString.replaceAll(new RegExp("\""), "").split(new RegExp(" "));
             var end = chunks.length > 2 ? 3 : chunks.length;
             var functionName = chunks.sublist(0, end).join("_").toLowerCase();
-            missingSteps += "\n@StepDef(\"$stepString\")\n$functionName(ctx) {\n}\n";
+            missingSteps += "\n@StepDef(\"$stepString\")\n$functionName(ctx) {\n// todo \n}\n";
           } else {
             step(ctx);
           }
@@ -36,10 +35,14 @@ void main() {
   });
 }
 
-//  Output verbiage for missing stepdefs
 
 //***************
 @StepDef("parser is working")
 step1(ctx) {
   print("Компрессия! $ctx");
+}
+
+@StepDef("I run dherkin")
+i_run_dherkin(ctx) {
+  print("УРА!");
 }
