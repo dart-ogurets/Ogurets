@@ -40,7 +40,7 @@ class StepdefProvider {
       var ctx = {};
       if (match != null) {
         for (var i = 1;i <= match.groupCount;i++) {
-          params.add(match.group(i));
+          params.add(match[i]);
         }
       }
 
