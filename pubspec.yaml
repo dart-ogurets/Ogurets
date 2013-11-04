@@ -5,4 +5,5 @@ description: Gherkin/Cucumber implementation in dart
 homepage: https://github.com/dkornishev/dherkin
 dependencies:
   log4dart: ">=1.4.10 <1.5.0"
+  args: ">=0.8.7 < 0.9.0"
 dev_dependencies:
