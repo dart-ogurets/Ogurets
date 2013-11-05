@@ -43,11 +43,12 @@ class Scenario {
     var missingSteps = [];
     var iter = steps.iterator;
     while (iter.moveNext()) {
-      var stepString = iter.current.verbiage;
-      var step = provider.locate(stepString);
+      var step = iter.current;
+      var stepString = step.verbiage;
+      var runner = provider.locate(stepString);
 
       try {
-        step();
+        runner({"table" : step.table});
       } on StepDefUndefined {
         _log.warn("Undefinded step: $stepString");
         missingSteps.add(stepString);
@@ -68,12 +69,30 @@ class Scenario {
 
 class Step {
   String verbiage;
-  List<Map> table = [];
+  GherkinTable table = new GherkinTable();
 
   Step(this.verbiage);
 
   String toString() {
-    return verbiage;
+    return "$verbiage $table";
+  }
+}
+
+class GherkinTable {
+  List<String> _columnNames = [];
+  List<Map> _table = [];
+
+  void addRow(row) {
+    if(_columnNames.isEmpty) {
+      _columnNames.addAll(row);
+    }
+    else {
+      _table.add(new Map.fromIterables(_columnNames, row));
+    }
+  }
+
+  String toString() {
+    return _table.toString();
   }
 }
 

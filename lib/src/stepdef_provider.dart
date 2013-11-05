@@ -33,11 +33,10 @@ class StepdefProvider {
 
   Function locate(step) {
     var found = _stepRunners.keys.firstWhere((key) => key.hasMatch(step), orElse: () => _NOTFOUND);
-    return () {
+    return (ctx) {
       var match = found.firstMatch(step);
 
       var params = [];
-      var ctx = {};
       if (match != null) {
         for (var i = 1;i <= match.groupCount;i++) {
           params.add(match[i]);

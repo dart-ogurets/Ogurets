@@ -4,7 +4,7 @@ RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
 RegExp scenarioPattern = new RegExp(r"Scenario\s*:\s*(.+)");
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
-RegExp tablePattern = new RegExp(r"\|?\s*([^|]+?)\s*\|\s*");
+RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
 RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
 
 class GherkinParser {
@@ -70,13 +70,16 @@ class GherkinParser {
         }
 
         // Tables
+        var row = [];
         iter = tablePattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
-          currentScenario.addStep(currentStep);
-          print("TABLE: ${match[1]}");
+          row.add(match[1]);
         }
 
+        if(!row.isEmpty) {
+          currentStep.table.addRow(row);
+        }
 
       }
     }).whenComplete(() => comp.complete(feature));

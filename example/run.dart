@@ -35,3 +35,23 @@ everything_works(ctx, params) {
 i_run_some(ctx, params) {
   print("I run some background");
 }
+
+@StepDef("I have a table")
+i_have_a_table(ctx, params) {
+  print("Table1 $ctx $params");
+}
+
+@StepDef("I am a step after the table")
+i_am_a_step(ctx, params) {
+  print("Table2 $ctx $params");
+}
+
+@StepDef("I am a table step \"(\\w+?)\"")
+i_am_a_table_step(ctx, params) {
+  print("Table3 $ctx $params");
+}
+
+@StepDef("everything works just fine")
+everything_works_just(ctx, params) {
+  print("Table4 $ctx $params");
+}
