@@ -4,6 +4,7 @@ RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
 RegExp scenarioPattern = new RegExp(r"Scenario\s*:\s*(.+)");
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
+RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
 RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
 RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
 
@@ -15,6 +16,7 @@ class GherkinParser {
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
+    GherkinTable currentTable;
 
     Completer comp = new Completer();
     file.readAsLines().then((List<String> contents) {
@@ -66,7 +68,15 @@ class GherkinParser {
         while (iter.moveNext()) {
           var match = iter.current;
           currentStep = new Step(match.group(2));
+          currentTable = currentStep.table;
           currentScenario.addStep(currentStep);
+        }
+
+        //  Examples
+        iter = examplesPattern.allMatches(line).iterator;
+        while (iter.moveNext()) {
+          var match = iter.current;
+          currentTable = currentScenario.examples;
         }
 
         // Tables
@@ -78,7 +88,7 @@ class GherkinParser {
         }
 
         if(!row.isEmpty) {
-          currentStep.table.addRow(row);
+          currentTable.addRow(row);
         }
 
       }

@@ -10,18 +10,12 @@ class Feature {
 
   Feature(this.name);
 
-  Future<String> execute(provider) {
-    Completer comp = new Completer();
-    var missingSteps = [];
-    Future.forEach(scenarios, ((Scenario scenario) {
-      missingSteps.addAll(background.execute(provider));
-      var missing = scenario.execute(provider);
-      missingSteps.addAll(missing);
-    })).whenComplete(() {
-      comp.complete(missingSteps);
-    });
-
-    return comp.future;
+  Future execute(executors) {
+    _writer.write("Feature: $name");
+    return Future.forEach(scenarios, ((Scenario scenario) {
+      background.execute(executors);
+      scenario.execute(executors);
+    }));
   }
 
   String toString() {
@@ -35,27 +29,32 @@ class Scenario {
   List<String> tags;
 
   List<Step> steps = [];
-  List<Map> examples = [];
+  GherkinTable examples = new GherkinTable();
 
   Scenario(this.name);
 
-  List<String> execute(provider) {
-    var missingSteps = [];
+  void execute(executors) {
+    _writer.write("\n\tScenario: $name");
     var iter = steps.iterator;
     while (iter.moveNext()) {
       var step = iter.current;
-      var stepString = step.verbiage;
-      var runner = provider.locate(stepString);
 
+      var runner = executors.locate(step.verbiage);
+
+      var color = "green";
+      var extra = "";
       try {
         runner({"table" : step.table});
       } on StepDefUndefined {
-        _log.warn("Undefinded step: $stepString");
-        missingSteps.add(stepString);
+        color = "yellow";
+      } catch(e, stack) {
+        _log.debug("Step failed: $step");
+        extra = "\n" + stack.toString();
+        color = "red";
+      } finally {
+        _writer.write("\t\t${step.verbiage}$extra", color: color);
       }
     }
-
-    return missingSteps;
   }
 
   void addStep(Step step) {
@@ -63,7 +62,7 @@ class Scenario {
   }
 
   String toString() {
-    return "${tags == null ? "" : tags} $name $steps";
+    return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 }
 

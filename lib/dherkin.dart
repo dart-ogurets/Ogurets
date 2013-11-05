@@ -14,24 +14,23 @@ part "src/outputter.dart";
 
 Logger _log = LoggerFactory.getLogger("dherkin");
 
+ResultWriter _writer = new _ConsoleWriter();
+
 void run(args) {
   var options = _parseArguments(args);
 
-  // TODO change to be flag driven
-  var writer = new _ConsoleWriter();
+// TODO re-init writer based on flags
 
   var scanner = new StepdefProvider();
   var parser = new GherkinParser();
 
-  scanner.scan().then((stepRunners) {
+  scanner.scan().then((executors) {
     options.rest.forEach((filePath) {
       var modelCreator = parser.parse(new File(filePath));
 
       modelCreator.then((feature) {
         _log.debug("Executing: $feature");
-        feature.execute(stepRunners).then((List<String> missingSteps) {
-          throw missingSteps;
-        }).catchError(writer.missingStepDefs, test: (e) => e is List);
+        feature.execute(executors).whenComplete(() => new Future(() => _writer.flush()));
       });
     });
   });
@@ -40,10 +39,10 @@ void run(args) {
 /**
 * Parses command line arguments
 */
+
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
   argParser.addFlag('junit', defaultsTo: true);
   ArgResults options = argParser.parse(args);
   return options;
 }
-

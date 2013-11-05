@@ -24,6 +24,7 @@ step1(ctx, params) {
 @StepDef("I run dherkin")
 i_run_dherkin(ctx, params) {
   print("УРА!");
+  throw "блин";
 }
 
 @StepDef("everything \"(\\w+?)\"")

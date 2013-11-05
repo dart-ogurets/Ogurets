@@ -41,6 +41,8 @@ class StepdefProvider {
         for (var i = 1;i <= match.groupCount;i++) {
           params.add(match[i]);
         }
+      } else {
+        _writer.missingStepDef(step);
       }
 
       _stepRunners[found](ctx,params);

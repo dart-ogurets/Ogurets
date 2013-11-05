@@ -31,3 +31,12 @@
       |A		|B		|C		|D		|
       |E		|F		|G		|H		|
     Then everything works just fine
+
+  @Example
+  Scenario Outline:  Outline Some examples
+    Given I read <column1>
+    And I evaluate <column2>
+  Examples:
+    |column1|column2|
+    |hello	|world|
+    |goodbye|world|

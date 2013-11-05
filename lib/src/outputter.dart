@@ -1,17 +1,34 @@
 part of dherkin;
 
 abstract class ResultWriter {
-  void missingStepDefs(List<String> steps);
+  void write(message);
+  void missingStepDef(steps);
+  void flush();
 }
 
 class _ConsoleWriter implements ResultWriter {
-  void missingStepDefs(steps) {
-    print("Step definitions are missing:");
-    print(steps.map((stepString) {
-      var matchString = stepString.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
-      return "\n@StepDef(\"$matchString\")\n${_generateFunctionName(stepString)}(ctx, params) {\n// todo \n}\n";
-    }).join());
+  static final ANSI_ESC = "\x1B[";
+
+  static final colors = {"black":"${ANSI_ESC}30m", "red":"${ANSI_ESC}31m", "green":"${ANSI_ESC}32m", "white":"${ANSI_ESC}37m", "yellow" : "${ANSI_ESC}33m"};
+
+  StringBuffer buffer = new StringBuffer();
+  StringBuffer missing = new StringBuffer();
+
+  void missingStepDef(step) {
+    var matchString = step.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
+    missing.writeln("${ANSI_ESC}33m\n@StepDef(\"$matchString\")\n${_generateFunctionName(step)}(ctx, params) {\n// todo \n}\n${ANSI_ESC}0m");
+
   }
+
+  void write(message, {color : "white"}) {
+    buffer.writeln("${colors[color]}$message${ANSI_ESC}0m");
+  }
+
+  void flush() {
+    print(buffer.toString());
+    print(missing.toString());
+  }
+
 }
 
 class _HtmlWriter implements ResultWriter {
