@@ -1,13 +1,10 @@
 part of dherkin;
 
 RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
-
 RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
-
 RegExp scenarioPattern = new RegExp(r"Scenario\s*:\s*(.+)");
-
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
-
+RegExp tablePattern = new RegExp(r"\|?\s*([^|]+?)\s*\|\s*");
 RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
 
 class GherkinParser {
@@ -17,6 +14,7 @@ class GherkinParser {
 
     Feature feature;
     Scenario currentScenario;
+    Step currentStep;
 
     Completer comp = new Completer();
     file.readAsLines().then((List<String> contents) {
@@ -33,6 +31,7 @@ class GherkinParser {
           tags.add(match.group(1));
         }
 
+        //  Feature
         iter = featurePattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
@@ -42,6 +41,7 @@ class GherkinParser {
           tags = [];
         }
 
+        //  Scenario
         iter = scenarioPattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
@@ -52,6 +52,7 @@ class GherkinParser {
           tags = [];
         }
 
+        //  Background
         iter = backgroundPattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
@@ -60,11 +61,23 @@ class GherkinParser {
           feature.background = currentScenario;
         }
 
+        //  Steps
         iter = stepPattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
-          currentScenario.steps.add(match.group(2));
+          currentStep = new Step(match.group(2));
+          currentScenario.addStep(currentStep);
         }
+
+        // Tables
+        iter = tablePattern.allMatches(line).iterator;
+        while (iter.moveNext()) {
+          var match = iter.current;
+          currentScenario.addStep(currentStep);
+          print("TABLE: ${match[1]}");
+        }
+
+
       }
     }).whenComplete(() => comp.complete(feature));
 

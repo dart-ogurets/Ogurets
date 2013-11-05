@@ -10,6 +10,9 @@
   @STAG2
   @STAG3 @STAG4 Scenario: Scenario Parser is working
     Given parser is working
+      |column1|column2|column3|column4|
+      |A		|B		|C		|D		|
+      |E		|F		|G		|H		|
     When I run dherkin
     And the phase of the moon is "favorable"
     Then everything "works"

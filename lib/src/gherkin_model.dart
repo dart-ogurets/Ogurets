@@ -34,7 +34,8 @@ class Scenario {
 
   List<String> tags;
 
-  List<String> steps = [];
+  List<Step> steps = [];
+  List<Map> examples = [];
 
   Scenario(this.name);
 
@@ -42,7 +43,7 @@ class Scenario {
     var missingSteps = [];
     var iter = steps.iterator;
     while (iter.moveNext()) {
-      var stepString = iter.current;
+      var stepString = iter.current.verbiage;
       var step = provider.locate(stepString);
 
       try {
@@ -56,8 +57,23 @@ class Scenario {
     return missingSteps;
   }
 
+  void addStep(Step step) {
+    steps.add(step);
+  }
+
   String toString() {
     return "${tags == null ? "" : tags} $name $steps";
+  }
+}
+
+class Step {
+  String verbiage;
+  List<Map> table = [];
+
+  Step(this.verbiage);
+
+  String toString() {
+    return verbiage;
   }
 }
 
