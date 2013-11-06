@@ -1,5 +1,7 @@
-Tables
-Scenario Outlines/Examples
++Tables
+    fix step generation with example table placeholders <>
+++Scenario Outlines/Examples
 Tag application
+junit output
 Parameter parsing
     HTML flag

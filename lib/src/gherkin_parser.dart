@@ -2,7 +2,7 @@ part of dherkin;
 
 RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
-RegExp scenarioPattern = new RegExp(r"Scenario\s*:\s*(.+)");
+RegExp scenarioPattern = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
 RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
 RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");

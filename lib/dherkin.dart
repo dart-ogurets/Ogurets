@@ -16,10 +16,13 @@ Logger _log = LoggerFactory.getLogger("dherkin");
 
 ResultWriter _writer = new _ConsoleWriter();
 
+var _runTags;
+
 void run(args) {
   var options = _parseArguments(args);
+  _runTags = options["tags"].split(",");
 
-// TODO re-init writer based on flags
+  // TODO re-init writer based on flags
 
   var scanner = new StepdefProvider();
   var parser = new GherkinParser();
@@ -29,8 +32,12 @@ void run(args) {
       var modelCreator = parser.parse(new File(filePath));
 
       modelCreator.then((feature) {
-        _log.debug("Executing: $feature");
-        feature.execute(executors).whenComplete(() => new Future(() => _writer.flush()));
+        if(_tagsMatch(feature.tags)) {
+          _log.debug("Executing: $feature");
+          feature.execute(executors).whenComplete(() => new Future(() => _writer.flush()));
+        } else {
+          _log.debug("Skipping: $feature due to no tags matching");
+        }
       });
     });
   });
@@ -43,6 +50,11 @@ void run(args) {
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
   argParser.addFlag('junit', defaultsTo: true);
+  argParser.addOption("tags");
   ArgResults options = argParser.parse(args);
   return options;
+}
+
+bool _tagsMatch(tags) {
+  return _runTags.isEmpty || tags.any((element) =>_runTags.contains(element));
 }

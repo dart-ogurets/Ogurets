@@ -56,3 +56,13 @@ i_am_a_table_step(ctx, params) {
 everything_works_just(ctx, params) {
   print("Table4 $ctx $params");
 }
+
+@StepDef("I evaluate <column2>")
+i_evaluate_$column2$(ctx, params) {
+  print("COLUMN 2");
+}
+
+@StepDef("I read <column1>")
+i_read_$column1$(ctx, params) {
+  print("COLUMN 1");
+}

@@ -13,8 +13,12 @@ class Feature {
   Future execute(executors) {
     _writer.write("Feature: $name");
     return Future.forEach(scenarios, ((Scenario scenario) {
-      background.execute(executors);
-      scenario.execute(executors);
+      _log.debug("Expected tags: $_runTags.  Scenario tags: ${scenario.tags}");
+      if(_tagsMatch(scenario.tags)) {
+        _log.debug("Executing Scenario: $scenario");
+        background.execute(executors);
+        scenario.execute(executors);
+      }
     }));
   }
 
