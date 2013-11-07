@@ -59,7 +59,7 @@ everything_works_just(ctx, params) {
 
 @StepDef("I evaluate <column2>")
 i_evaluate_$column2$(ctx, params) {
-  print("COLUMN 2");
+  print("COLUMN 2 $ctx");
 }
 
 @StepDef("I read <column1>")

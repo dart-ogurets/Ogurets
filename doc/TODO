@@ -1,6 +1,7 @@
 +Tables
-    fix step generation with example table placeholders <>
-++Scenario Outlines/Examples
+    +fix step generation with example table placeholders <>
++Scenario Outlines/Examples
+    -running
 Tag application
 junit output
 Parameter parsing

@@ -38,27 +38,41 @@ class Scenario {
   Scenario(this.name);
 
   void execute(executors) {
-    _writer.write("\n\tScenario: $name");
-    var iter = steps.iterator;
-    while (iter.moveNext()) {
-      var step = iter.current;
+    if(examples._table.isEmpty) {
+      examples._table.add({});
+    }
 
-      var runner = executors.locate(step.verbiage);
+    var tableIter = examples._table.iterator;
+    while (tableIter.moveNext()) {
+      var row = tableIter.current;
+      _writer.write("\n\tScenario: $name");
+      var iter = steps.iterator;
+      while (iter.moveNext()) {
+        var step = iter.current;
 
-      var color = "green";
-      var extra = "";
-      try {
-        runner({"table" : step.table});
-      } on StepDefUndefined {
-        color = "yellow";
-      } catch(e, stack) {
-        _log.debug("Step failed: $step");
-        extra = "\n" + stack.toString();
-        color = "red";
-      } finally {
+        var runner = executors.locate(step.verbiage);
+
+        var color = "green";
+        var extra = "";
+        try {
+          runner({
+              "table" : step.table,
+              "example" : row
+          });
+        }
+        on StepDefUndefined
+        {
+          color = "yellow";
+        }
+        catch(e, stack) {
+          _log.debug("Step failed: $step");
+          extra = "\n" + stack.toString();
+          color = "red";
+        } finally {
         _writer.write("\t\t${step.verbiage}$extra", color: color);
       }
     }
+  }
   }
 
   void addStep(Step step) {
