@@ -46,7 +46,6 @@ void run(args) {
 /**
 * Parses command line arguments
 */
-
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
   argParser.addFlag('junit', defaultsTo: true);
