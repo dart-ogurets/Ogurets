@@ -50,8 +50,7 @@ ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
   argParser.addFlag('junit', defaultsTo: true);
   argParser.addOption("tags");
-  ArgResults options = argParser.parse(args);
-  return options;
+  return argParser.parse(args);
 }
 
 bool _tagsMatch(tags) {

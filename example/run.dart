@@ -9,9 +9,6 @@ import "../lib/dherkin.dart";
 
 void main(args) {
   run(args);
-
-  //var exp = new RegExp("everything \"(\\w+?)\"");
-  //print(exp.firstMatch("everything \"works\"").group(1));
 }
 
 
