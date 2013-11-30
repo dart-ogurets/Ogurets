@@ -37,7 +37,17 @@ class _ConsoleWriter implements ResultWriter {
 }
 
 class _HtmlWriter implements ResultWriter {
+  void flush() {
+    throw "not supported yet";
+  }
 
+  void missingStepDef(steps) {
+    throw "not supported yet";
+  }
+
+  void write(message, {color: "white"}) {
+    throw "not supported yet";
+  }
 }
 
 String _generateFunctionName(stepString) {

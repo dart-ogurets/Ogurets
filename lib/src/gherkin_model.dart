@@ -10,14 +10,14 @@ class Feature {
 
   Feature(this.name);
 
-  Future execute(executors) {
+  Future execute() {
     _writer.write("Feature: $name");
     return Future.forEach(scenarios, ((Scenario scenario) {
       _log.debug("Expected tags: $_runTags.  Scenario tags: ${scenario.tags}");
       if(_tagsMatch(scenario.tags)) {
         _log.debug("Executing Scenario: $scenario");
-        background.execute(executors);
-        scenario.execute(executors);
+        background.execute();
+        scenario.execute();
       }
     }));
   }
@@ -37,7 +37,7 @@ class Scenario {
 
   Scenario(this.name);
 
-  void execute(executors) {
+  void execute() {
     if(examples._table.isEmpty) {
       examples._table.add({});
     }
@@ -49,16 +49,24 @@ class Scenario {
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
+        var found = _stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _NOTFOUND);
 
-        var runner = executors.locate(step.verbiage);
+        var match = found.firstMatch(step.verbiage);
+        var params = [];
+        if (match != null) {
+          for (var i = 1;i <= match.groupCount;i++) {
+            params.add(match[i]);
+          }
+        } else {
+          _writer.missingStepDef(step.verbiage);
+        }
 
         var color = "green";
         var extra = "";
+
+        var ctx = {"table":step.table};
         try {
-          runner({
-              "table" : step.table,
-              "example" : row
-          });
+          _stepRunners[found](ctx,params, row);
         }
         on StepDefUndefined
         {
@@ -66,6 +74,8 @@ class Scenario {
         }
         catch(e, stack) {
           _log.debug("Step failed: $step");
+          _log.debug(e.toString());
+          _log.debug(stack.toString());
           extra = "\n" + stack.toString();
           color = "red";
         } finally {

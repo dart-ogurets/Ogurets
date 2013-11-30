@@ -1,11 +1,6 @@
 library dherkin_example;
 
-import "dart:io";
-import "dart:async";
-import "dart:mirrors";
 import "../lib/dherkin.dart";
-
-
 
 void main(args) {
   run(args);
@@ -55,11 +50,11 @@ everything_works_just(ctx, params) {
 }
 
 @StepDef("I evaluate <column2>")
-i_evaluate_$column2$(ctx, params) {
-  print("COLUMN 2 $ctx");
+i_evaluate_$column2$(ctx, params, {column1, column2}) {
+  print("COLUMN 2 $ctx $column2");
 }
 
 @StepDef("I read <column1>")
-i_read_$column1$(ctx, params) {
-  print("COLUMN 1");
+i_read_$column1$(ctx, params, {column1, column2}) {
+  print("COLUMN 1 $column1");
 }

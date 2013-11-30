@@ -11,8 +11,7 @@ RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensiti
 class GherkinParser {
   static final _log = LoggerFactory.getLoggerFor(GherkinParser);
 
-  Feature<Feature> parse(File file) {
-
+  Future<Feature> parse(File file) {
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
