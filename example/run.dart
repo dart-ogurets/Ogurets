@@ -55,6 +55,6 @@ i_evaluate_$column2$(ctx, params, {column1, column2}) {
 }
 
 @StepDef("I read <column1>")
-i_read_$column1$(ctx, params, {column1, column2}) {
-  print("COLUMN 1 $column1");
+i_read_$column1$(ctx, params, {column1,column2}) {
+  print("Columns are working $column1 $column2");
 }

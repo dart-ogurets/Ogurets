@@ -58,7 +58,7 @@ class Scenario {
             params.add(match[i]);
           }
         } else {
-          _writer.missingStepDef(step.verbiage);
+          _writer.missingStepDef(step.verbiage, examples._columnNames);
         }
 
         var color = "green";
