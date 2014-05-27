@@ -51,7 +51,7 @@ void run(args) {
     Completer comp = new Completer();
     Future.forEach(currentMirrorSystem().libraries.values, (LibraryMirror lib) {
       return new Future.sync(() {
-        Future.forEach(lib.functions.values, (MethodMirror mm) {
+        Future.forEach(lib.declarations.values, (MethodMirror mm) {
           return new Future.sync(() {
             var filteredMetadata = mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
             Future.forEach(filteredMetadata, (InstanceMirror im) {
