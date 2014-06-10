@@ -58,3 +58,29 @@ i_evaluate_$column2$(ctx, params, {column1, column2}) {
 i_read_$column1$(ctx, params, {column1,column2}) {
   print("Columns are working $column1 $column2");
 }
+
+
+// PyStrings
+
+String actualPyString;
+String expectedPyString = """
+line 1
+line 2
+""";
+@StepDef("I have the following PyString:")
+i_have_the_following_pystring(ctx, params) {
+  if (params.length > 0) {
+    actualPyString = params[0];
+  }
+}
+
+@StepDef("the above StepDef should have the PyString as parameter.")
+the_above_stepdef_should_have_the_pystring(ctx, params) {
+  // assert does not raises anything (production mode?)
+  // also, maybe we could use the matchers package here ?
+  //assert(actualPyString == expectedPyString);
+  if (actualPyString != expectedPyString) {
+    throw new Exception("PyString was not as expected : '$actualPyString'");
+  }
+}
+
