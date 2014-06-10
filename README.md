@@ -6,9 +6,9 @@ for Behavior Driven Development (BDD).
 
 Usage
 -----
-Write gherkin and invoke the runtime.
-Copy and paste generated step defs.
-Implement!
+1. Write gherkin and invoke the runtime.
+2. Copy and paste generated step defs.
+3. Implement!
 
 Caveat
 ------
