@@ -7,6 +7,7 @@ RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
 RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
 RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
 RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
+RegExp pyStringPattern = new RegExp(r'^"""$');
 
 class GherkinParser {
   static final _log = LoggerFactory.getLoggerFor(GherkinParser);
@@ -16,6 +17,7 @@ class GherkinParser {
     Scenario currentScenario;
     Step currentStep;
     GherkinTable currentTable;
+    String pyString;
 
     Completer comp = new Completer();
     file.readAsLines().then((List<String> contents) {
@@ -25,6 +27,7 @@ class GherkinParser {
       while (lineIter.moveNext()) {
         var line = lineIter.current;
 
+        //  Tags
         var iter = tagsPattern.allMatches(line).iterator;
         while (iter.moveNext()) {
           var match = iter.current;
@@ -71,6 +74,25 @@ class GherkinParser {
           currentScenario.addStep(currentStep);
         }
 
+        //  PyStrings
+        if (pyStringPattern.hasMatch(line)) {
+          pyString = '';
+          bool foundClosingTag = false;
+          while (!foundClosingTag && lineIter.moveNext()) {
+            line = lineIter.current;
+            if (pyStringPattern.hasMatch(line)) {
+              foundClosingTag = true;
+            } else {
+              pyString += line + "\n";
+            }
+          }
+          if (foundClosingTag) {
+            currentStep.pyString = pyString;
+          } else {
+            throw new Exception("Invalid Gherkin : PyString's closing \"\"\" not found.");
+          }
+        }
+
         //  Examples
         iter = examplesPattern.allMatches(line).iterator;
         while (iter.moveNext()) {
@@ -78,7 +100,7 @@ class GherkinParser {
           currentTable = currentScenario.examples;
         }
 
-        // Tables
+        //  Tables
         var row = [];
         iter = tablePattern.allMatches(line).iterator;
         while (iter.moveNext()) {

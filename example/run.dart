@@ -58,3 +58,34 @@ i_evaluate_$column2$(ctx, params, {column1, column2}) {
 i_read_$column1$(ctx, params, {column1,column2}) {
   print("Columns are working $column1 $column2");
 }
+
+
+// PyStrings
+
+List stepParameters;
+String expectedPyString = """
+line 1
+line 2
+""";
+
+@StepDef("I have the following PyString:")
+i_have_the_following_pystring(ctx, params) {
+  stepParameters = params;
+}
+
+@StepDef("the above Step should have the PyString as last parameter.")
+the_above_stepdef_should_have_the_pystring(ctx, params) {
+  // assert does not raises anything ; can dherkin run in (opt-out) checked mode ?
+  // also, maybe we could use the matchers/expect package ? Assertions make sense here.
+  if (stepParameters != null && stepParameters.length > 0) {
+    String actualPyString = stepParameters.last;
+    if (actualPyString != expectedPyString) {
+      throw new Exception("PyString was not as expected :\n[actual]\n$actualPyString\n[expected]\n$expectedPyString");
+    }
+  } else {
+    throw new Exception("No parameters were found in above step.");
+  }
+
+
+}
+
