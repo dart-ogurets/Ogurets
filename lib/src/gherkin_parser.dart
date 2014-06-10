@@ -87,7 +87,6 @@ class GherkinParser {
             }
           }
           if (foundClosingTag) {
-            _log.debug("Found whole PyString");
             currentStep.pyString = pyString;
           }
         }

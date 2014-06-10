@@ -112,7 +112,11 @@ class Step {
   Step(this.verbiage);
 
   String toString() {
-    return "$verbiage $pyString $table";
+    if (pyString != null) {
+      return "$verbiage\n\"\"\"\n$pyString\"\"\"\n$table";
+    } else {
+      return "$verbiage $table";
+    }
   }
 }
 
