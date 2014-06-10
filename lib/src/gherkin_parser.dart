@@ -88,6 +88,8 @@ class GherkinParser {
           }
           if (foundClosingTag) {
             currentStep.pyString = pyString;
+          } else {
+            throw new Exception("Invalid Gherkin : PyString's closing \"\"\" not found.");
           }
         }
 
