@@ -6,4 +6,4 @@ Feature: Supporting PyStrings
 line 1
 line 2
 """
-		Then the above StepDef should have the PyString as parameter.
+		Then the above Step should have the PyString as last parameter.

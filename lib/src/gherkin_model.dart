@@ -54,9 +54,15 @@ class Scenario {
         var match = found.firstMatch(step.verbiage);
         var params = [];
         if (match != null) {
+          // Parameters from Regex
           for (var i = 1;i <= match.groupCount;i++) {
             params.add(match[i]);
           }
+          // PyString
+          if (step.pyString != null) {
+            params.add(step.pyString);
+          }
+
         } else {
           _writer.missingStepDef(step.verbiage, examples._columnNames);
         }
@@ -76,13 +82,17 @@ class Scenario {
           _log.debug("Step failed: $step");
           _log.debug(e.toString());
           _log.debug(stack.toString());
-          extra = "\n" + stack.toString();
+          extra = "\n" + e.toString() + "\n" + stack.toString();
           color = "red";
         } finally {
-        _writer.write("\t\t${step.verbiage}$extra", color: color);
+          if (step.pyString != null) {
+            _writer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+          } else {
+            _writer.write("\t\t${step.verbiage}$extra", color: color);
+          }
+        }
       }
     }
-  }
   }
 
   void addStep(Step step) {
@@ -96,12 +106,13 @@ class Scenario {
 
 class Step {
   String verbiage;
+  String pyString;
   GherkinTable table = new GherkinTable();
 
   Step(this.verbiage);
 
   String toString() {
-    return "$verbiage $table";
+    return "$verbiage $pyString $table";
   }
 }
 
