@@ -47,11 +47,13 @@ void run(args) {
   });
 }
 
+  //  Scans the entirety of the vm for step definitions executables
+  //  TODO Refactor to be less convoluted
   Future _scan() {
     Completer comp = new Completer();
     Future.forEach(currentMirrorSystem().libraries.values, (LibraryMirror lib) {
       return new Future.sync(() {
-        Future.forEach(lib.declarations.values, (MethodMirror mm) {
+        Future.forEach(lib.declarations.values.where((DeclarationMirror dm) => dm is MethodMirror), (MethodMirror mm) {
           return new Future.sync(() {
             var filteredMetadata = mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
             Future.forEach(filteredMetadata, (InstanceMirror im) {
