@@ -4,6 +4,7 @@ import "../lib/dherkin.dart";
 
 void main(args) {
   run(args);
+  //run(["gherkin/everything.feature","gherkin/pystrings.feature", "gherkin/test_feature.feature"]);
 }
 
 
@@ -11,6 +12,7 @@ void main(args) {
 @StepDef("parser is working")
 step1(ctx, params) {
   print("Компрессия! $ctx");
+  print("PARSER~~");
 }
 
 @StepDef("I run dherkin")

@@ -20,6 +20,9 @@ var _runTags = [];
 final _NOTFOUND = new RegExp("###");
 Map _stepRunners = { _NOTFOUND : (ctx, params, named) => throw new StepDefUndefined()};
 
+/**
+ * Runs specified gherking files with provided flags
+ */
 void run(args) {
   var options = _parseArguments(args);
   
@@ -34,7 +37,6 @@ void run(args) {
   _scan().then((executors) {
     options.rest.forEach((filePath) {
       var modelCreator = parser.parse(new File(filePath));
-
       modelCreator.then((feature) {
         if(_tagsMatch(feature.tags)) {
           _log.debug("Executing: $feature");
@@ -47,11 +49,13 @@ void run(args) {
   });
 }
 
+  //  Scans the entirety of the vm for step definitions executables
+  //  TODO Refactor to be less convoluted
   Future _scan() {
     Completer comp = new Completer();
     Future.forEach(currentMirrorSystem().libraries.values, (LibraryMirror lib) {
       return new Future.sync(() {
-        Future.forEach(lib.declarations.values, (MethodMirror mm) {
+        Future.forEach(lib.declarations.values.where((DeclarationMirror dm) => dm is MethodMirror), (MethodMirror mm) {
           return new Future.sync(() {
             var filteredMetadata = mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
             Future.forEach(filteredMetadata, (InstanceMirror im) {
