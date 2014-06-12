@@ -9,9 +9,9 @@ for Behavior Driven Development (BDD).
 Usage
 -----
 
-1. Create your runner :
+1. Create your runner `my_awesome_bdd.dart` :
 
-``` dart my_awesome_bdd.dart
+``` dart
 library my_awesome_bdd;
 
 import 'package:dherkin/dherkin.dart';
@@ -23,7 +23,7 @@ main(args) {
 // your StepDefs will go there
 ```
 
-2. Write gherkin and invoke the runner on it : `$ dart my_awesome_bdd.dart my_gherkin.feature`
+2. Write gherkin `my_gherkin.feature` and invoke the runner on it : `$ dart my_awesome_bdd.dart my_gherkin.feature`
 3. Copy and paste generated step definitions.
 4. Implement!
 
