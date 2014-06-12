@@ -30,7 +30,8 @@ class _ConsoleWriter implements ResultWriter {
     var missingBuffer = new StringBuffer();
     Future.forEach(_missingStepDefs, (step) {
       var matchString = step.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
-      missingBuffer.writeln("${ANSI_ESC}33m\n@StepDef(\"$matchString\")\n${_generateFunctionName(step)}(ctx, params, {${_columns[step].join(",")}}) {\n// todo \n}\n${ANSI_ESC}0m");
+      var columnsVerbiage = _columns[step].length > 0 ? ", {${_columns[step].join(",")}}" : "";
+      missingBuffer.writeln("${ANSI_ESC}33m\n@StepDef(\"$matchString\")\n${_generateFunctionName(step)}(ctx, params$columnsVerbiage) {\n// todo \n}\n${ANSI_ESC}0m");
     }).whenComplete(() => print(missingBuffer.toString()));
 
 
