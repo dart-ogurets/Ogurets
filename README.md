@@ -9,7 +9,7 @@ for Behavior Driven Development (BDD).
 Usage
 -----
 
-1. Create your runner `my_awesome_bdd.dart` :
+1. Create your runner `my_bdd_runner.dart` :
 
 ``` dart
 library my_bdd_runner;
