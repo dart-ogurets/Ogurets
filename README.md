@@ -10,7 +10,6 @@ Usage
 -----
 
 1. Create your runner `my_bdd_runner.dart` :
-
 ``` dart
 library my_bdd_runner;
 
@@ -22,7 +21,6 @@ main(args) {
 
 // write your StepDefs below
 ```
-
 2. Write gherkin `my_gherkin.feature`
 3. Invoke the runner : `$ dart my_bdd_runner.dart my_gherkin.feature`
 4. Copy and paste generated step definitions.
