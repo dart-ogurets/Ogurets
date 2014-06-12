@@ -20,6 +20,9 @@ var _runTags = [];
 final _NOTFOUND = new RegExp("###");
 Map _stepRunners = { _NOTFOUND : (ctx, params, named) => throw new StepDefUndefined()};
 
+/**
+ * Runs specified gherking files with provided flags
+ */
 void run(args) {
   var options = _parseArguments(args);
   
@@ -34,7 +37,6 @@ void run(args) {
   _scan().then((executors) {
     options.rest.forEach((filePath) {
       var modelCreator = parser.parse(new File(filePath));
-
       modelCreator.then((feature) {
         if(_tagsMatch(feature.tags)) {
           _log.debug("Executing: $feature");
