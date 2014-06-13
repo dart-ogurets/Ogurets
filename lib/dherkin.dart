@@ -18,7 +18,10 @@ ResultWriter _writer = new _ConsoleWriter();
 var _runTags = [];
 
 final _NOTFOUND = new RegExp("###");
-Map _stepRunners = { _NOTFOUND : (ctx, params, named) => throw new StepDefUndefined()};
+Map _stepRunners = { _NOTFOUND : (ctx, params, named) => throw new StepDefUndefined() };
+
+int okScenariosCount = 0;
+int koScenariosCount = 0;
 
 /**
  * Runs specified gherking files with provided flags
@@ -35,16 +38,30 @@ void run(args) {
   var parser = new GherkinParser();
 
   _scan().then((executors) {
-    options.rest.forEach((filePath) {
+    Future.forEach(options.rest, (filePath) {
+      Completer c = new Completer();
       var modelCreator = parser.parse(new File(filePath));
       modelCreator.then((feature) {
         if(_tagsMatch(feature.tags)) {
           _log.debug("Executing: $feature");
-          feature.execute().whenComplete(() => new Future(() => _writer.flush()));
+          feature.execute().whenComplete(() {
+            c.complete(feature);
+            okScenariosCount += feature.okScenariosCount;
+            koScenariosCount += feature.koScenariosCount;
+            return new Future(() => _writer.flush());
+          });
         } else {
           _log.debug("Skipping: $feature due to no tags matching");
         }
       });
+      return c.future;
+    }).then((_){
+      if (okScenariosCount > 0) {
+        _writer.write("\n$okScenariosCount scenario(s) ran successfully.", color: "green");
+      }
+      if (koScenariosCount > 0) {
+        _writer.write("\n$koScenariosCount scenario(s) failed.", color: "red");
+      }
     });
   });
 }
