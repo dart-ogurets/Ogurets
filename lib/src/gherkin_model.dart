@@ -8,6 +8,9 @@ class Feature {
   Scenario background = _NOOP;
   List<Scenario> scenarios = [];
 
+  int okScenariosCount = 0;
+  int koScenariosCount = 0;
+
   Feature(this.name);
 
   Future execute() {
@@ -18,6 +21,11 @@ class Feature {
         _log.debug("Executing Scenario: $scenario");
         background.execute();
         scenario.execute();
+        if (scenario.hasFailed) {
+          koScenariosCount++;
+        } else {
+          okScenariosCount++;
+        }
       }
     }));
   }
@@ -34,6 +42,8 @@ class Scenario {
 
   List<Step> steps = [];
   GherkinTable examples = new GherkinTable();
+
+  bool hasFailed = false;
 
   Scenario(this.name);
 
@@ -79,6 +89,7 @@ class Scenario {
           color = "yellow";
         }
         catch(e, stack) {
+          hasFailed = true;
           _log.debug("Step failed: $step");
           _log.debug(e.toString());
           _log.debug(stack.toString());
