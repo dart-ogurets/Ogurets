@@ -1,23 +1,25 @@
 part of dherkin;
 
-abstract class ResultWriter {
+abstract class ResultBuffer {
   void write(message, {color: "white"});
 
   void missingStepDef(steps, columnNames);
 
+  void merge(ResultBuffer buffer);
+
   void flush();
 }
 
-class _ConsoleWriter implements ResultWriter {
+class _ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";
 
   static final colors = {
       "black":"${ANSI_ESC}30m", "red":"${ANSI_ESC}31m", "green":"${ANSI_ESC}32m", "white":"${ANSI_ESC}37m", "yellow" : "${ANSI_ESC}33m"
   };
 
-  Set<String> _missingStepDefs = new Set();
   Map _columns = {
   };
+  Set<String> _missingStepDefs = new Set();
   StringBuffer _buffer = new StringBuffer();
 
   void missingStepDef(step, columnNames) {
@@ -29,7 +31,18 @@ class _ConsoleWriter implements ResultWriter {
     _buffer.writeln("${colors[color]}$message${ANSI_ESC}0m");
   }
 
+  void merge(ResultBuffer other) {
+    if (other is _ConsoleBuffer) {
+      this._buffer.write(other._buffer);
+      this._missingStepDefs.addAll(other._missingStepDefs);
+      this._columns.addAll(other._columns);
+    } else {
+      throw "Tried to merge different types of buffers!  Reciever: ${this.type} Other: ${other.type}";
+    }
+  }
+
   void flush() {
+    _log.debug("Flusing");
     print(_buffer.toString());
 
     _missingStepDefs.forEach((step) {
@@ -40,21 +53,6 @@ class _ConsoleWriter implements ResultWriter {
 
     _buffer.clear();
     _missingStepDefs.clear();
-  }
-
-}
-
-class _HtmlWriter implements ResultWriter {
-  void flush() {
-    throw "not supported yet";
-  }
-
-  void missingStepDef(steps, columnNames) {
-    throw "not supported yet";
-  }
-
-  void write(message, {color: "white"}) {
-    throw "not supported yet";
   }
 }
 
