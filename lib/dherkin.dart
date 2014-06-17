@@ -41,12 +41,8 @@ Future run(args) {
   var futures = [];
   return _scan().whenComplete(() {
     return Future.forEach(featureFiles, (filePath) {
-      worker.handle(new GherkinParserTask(new File(filePath))).then((feature) {
-        var f = feature.execute(worker);
-        f.then((_) => print("FEATURE DONE"));
-        futures.add(f);
-      });
-    }).then((_) => Future.wait(futures).then((_) => print("DONE!!!")));
+      return worker.handle(new GherkinParserTask(new File(filePath))).then((feature) => futures.add(feature.execute(worker)));
+    }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
   });
 }
 
