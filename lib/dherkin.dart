@@ -26,7 +26,7 @@ Map _stepRunners = {
  * Runs specified gherking files with provided flags
  */
 
-void run(args) {
+Future run(args) {
   LoggerFactory.config[".*"].debugEnabled = false;
   var options = _parseArguments(args);
 
@@ -38,12 +38,15 @@ void run(args) {
 
   var featureFiles = options.rest;
 
-  _scan().whenComplete(() {
-    featureFiles.forEach((filePath) {
+  var futures = [];
+  return _scan().whenComplete(() {
+    return Future.forEach(featureFiles, (filePath) {
       worker.handle(new GherkinParserTask(new File(filePath))).then((feature) {
-        feature.execute(worker).whenComplete(() => _log.debug("Done processing feature ${feature.name}"));
+        var f = feature.execute(worker);
+        f.then((_) => print("FEATURE DONE"));
+        futures.add(f);
       });
-    });
+    }).then((_) => Future.wait(futures).then((_) => print("DONE!!!")));
   });
 }
 

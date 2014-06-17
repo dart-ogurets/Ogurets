@@ -48,6 +48,7 @@ class Feature {
          }
        }).whenComplete(() {
          Future.wait(results).whenComplete(() {
+           print("FEATURE ${name}");
            buffer.flush();
            completer.complete();
          });

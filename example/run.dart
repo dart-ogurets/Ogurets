@@ -6,7 +6,7 @@ import "dart:io";
 import "dart:async";
 
 void main(args) {
-  run(args);
+  run(args).whenComplete(() => print("ALL DONE"));
 }
 
 //***************
