@@ -9,10 +9,16 @@ RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
 RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
 RegExp pyStringPattern = new RegExp(r'^"""$');
 
-class GherkinParser {
-  static final _log = LoggerFactory.getLoggerFor(GherkinParser);
+class GherkinParserTask implements Task {
+  static final _log = LoggerFactory.getLoggerFor(GherkinParserTask);
 
-  Future<Feature> parse(File file) {
+  File file;
+
+  GherkinParserTask(this.file);
+
+  Future<Feature> execute() {
+    LoggerFactory.config[".*"].debugEnabled = false; // TODO remove
+
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
