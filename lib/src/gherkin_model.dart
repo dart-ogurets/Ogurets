@@ -1,8 +1,9 @@
-part of dherkin;
+part of dherkin_base;
 
 class Feature {
-  String name;
+  static final Logger _log = LoggerFactory.getLogger("dherkin");
 
+  String name;
   List<String> tags;
 
   Scenario background = _NOOP;
@@ -13,19 +14,21 @@ class Feature {
 
   Feature(this.name);
 
-  Future execute() {
-    _writer.write("Feature: $name");
+  Future execute(ResultWriter writer, Map<RegExp,Function> stepDefs, runTags) {
+    writer.write("Feature: $name");
     return Future.forEach(scenarios, ((Scenario scenario) {
-      _log.debug("Expected tags: $_runTags.  Scenario tags: ${scenario.tags}");
-      if(_tagsMatch(scenario.tags)) {
+      _log.debug("Expected tags: $runTags.  Scenario tags: ${scenario.tags}");
+      if(doesTagsMatch(scenario.tags, runTags)) {
         _log.debug("Executing Scenario: $scenario");
-        background.execute();
-        scenario.execute();
+        background.execute(writer, stepDefs);
+        scenario.execute(writer, stepDefs);
         if (scenario.hasFailed) {
           koScenariosCount++;
         } else {
           okScenariosCount++;
         }
+      } else {
+        _log.debug("Skipping Scenario: $scenario");
       }
     }));
   }
@@ -47,7 +50,7 @@ class Scenario {
 
   Scenario(this.name);
 
-  void execute() {
+  void execute(ResultWriter writer, Map<RegExp,Function> stepDefs) {
     if(examples._table.isEmpty) {
       examples._table.add({});
     }
@@ -55,11 +58,11 @@ class Scenario {
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
       var row = tableIter.current;
-      _writer.write("\n\tScenario: $name");
+      writer.write("\n\tScenario: $name");
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var found = _stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _NOTFOUND);
+        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => STEPDEF_NOTFOUND);
 
         var match = found.firstMatch(step.verbiage);
         var params = [];
@@ -74,7 +77,7 @@ class Scenario {
           }
 
         } else {
-          _writer.missingStepDef(step.verbiage, examples._columnNames);
+          writer.missingStepDef(step.verbiage, examples._columnNames);
         }
 
         var color = "green";
@@ -82,7 +85,7 @@ class Scenario {
 
         var ctx = {"table":step.table};
         try {
-          _stepRunners[found](ctx,params, row);
+          stepDefs[found](ctx,params, row);
         }
         on StepDefUndefined
         {
@@ -90,16 +93,13 @@ class Scenario {
         }
         catch(e, stack) {
           hasFailed = true;
-          _log.debug("Step failed: $step");
-          _log.debug(e.toString());
-          _log.debug(stack.toString());
           extra = "\n" + e.toString() + "\n" + stack.toString();
           color = "red";
         } finally {
           if (step.pyString != null) {
-            _writer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+            writer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
           } else {
-            _writer.write("\t\t${step.verbiage}$extra", color: color);
+            writer.write("\t\t${step.verbiage}$extra", color: color);
           }
         }
       }

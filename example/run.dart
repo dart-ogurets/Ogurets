@@ -1,14 +1,15 @@
 library dherkin_example;
 
-import "../lib/dherkin.dart";
+import "package:log4dart/log4dart.dart";
+import '../lib/dherkin.dart';
 
 void main(args) {
   run(args);
-  //run(["gherkin/everything.feature","gherkin/pystrings.feature", "gherkin/test_feature.feature"]);
+//  run(["gherkin/everything.feature","gherkin/pystrings.feature","gherkin/test_feature.feature"]);
 }
 
+/// ----------------------------------------------------------------------------
 
-//***************
 @StepDef("parser is working")
 step1(ctx, params) {
   print("Компрессия! $ctx");
@@ -62,7 +63,7 @@ i_read_$column1$(ctx, params, {column1,column2}) {
 }
 
 
-// PyStrings
+/// PyStrings ------------------------------------------------------------------
 
 List stepParameters;
 String expectedPyString = """
@@ -77,8 +78,7 @@ i_have_the_following_pystring(ctx, params) {
 
 @StepDef("the above Step should have the PyString as last parameter.")
 the_above_stepdef_should_have_the_pystring(ctx, params) {
-  // assert does not raises anything ; can dherkin run in (opt-out) checked mode ?
-  // also, maybe we could use the matchers/expect package ? Assertions make sense here.
+  // maybe we could use the matchers/unittest package ? Assertions make sense here.
   if (stepParameters != null && stepParameters.length > 0) {
     String actualPyString = stepParameters.last;
     if (actualPyString != expectedPyString) {

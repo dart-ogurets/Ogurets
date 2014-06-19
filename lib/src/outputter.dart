@@ -1,4 +1,4 @@
-part of dherkin;
+part of dherkin_base;
 
 abstract class ResultWriter {
   void write(message, {color: "white"});
@@ -8,7 +8,7 @@ abstract class ResultWriter {
   void flush();
 }
 
-class _ConsoleWriter implements ResultWriter {
+class ConsoleWriter implements ResultWriter {
   static final ANSI_ESC = "\x1B[";
 
   static final colors = {
@@ -44,7 +44,7 @@ class _ConsoleWriter implements ResultWriter {
 
 }
 
-class _HtmlWriter implements ResultWriter {
+class HtmlWriter implements ResultWriter {
   void flush() {
     throw "not supported yet";
   }

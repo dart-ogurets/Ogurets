@@ -1,18 +1,27 @@
-part of dherkin;
+part of dherkin_base;
 
-RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
-RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
-RegExp scenarioPattern = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
+RegExp tagsPattern       = new RegExp(r"(@[^@\r\n\t ]+)");
+RegExp featurePattern    = new RegExp(r"Feature\s*:\s*(.+)");
+RegExp scenarioPattern   = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
-RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
-RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
-RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
-RegExp pyStringPattern = new RegExp(r'^"""$');
+RegExp examplesPattern   = new RegExp(r"Examples\s*:\s*");
+RegExp tablePattern      = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
+RegExp stepPattern       = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
+RegExp pyStringPattern   = new RegExp(r'^\s*("""|```)$');
+
+
+class GherkinSyntaxError extends Exception {
+  GherkinSyntaxError(String msg) : super(msg) {}
+}
+
 
 class GherkinParser {
-  static final _log = LoggerFactory.getLoggerFor(GherkinParser);
+  static final _log = LoggerFactory.getLogger("dherkin");
 
-  Future<Feature> parse(File file) {
+  /// Returns a Future to a fully populated Feature,
+  /// from the Gherkin feature statements in [contents],
+  /// which is a List of lines.
+  Future<Feature> parse(List<String> contents) {
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
@@ -20,7 +29,7 @@ class GherkinParser {
     String pyString;
 
     Completer comp = new Completer();
-    file.readAsLines().then((List<String> contents) {
+    new Future(() {
       var tags = [];
 
       var lineIter = contents.iterator;
@@ -89,7 +98,7 @@ class GherkinParser {
           if (foundClosingTag) {
             currentStep.pyString = pyString;
           } else {
-            throw new Exception("Invalid Gherkin : PyString's closing \"\"\" not found.");
+            throw new GherkinSyntaxError("PyString's closing tag not found.");
           }
         }
 
