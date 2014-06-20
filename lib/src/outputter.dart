@@ -36,7 +36,9 @@ class ConsoleBuffer implements ResultBuffer {
   }
 
   void merge(ResultBuffer other) {
-    if (other is ConsoleBuffer) {
+    if (other == null || other == this) {
+      return;
+    } else if (other is ConsoleBuffer) {
       this._buffer.write(other._buffer);
       this._missingStepDefs.addAll(other._missingStepDefs);
       this._columns.addAll(other._columns);

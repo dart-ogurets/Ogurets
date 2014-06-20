@@ -37,16 +37,18 @@ Future run(args) {
   var featureFiles = options.rest;
 
   var futures = [];
-  return Future.forEach(featureFiles, (filePath) {
-    Completer c = new Completer();
-    new File(filePath).readAsLines().then((List<String> contents) {
-      return worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
-        futures.add(feature.execute(worker, _buffer, runTags));
-        c.complete();
+  return findStepRunners().then((stepRunners) {
+    return Future.forEach(featureFiles, (filePath) {
+      Completer c = new Completer();
+      new File(filePath).readAsLines().then((List<String> contents) {
+        return worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
+          futures.add(feature.execute(_buffer, stepRunners, runTags: runTags, worker: worker));
+          c.complete();
+        });
       });
-    });
-    return c.future;
-  }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
+      return c.future;
+    }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
+  });
 
 }
 

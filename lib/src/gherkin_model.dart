@@ -10,11 +10,10 @@ class ScenarioExecutionTask implements Task {
   Future execute() {
     LoggerFactory.config[".*"].debugEnabled = false;  // TODO key off options
     Completer c = new Completer();
-    // We cannot have stepDefs as injected dependency, (object is closure),
+    // We cannot have stepRunners as injected dependency, (object is closure),
     // so we re-seek them in this task.
-    findStepRunners().then((stepDefs) {
-      scenario.execute(buffer, stepDefs);
-      _log.debug("Done executing: ${scenario.name}");
+    findStepRunners().then((stepRunners) {
+      scenario.execute(buffer, stepRunners);
       c.complete([buffer, scenario.hasFailed]);
     });
 
@@ -37,7 +36,8 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future execute(Worker worker, ResultBuffer buffer, runTags) {
+  Future execute(ResultBuffer buffer, Map<RegExp, Function> stepRunners,
+                 { List<String> runTags, Worker worker }) {
 
     if (_tagsMatch(tags, runTags)) {
       buffer.write("\nFeature: $name");
@@ -52,7 +52,15 @@ class Feature {
 
           scenario.background = background;
 
-          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario));
+          Future scenarioFuture;
+          if (worker != null) {
+            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario));
+          } else {
+            scenarioFuture = new Future((){
+              scenario.execute(buffer, stepRunners);
+              return [buffer, scenario.hasFailed];
+            });
+          }
 
           scenarioFuture.then((output) {
             buffer.merge(output[0]);
@@ -116,13 +124,13 @@ class Scenario {
 
   Scenario(this.name, this.location);
 
-  void execute(ResultBuffer buffer, Map<RegExp, Function> stepDefs) {
+  void execute(ResultBuffer buffer, Map<RegExp, Function> stepRunners) {
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
 
     if (background != null) {
-      background.execute(buffer, stepDefs);
+      background.execute(buffer, stepRunners);
     }
 
     var tableIter = examples._table.iterator;
@@ -134,7 +142,7 @@ class Scenario {
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _STEPDEF_NOTFOUND);
+        var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _STEPDEF_NOTFOUND);
 
         var match = found.firstMatch(step.verbiage);
         var params = [];
@@ -159,7 +167,7 @@ class Scenario {
             "table": step.table
         };
         try {
-          stepDefs[found](ctx, params, row);
+          stepRunners[found](ctx, params, row);
         } on StepDefUndefined catch(e) {
           color = "yellow";
         } catch (e, s) {
