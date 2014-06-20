@@ -6,24 +6,25 @@ import "dart:mirrors";
 
 import 'package:args/args.dart';
 import "package:log4dart/log4dart.dart";
+import "package:worker/worker.dart";
 
 import "dherkin_base.dart";
 export "dherkin_base.dart";
 
 
 Logger _log = LoggerFactory.getLogger("dherkin");
+ResultBuffer _buffer = new ConsoleBuffer();
 
 
 /**
  * Runs specified gherkin files with provided flags.
  * [args] may be a list of filepaths.
- *
  */
-void run(args) {
+Future run(args) {
   var options = _parseArguments(args);
 
-  if (!options["debug"]) {
-    LoggerFactory.config.getConfigFor("dherkin").debugEnabled = false;
+  if (!options["debug"]) {  // unsure about effect of this.
+    LoggerFactory.config[".*"].debugEnabled = false;
   }
 
   int okScenariosCount = 0;
@@ -34,40 +35,59 @@ void run(args) {
     runTags = options["tags"].split(",");
   }
 
-  // TODO init writer based on flags
-  ResultWriter writer = new ConsoleWriter();
+  var worker = new Worker(spawnLazily: false, poolSize: Platform.numberOfProcessors);
 
-  var parser = new GherkinParser();
+  var featureFiles = options.rest;
 
-  findStepRunners().then((stepsRunners) {
-    Future.forEach(options.rest, (filePath) {
+  var futures = [];
+  return findStepRunners().then((stepsRunners) {
+    return Future.forEach(featureFiles, (filePath) {
       Completer c = new Completer();
       new File(filePath).readAsLines().then((List<String> contents) {
-        var modelCreator = parser.parse(contents);
-        modelCreator.then((feature) {
-          if(doesTagsMatch(feature.tags, runTags)) {
-            _log.debug("Executing: $feature");
-            feature.execute(writer, stepsRunners, runTags).whenComplete(() {
-              c.complete(feature);
-              okScenariosCount += feature.okScenariosCount;
-              koScenariosCount += feature.koScenariosCount;
-              return new Future(() => writer.flush());
-            });
-          } else {
-            _log.debug("Skipping: $feature due to no tags matching");
-          }
+        return worker.handle(new GherkinParserTask(contents)).then((featur) {
+          c.complete();
+          return futures.add(featur.execute(worker, _buffer, stepsRunners, runTags));
         });
       });
       return c.future;
-    }).then((_){
-      if (okScenariosCount > 0) {
-        writer.write("\n$okScenariosCount scenario(s) ran successfully.", color: "green");
-      }
-      if (koScenariosCount > 0) {
-        writer.write("\n$koScenariosCount scenario(s) failed.", color: "red");
-      }
-    });
+    }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
+
+//    Future.forEach(options.rest, (filePath) {
+//      Completer c = new Completer();
+//      new File(filePath).readAsLines().then((List<String> contents) {
+//        var modelCreator = parser.parse(contents);
+//        modelCreator.then((feature) {
+//          if(doesTagsMatch(feature.tags, runTags)) {
+//            _log.debug("Executing: $feature");
+//            feature.execute(writer, stepsRunners, runTags).whenComplete(() {
+//              c.complete(feature);
+//              okScenariosCount += feature.okScenariosCount;
+//              koScenariosCount += feature.koScenariosCount;
+//              return new Future(() => writer.flush());
+//            });
+//          } else {
+//            _log.debug("Skipping: $feature due to no tags matching");
+//          }
+//        });
+//      });
+//      return c.future;
+//    }).then((_){
+//      if (okScenariosCount > 0) {
+//        writer.write("\n$okScenariosCount scenario(s) ran successfully.", color: "green");
+//      }
+//      if (koScenariosCount > 0) {
+//        writer.write("\n$koScenariosCount scenario(s) failed.", color: "red");
+//      }
+//    });
   });
+
+//  if (okScenariosCount > 0) {
+//    _writer.write("\n$okScenariosCount scenario(s) ran successfully.", color: "green");
+//  }
+//
+//  if (koScenariosCount > 0) {
+//    _writer.write("\n$koScenariosCount scenario(s) failed.", color: "red");
+//  }
 }
 
 
@@ -76,8 +96,8 @@ void run(args) {
  */
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
-  //argParser.addFlag('junit', defaultsTo: true);
-  argParser.addFlag('debug', defaultsTo: false);
+  argParser.addFlag('junit', defaultsTo: true); // this is not used ?
+  argParser.addFlag('debug', defaultsTo: true);
   argParser.addOption("tags");
   return argParser.parse(args);
 }

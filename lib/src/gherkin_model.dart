@@ -1,5 +1,24 @@
 part of dherkin_base;
 
+class ScenarioExecutionTask implements Task {
+//  static final Logger _log = LoggerFactory.getLogger("dherkin");
+
+  Scenario scenario;
+  Map<RegExp,Function> stepDefs;
+  ResultBuffer buffer;
+
+  ScenarioExecutionTask(this.scenario, this.stepDefs, this.buffer);
+
+  Future<ResultBuffer> execute() {
+//    return new Future((){
+//      return [buffer, scenario.hasFailed];
+//    });
+    scenario.execute(buffer, stepDefs);
+    //_log.debug("Done executing: ${scenario.name}");
+    return new Future.value([buffer, scenario.hasFailed]);
+  }
+}
+
 class Feature {
   static final Logger _log = LoggerFactory.getLogger("dherkin");
 
@@ -14,25 +33,62 @@ class Feature {
 
   Feature(this.name);
 
-  Future execute(ResultWriter writer, Map<RegExp,Function> stepDefs, runTags) {
-    writer.write("Feature: $name");
-    return Future.forEach(scenarios, ((Scenario scenario) {
-      _log.debug("Expected tags: $runTags.  Scenario tags: ${scenario.tags}");
-      if(doesTagsMatch(scenario.tags, runTags)) {
-        _log.debug("Executing Scenario: $scenario");
-        background.execute(writer, stepDefs);
-        scenario.execute(writer, stepDefs);
-        if (scenario.hasFailed) {
-          koScenariosCount++;
+  Future execute(Worker worker, ResultBuffer buffer, Map<RegExp,Function> stepDefs, runTags) {
+
+    if (doesTagsMatch(tags, runTags)) {
+
+      buffer.write("Feature: $name");
+
+      var completer = new Completer();
+      var results = [];
+      Future.forEach(scenarios, (Scenario scenario) {
+        _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
+        if (doesTagsMatch(scenario.tags, runTags)) {
+          _log.debug("Executing Scenario: $scenario");
+          scenario.background = background;
+
+          var future = worker.handle(new ScenarioExecutionTask(scenario, stepDefs, buffer));
+
+          future.then((output) {
+            buffer.merge(output[0]);
+
+            if(output[1]) {
+              okScenariosCount++;
+            } else {
+              koScenariosCount++;
+            }
+          }).catchError((e,s){
+            _log.debug("ERROOOOOOOOOOOOOR $e \n $s");
+          });
+
+          results.add(future);
         } else {
-          okScenariosCount++;
+          _log.debug("Skipping Scenario: $scenario");
         }
-      } else {
-        _log.debug("Skipping Scenario: $scenario");
-      }
-    }));
+      }).whenComplete(() {
+        Future.wait(results).whenComplete(() {
+          buffer.write("Scenarios passed: $okScenariosCount", color: 'green');
+
+          if(koScenariosCount > 0) {
+            buffer.write("Scenarios failed: $koScenariosCount", color: 'red');
+          }
+
+          buffer.flush();
+          completer.complete();
+        });
+      });
+
+      return completer.future;
+    } else {
+      _log.info("Skipping feature $name due to tags not matching");
+
+      return new Future.value("NOOP");
+    }
   }
 
+  /**
+   * Converts to printable format
+   */
   String toString() {
     return "$name ${tags == null ? "" : tags}\n $background \n$scenarios";
   }
@@ -43,6 +99,8 @@ class Scenario {
 
   List<String> tags;
 
+   Scenario background;
+
   List<Step> steps = [];
   GherkinTable examples = new GherkinTable();
 
@@ -50,15 +108,19 @@ class Scenario {
 
   Scenario(this.name);
 
-  void execute(ResultWriter writer, Map<RegExp,Function> stepDefs) {
-    if(examples._table.isEmpty) {
+  void execute(ResultBuffer buffer, Map<RegExp,Function> stepDefs) {
+    if (examples._table.isEmpty) {
       examples._table.add({});
+    }
+
+    if (background != null) {
+      background.execute(buffer, stepDefs);
     }
 
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
       var row = tableIter.current;
-      writer.write("\n\tScenario: $name");
+      buffer.write("\n\tScenario: $name");
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
@@ -68,7 +130,7 @@ class Scenario {
         var params = [];
         if (match != null) {
           // Parameters from Regex
-          for (var i = 1;i <= match.groupCount;i++) {
+          for (var i = 1; i <= match.groupCount; i++) {
             params.add(match[i]);
           }
           // PyString
@@ -77,33 +139,37 @@ class Scenario {
           }
 
         } else {
-          writer.missingStepDef(step.verbiage, examples._columnNames);
+          buffer.missingStepDef(step.verbiage, examples._columnNames);
         }
 
         var color = "green";
         var extra = "";
 
-        var ctx = {"table":step.table};
+        var ctx = {
+          "table": step.table
+        };
         try {
           stepDefs[found](ctx,params, row);
-        }
-        on StepDefUndefined
-        {
+        } on StepDefUndefined {
           color = "yellow";
-        }
-        catch(e, stack) {
+        } catch (e, stack) {
           hasFailed = true;
+          //_log.debug("Step failed: $step");
+          //_log.debug(e.toString());
+          //_log.debug(stack.toString());
           extra = "\n" + e.toString() + "\n" + stack.toString();
           color = "red";
         } finally {
           if (step.pyString != null) {
-            writer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+            buffer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
           } else {
-            writer.write("\t\t${step.verbiage}$extra", color: color);
+            buffer.write("\t\t${step.verbiage}$extra", color: color);
           }
         }
       }
     }
+
+    return buffer;
   }
 
   void addStep(Step step) {
@@ -136,10 +202,9 @@ class GherkinTable {
   List<Map> _table = [];
 
   void addRow(row) {
-    if(_columnNames.isEmpty) {
+    if (_columnNames.isEmpty) {
       _columnNames.addAll(row);
-    }
-    else {
+    } else {
       _table.add(new Map.fromIterables(_columnNames, row));
     }
   }

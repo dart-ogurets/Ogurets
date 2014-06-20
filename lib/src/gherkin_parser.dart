@@ -15,21 +15,25 @@ class GherkinSyntaxError extends Exception {
 }
 
 
-class GherkinParser {
-  static final _log = LoggerFactory.getLogger("dherkin");
+class GherkinParserTask implements Task {
+  static final _log = LoggerFactory.getLoggerFor(GherkinParserTask);
+
+  List<String> contents;
+
+  GherkinParserTask(List<String> this.contents);
 
   /// Returns a Future to a fully populated Feature,
   /// from the Gherkin feature statements in [contents],
   /// which is a List of lines.
-  Future<Feature> parse(List<String> contents) {
+  Future<Feature> execute() {
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
     GherkinTable currentTable;
     String pyString;
 
-    Completer comp = new Completer();
-    new Future(() {
+//    Completer comp = new Completer();
+//    new Future(() {
       var tags = [];
 
       var lineIter = contents.iterator;
@@ -122,8 +126,9 @@ class GherkinParser {
         }
 
       }
-    }).whenComplete(() => comp.complete(feature));
+//    }).whenComplete(() => comp.complete(feature));
 
-    return comp.future;
+//    return comp.future;
+    return new Future.value(feature);
   }
 }

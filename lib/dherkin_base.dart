@@ -3,8 +3,8 @@ library dherkin_base;
 import "dart:async";
 import "dart:mirrors";
 
-import 'package:args/args.dart';
 import "package:log4dart/log4dart.dart";
+import "package:worker/worker.dart";
 
 part "src/gherkin_model.dart";
 part "src/gherkin_parser.dart";

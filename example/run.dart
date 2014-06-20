@@ -4,8 +4,8 @@ import "package:log4dart/log4dart.dart";
 import '../lib/dherkin.dart';
 
 void main(args) {
-  run(args);
-//  run(["gherkin/everything.feature","gherkin/pystrings.feature","gherkin/test_feature.feature"]);
+  args = ["gherkin/everything.feature","gherkin/pystrings.feature","gherkin/test_feature.feature"];
+  run(args).whenComplete(() => print("ALL DONE"));
 }
 
 /// ----------------------------------------------------------------------------
@@ -13,7 +13,6 @@ void main(args) {
 @StepDef("parser is working")
 step1(ctx, params) {
   print("Компрессия! $ctx");
-  print("PARSER~~");
 }
 
 @StepDef("I run dherkin")
@@ -58,7 +57,7 @@ i_evaluate_$column2$(ctx, params, {column1, column2}) {
 }
 
 @StepDef("I read <column1>")
-i_read_$column1$(ctx, params, {column1,column2}) {
+i_read_$column1$(ctx, params, {column1, column2}) {
   print("Columns are working $column1 $column2");
 }
 
