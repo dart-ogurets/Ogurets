@@ -1,30 +1,35 @@
 part of dherkin_core;
 
-RegExp tagsPattern       = new RegExp(r"(@[^@\r\n\t ]+)");
-RegExp featurePattern    = new RegExp(r"Feature\s*:\s*(.+)");
-RegExp scenarioPattern   = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
+RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
+RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
+RegExp scenarioPattern = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
 RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
-RegExp examplesPattern   = new RegExp(r"Examples\s*:\s*");
-RegExp tablePattern      = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
-RegExp stepPattern       = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
-RegExp pyStringPattern   = new RegExp(r'^\s*("""|```)$');
+RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
+RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
+RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
+RegExp pyStringPattern = new RegExp(r'^\s*("""|```)$');
 
 
 class GherkinSyntaxError extends StateError {
-  GherkinSyntaxError(String msg) : super(msg) {}
+  GherkinSyntaxError(String msg) : super(msg);
 }
 
 
 class GherkinParserTask implements Task {
 
   List<String> contents;
+  String filePath;
 
-  GherkinParserTask(List<String> this.contents);
+  GherkinParserTask(List<String> this.contents, this.filePath);
 
-  /// Returns a Future to a fully populated Feature,
-  /// from the Gherkin feature statements in [contents],
-  /// which is a List of lines.
+  /**
+   * Returns a Future to a fully populated Feature,
+   * from the Gherkin feature statements in [contents],
+   * which is a List of lines.
+   */
   Future<Feature> execute() {
+    LoggerFactory.config[".*"].debugEnabled = false; // TODO key off options
+
     Feature feature;
     Scenario currentScenario;
     Step currentStep;
@@ -34,8 +39,10 @@ class GherkinParserTask implements Task {
     var tags = [];
 
     var lineIter = contents.iterator;
+    var lineCounter = 0;
     while (lineIter.moveNext()) {
       var line = lineIter.current;
+      lineCounter++;
 
       //  Tags
       var iter = tagsPattern.allMatches(line).iterator;
@@ -50,7 +57,7 @@ class GherkinParserTask implements Task {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.debug(match.group(1));
-        feature = new Feature(match.group(1));
+        feature = new Feature(match.group(1), new Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
       }
@@ -60,7 +67,7 @@ class GherkinParserTask implements Task {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.debug(match.group(1));
-        currentScenario = new Scenario(match.group(1));
+        currentScenario = new Scenario(match.group(1), new Location(filePath, lineCounter));
         currentScenario.tags = tags;
         feature.scenarios.add(currentScenario);
         tags = [];
@@ -71,7 +78,7 @@ class GherkinParserTask implements Task {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.debug("Background");
-        currentScenario = new Scenario("Background");
+        currentScenario = new Scenario("Background", new Location(filePath, lineCounter));
         feature.background = currentScenario;
       }
 
@@ -79,7 +86,7 @@ class GherkinParserTask implements Task {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = new Step(match.group(2));
+        currentStep = new Step(match.group(2), new Location(filePath, lineCounter));
         currentTable = currentStep.table;
         currentScenario.addStep(currentStep);
       }
@@ -118,7 +125,7 @@ class GherkinParserTask implements Task {
         row.add(match[1]);
       }
 
-      if(!row.isEmpty) {
+      if (!row.isEmpty) {
         currentTable.addRow(row);
       }
 

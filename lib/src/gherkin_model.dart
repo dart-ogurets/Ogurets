@@ -3,11 +3,12 @@ part of dherkin_core;
 class ScenarioExecutionTask implements Task {
 
   Scenario scenario;
-  ResultBuffer buffer;
+  ResultBuffer buffer = new ConsoleBuffer(); // TODO create appropriate type
 
-  ScenarioExecutionTask(this.scenario, this.buffer);
+  ScenarioExecutionTask(this.scenario);
 
   Future execute() {
+    LoggerFactory.config[".*"].debugEnabled = false;  // TODO key off options
     Completer c = new Completer();
     // We cannot have stepDefs as injected dependency, (object is closure),
     // so we re-seek them in this task.
@@ -29,27 +30,29 @@ class Feature {
   Scenario background = _NOOP;
   List<Scenario> scenarios = [];
 
+  Location location;
+
   int okScenariosCount = 0;
   int koScenariosCount = 0;
 
-  Feature(this.name);
+  Feature(this.name, this.location);
 
-  Future execute(Worker worker, ResultBuffer buffer, Map<RegExp, Function> stepDefs, runTags) {
+  Future execute(Worker worker, ResultBuffer buffer, runTags) {
 
-    if (doesTagsMatch(tags, runTags)) {
-
-      buffer.write("Feature: $name");
+    if (_tagsMatch(tags, runTags)) {
+      buffer.write("\nFeature: $name");
+      buffer.writeln("$location", color: 'gray');
 
       var completer = new Completer();
       var results = [];
       Future.forEach(scenarios, (Scenario scenario) {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
-        if (doesTagsMatch(scenario.tags, runTags)) {
+        if (_tagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
 
           scenario.background = background;
 
-          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, buffer));
+          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario));
 
           scenarioFuture.then((output) {
             buffer.merge(output[0]);
@@ -69,10 +72,11 @@ class Feature {
         }
       }).whenComplete(() {
         Future.wait(results).whenComplete(() {
-          buffer.write("Scenarios passed: $okScenariosCount", color: 'green');
+          buffer.writeln("-------------------");
+          buffer.writeln("Scenarios passed: $okScenariosCount", color: 'green');
 
           if (koScenariosCount > 0) {
-            buffer.write("Scenarios failed: $koScenariosCount", color: 'red');
+            buffer.writeln("Scenarios failed: $koScenariosCount", color: 'red');
           }
 
           buffer.flush();
@@ -108,7 +112,9 @@ class Scenario {
 
   bool hasFailed = false;
 
-  Scenario(this.name);
+  Location location;
+
+  Scenario(this.name, this.location);
 
   void execute(ResultBuffer buffer, Map<RegExp, Function> stepDefs) {
     if (examples._table.isEmpty) {
@@ -123,10 +129,12 @@ class Scenario {
     while (tableIter.moveNext()) {
       var row = tableIter.current;
       buffer.write("\n\tScenario: $name");
+      buffer.writeln("$location", color: 'gray');
+
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => STEPDEF_NOTFOUND);
+        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _STEPDEF_NOTFOUND);
 
         var match = found.firstMatch(step.verbiage);
         var params = [];
@@ -161,9 +169,11 @@ class Scenario {
           color = "red";
         } finally {
           if (step.pyString != null) {
-            buffer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+            buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
           } else {
-            buffer.write("\t\t${step.verbiage}$extra", color: color);
+            buffer.write("\t\t${step.verbiage}", color: color);
+            buffer.write("\t${step.location}", color: 'gray');
+            buffer.writeln(extra, color: color);
           }
         }
       }
@@ -183,8 +193,9 @@ class Step {
   String verbiage;
   String pyString;
   GherkinTable table = new GherkinTable();
+  Location location;
 
-  Step(this.verbiage);
+  Step(this.verbiage, this.location);
 
   String toString() {
     if (pyString != null) {
@@ -192,6 +203,17 @@ class Step {
     } else {
       return "$verbiage $table";
     }
+  }
+}
+
+class Location {
+  String srcFilePath;
+  int srcLineNumber;
+
+  Location(this.srcFilePath, this.srcLineNumber);
+
+  String toString() {
+    return " # $srcFilePath:$srcLineNumber";
   }
 }
 
@@ -214,12 +236,9 @@ class GherkinTable {
 
 class StepDef {
   final String verbiage;
-
   const StepDef(this.verbiage);
 }
 
-class StepDefUndefined implements Exception {
+class StepDefUndefined implements Exception {}
 
-}
-
-final _NOOP = new Scenario("NOOP");
+final _NOOP = new Scenario("NOOP", new Location("", -1));

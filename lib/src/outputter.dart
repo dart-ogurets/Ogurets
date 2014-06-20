@@ -2,11 +2,9 @@ part of dherkin_core;
 
 abstract class ResultBuffer {
   void write(message, {color: "white"});
-
+  void writeln(message, {color: "white"});
   void missingStepDef(steps, columnNames);
-
   void merge(ResultBuffer buffer);
-
   void flush();
 }
 
@@ -14,20 +12,27 @@ class ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";
 
   static final colors = {
-      "black":"${ANSI_ESC}30m", "red":"${ANSI_ESC}31m", "green":"${ANSI_ESC}32m", "white":"${ANSI_ESC}37m", "yellow" : "${ANSI_ESC}33m"
-  };
+      "black": new AnsiPen()..black(), "red":new AnsiPen()..red(), "green":new AnsiPen()..green(), "white":new AnsiPen()..white(), "yellow" : new AnsiPen()..yellow(), "gray": new AnsiPen()..gray(level: 0.5)};
 
   Map _columns = {};
   Set<String> _missingStepDefs = new Set();
   StringBuffer _buffer = new StringBuffer();
+
+  String buffer() {
+    return _buffer;
+  }
 
   void missingStepDef(step, columnNames) {
     _columns[step] = columnNames;
     _missingStepDefs.add(step);
   }
 
-  void write(message, {color : "white"}) {
-    _buffer.writeln("${colors[color]}$message${ANSI_ESC}0m");
+  void write(message, {color: "white"}) {
+    _buffer.write(colors[color](message));
+  }
+
+  void writeln(message, {color : "white"}) {
+    _buffer.writeln(colors[color](message));
   }
 
   void merge(ResultBuffer other) {
@@ -47,7 +52,7 @@ class ConsoleBuffer implements ResultBuffer {
     _missingStepDefs.forEach((step) {
       var matchString = step.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
       var columnsVerbiage = _columns[step].length > 0 ? ", {${_columns[step].join(",")}}" : "";
-      print("${ANSI_ESC}33m\n@StepDef(\"$matchString\")\n${_generateFunctionName(step)}(ctx, params$columnsVerbiage) {\n// todo \n}\n${ANSI_ESC}0m");
+      print(colors["yellow"]("\n@StepDef(\"$matchString\")\n${_generateFunctionName(step)}(ctx, params$columnsVerbiage) {\n// todo \n}\n"));
     });
 
     _buffer.clear();
