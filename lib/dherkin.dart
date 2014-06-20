@@ -61,7 +61,7 @@ Future run(args) {
  */
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
-  argParser.addFlag('junit', defaultsTo: true); // this is not used ?
+  //argParser.addFlag('junit', defaultsTo: true); // this is not used ?
   argParser.addFlag('debug', defaultsTo: true);
   argParser.addOption("tags");
   return argParser.parse(args);
