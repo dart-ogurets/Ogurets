@@ -1,4 +1,4 @@
-library dherkin_base;
+library dherkin_core;
 
 import "dart:async";
 import "dart:mirrors";
@@ -15,6 +15,7 @@ part "src/outputter.dart";
 
 final STEPDEF_NOTFOUND = new RegExp("###");
 
+Logger _log = LoggerFactory.getLogger("dherkin");
 
 ///  Scans the entirety of the vm for step definitions executables
 ///  TODO : refactor to be less convoluted.

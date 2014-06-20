@@ -1,4 +1,4 @@
-part of dherkin_base;
+part of dherkin_core;
 
 abstract class ResultBuffer {
   void write(message, {color: "white"});
@@ -36,7 +36,7 @@ class ConsoleBuffer implements ResultBuffer {
       this._missingStepDefs.addAll(other._missingStepDefs);
       this._columns.addAll(other._columns);
     } else {
-      throw "Tried to merge different types of buffers!  Reciever: ${this.type} Other: ${other.type}";
+      throw "Tried to merge different types of buffers!  Receiver: ${this.runtimeType.toString()} Other: ${other.runtimeType.toString()}";
     }
   }
 

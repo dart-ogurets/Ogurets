@@ -1,4 +1,4 @@
-part of dherkin_base;
+part of dherkin_core;
 
 RegExp tagsPattern       = new RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern    = new RegExp(r"Feature\s*:\s*(.+)");
@@ -16,7 +16,6 @@ class GherkinSyntaxError extends Exception {
 
 
 class GherkinParserTask implements Task {
-  static final _log = LoggerFactory.getLoggerFor(GherkinParserTask);
 
   List<String> contents;
 
@@ -32,103 +31,99 @@ class GherkinParserTask implements Task {
     GherkinTable currentTable;
     String pyString;
 
-//    Completer comp = new Completer();
-//    new Future(() {
-      var tags = [];
+    var tags = [];
 
-      var lineIter = contents.iterator;
-      while (lineIter.moveNext()) {
-        var line = lineIter.current;
+    var lineIter = contents.iterator;
+    while (lineIter.moveNext()) {
+      var line = lineIter.current;
 
-        //  Tags
-        var iter = tagsPattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          _log.debug(match.group(1));
-          tags.add(match.group(1));
-        }
-
-        //  Feature
-        iter = featurePattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          _log.debug(match.group(1));
-          feature = new Feature(match.group(1));
-          feature.tags = tags;
-          tags = [];
-        }
-
-        //  Scenario
-        iter = scenarioPattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          _log.debug(match.group(1));
-          currentScenario = new Scenario(match.group(1));
-          currentScenario.tags = tags;
-          feature.scenarios.add(currentScenario);
-          tags = [];
-        }
-
-        //  Background
-        iter = backgroundPattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          _log.debug("Background");
-          currentScenario = new Scenario("Background");
-          feature.background = currentScenario;
-        }
-
-        //  Steps
-        iter = stepPattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          currentStep = new Step(match.group(2));
-          currentTable = currentStep.table;
-          currentScenario.addStep(currentStep);
-        }
-
-        //  PyStrings
-        if (pyStringPattern.hasMatch(line)) {
-          pyString = '';
-          bool foundClosingTag = false;
-          while (!foundClosingTag && lineIter.moveNext()) {
-            line = lineIter.current;
-            if (pyStringPattern.hasMatch(line)) {
-              foundClosingTag = true;
-            } else {
-              pyString += line + "\n";
-            }
-          }
-          if (foundClosingTag) {
-            currentStep.pyString = pyString;
-          } else {
-            throw new GherkinSyntaxError("PyString's closing tag not found.");
-          }
-        }
-
-        //  Examples
-        iter = examplesPattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          currentTable = currentScenario.examples;
-        }
-
-        //  Tables
-        var row = [];
-        iter = tablePattern.allMatches(line).iterator;
-        while (iter.moveNext()) {
-          var match = iter.current;
-          row.add(match[1]);
-        }
-
-        if(!row.isEmpty) {
-          currentTable.addRow(row);
-        }
-
+      //  Tags
+      var iter = tagsPattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        _log.debug(match.group(1));
+        tags.add(match.group(1));
       }
-//    }).whenComplete(() => comp.complete(feature));
 
-//    return comp.future;
+      //  Feature
+      iter = featurePattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        _log.debug(match.group(1));
+        feature = new Feature(match.group(1));
+        feature.tags = tags;
+        tags = [];
+      }
+
+      //  Scenario
+      iter = scenarioPattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        _log.debug(match.group(1));
+        currentScenario = new Scenario(match.group(1));
+        currentScenario.tags = tags;
+        feature.scenarios.add(currentScenario);
+        tags = [];
+      }
+
+      //  Background
+      iter = backgroundPattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        _log.debug("Background");
+        currentScenario = new Scenario("Background");
+        feature.background = currentScenario;
+      }
+
+      //  Steps
+      iter = stepPattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        currentStep = new Step(match.group(2));
+        currentTable = currentStep.table;
+        currentScenario.addStep(currentStep);
+      }
+
+      //  PyStrings
+      if (pyStringPattern.hasMatch(line)) {
+        pyString = '';
+        bool foundClosingTag = false;
+        while (!foundClosingTag && lineIter.moveNext()) {
+          line = lineIter.current;
+          if (pyStringPattern.hasMatch(line)) {
+            foundClosingTag = true;
+          } else {
+            pyString += line + "\n";
+          }
+        }
+        if (foundClosingTag) {
+          currentStep.pyString = pyString;
+        } else {
+          throw new GherkinSyntaxError("PyString's closing tag not found.");
+        }
+      }
+
+      //  Examples
+      iter = examplesPattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        currentTable = currentScenario.examples;
+      }
+
+      //  Tables
+      var row = [];
+      iter = tablePattern.allMatches(line).iterator;
+      while (iter.moveNext()) {
+        var match = iter.current;
+        row.add(match[1]);
+      }
+
+      if(!row.isEmpty) {
+        currentTable.addRow(row);
+      }
+
+    }
+
     return new Future.value(feature);
   }
 }

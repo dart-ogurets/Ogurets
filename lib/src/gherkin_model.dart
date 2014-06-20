@@ -1,26 +1,27 @@
-part of dherkin_base;
+part of dherkin_core;
 
 class ScenarioExecutionTask implements Task {
-//  static final Logger _log = LoggerFactory.getLogger("dherkin");
 
   Scenario scenario;
-  Map<RegExp,Function> stepDefs;
   ResultBuffer buffer;
 
-  ScenarioExecutionTask(this.scenario, this.stepDefs, this.buffer);
+  ScenarioExecutionTask(this.scenario, this.buffer);
 
-  Future<ResultBuffer> execute() {
-//    return new Future((){
-//      return [buffer, scenario.hasFailed];
-//    });
-    scenario.execute(buffer, stepDefs);
-    //_log.debug("Done executing: ${scenario.name}");
-    return new Future.value([buffer, scenario.hasFailed]);
+  Future execute() {
+    Completer c = new Completer();
+    // We cannot have stepDefs as injected dependency, (object is closure),
+    // so we re-seek them in this task.
+    findStepRunners().then((stepDefs){
+      scenario.execute(buffer, stepDefs);
+      _log.debug("Done executing: ${scenario.name}");
+      c.complete([buffer, scenario.hasFailed]);
+    });
+
+    return c.future;
   }
 }
 
 class Feature {
-  static final Logger _log = LoggerFactory.getLogger("dherkin");
 
   String name;
   List<String> tags;
@@ -45,11 +46,12 @@ class Feature {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (doesTagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
+
           scenario.background = background;
 
-          var future = worker.handle(new ScenarioExecutionTask(scenario, stepDefs, buffer));
+          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, buffer));
 
-          future.then((output) {
+          scenarioFuture.then((output) {
             buffer.merge(output[0]);
 
             if(output[1]) {
@@ -61,7 +63,7 @@ class Feature {
             _log.debug("ERROOOOOOOOOOOOOR $e \n $s");
           });
 
-          results.add(future);
+          results.add(scenarioFuture);
         } else {
           _log.debug("Skipping Scenario: $scenario");
         }
@@ -152,12 +154,10 @@ class Scenario {
           stepDefs[found](ctx,params, row);
         } on StepDefUndefined {
           color = "yellow";
-        } catch (e, stack) {
+        } catch (e, s) {
           hasFailed = true;
-          //_log.debug("Step failed: $step");
-          //_log.debug(e.toString());
-          //_log.debug(stack.toString());
-          extra = "\n" + e.toString() + "\n" + stack.toString();
+          _log.debug("Step failed: $step");
+          extra = "\n$e\n$s";
           color = "red";
         } finally {
           if (step.pyString != null) {
@@ -169,7 +169,7 @@ class Scenario {
       }
     }
 
-    return buffer;
+//    return buffer;
   }
 
   void addStep(Step step) {
