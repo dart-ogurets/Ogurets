@@ -25,6 +25,8 @@ class GherkinParserTask implements Task {
   /// from the Gherkin feature statements in [contents],
   /// which is a List of lines.
   Future<Feature> execute() {
+    LoggerFactory.config[".*"].debugEnabled = false;  // TODO key off options
+
     Feature feature;
     Scenario currentScenario;
     Step currentStep;

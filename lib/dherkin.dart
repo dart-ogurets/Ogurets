@@ -13,8 +13,7 @@ export 'dherkin_core.dart';
 
 
 Logger _log = LoggerFactory.getLogger("dherkin");
-ResultBuffer _buffer = new ConsoleBuffer();
-
+ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
 
 /**
  * Runs specified gherkin files with provided flags.
@@ -23,9 +22,7 @@ ResultBuffer _buffer = new ConsoleBuffer();
 Future run(args) {
   var options = _parseArguments(args);
 
-  if (!options["debug"]) {  // unsure about effect of this.
-    LoggerFactory.config[".*"].debugEnabled = false;
-  }
+  LoggerFactory.config[".*"].debugEnabled = options["debug"];
 
   int okScenariosCount = 0;
   int koScenariosCount = 0;
@@ -40,29 +37,26 @@ Future run(args) {
   var featureFiles = options.rest;
 
   var futures = [];
-  return findStepRunners().then((stepsRunners) {
-    return Future.forEach(featureFiles, (filePath) {
-      Completer c = new Completer();
-      new File(filePath).readAsLines().then((List<String> contents) {
-        return worker.handle(new GherkinParserTask(contents)).then((feature) {
-          futures.add(feature.execute(worker, _buffer, stepsRunners, runTags));
-          c.complete();
-        });
+  return Future.forEach(featureFiles, (filePath) {
+    Completer c = new Completer();
+    new File(filePath).readAsLines().then((List<String> contents) {
+      return worker.handle(new GherkinParserTask(contents)).then((feature) {
+        futures.add(feature.execute(worker, _buffer, runTags));
+        c.complete();
       });
-      return c.future;
-    }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
-  });
+    });
+    return c.future;
+  }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
 
 }
-
 
 /**
  * Parses command line arguments.
  */
+
 ArgResults _parseArguments(args) {
   var argParser = new ArgParser();
-  //argParser.addFlag('junit', defaultsTo: true); // this is not used ?
-  argParser.addFlag('debug', defaultsTo: true);
+  argParser.addFlag('debug', defaultsTo: false);
   argParser.addOption("tags");
   return argParser.parse(args);
 }

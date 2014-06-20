@@ -8,6 +8,7 @@ class ScenarioExecutionTask implements Task {
   ScenarioExecutionTask(this.scenario, this.buffer);
 
   Future execute() {
+    LoggerFactory.config[".*"].debugEnabled = false;  // TODO key off options
     Completer c = new Completer();
     // We cannot have stepDefs as injected dependency, (object is closure),
     // so we re-seek them in this task.
@@ -34,9 +35,9 @@ class Feature {
 
   Feature(this.name);
 
-  Future execute(Worker worker, ResultBuffer buffer, Map<RegExp, Function> stepDefs, runTags) {
+  Future execute(Worker worker, ResultBuffer buffer, runTags) {
 
-    if (doesTagsMatch(tags, runTags)) {
+    if (_tagsMatch(tags, runTags)) {
 
       buffer.write("Feature: $name");
 
@@ -44,7 +45,7 @@ class Feature {
       var results = [];
       Future.forEach(scenarios, (Scenario scenario) {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
-        if (doesTagsMatch(scenario.tags, runTags)) {
+        if (_tagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
 
           scenario.background = background;
@@ -126,7 +127,7 @@ class Scenario {
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => STEPDEF_NOTFOUND);
+        var found = stepDefs.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => _STEPDEF_NOTFOUND);
 
         var match = found.firstMatch(step.verbiage);
         var params = [];
