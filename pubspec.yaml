@@ -6,8 +6,10 @@ homepage: https://github.com/dkornishev/dherkin
 dependencies:
   log4dart: ">=1.4.10 <1.5.0"
   args: ">=0.8.7 < 0.9.0"
+  # A version of worker that does not depend on dart:io
+  # Should closely match the current version of worker.
   worker:
-    git: https://github.com/Dreckr/Worker.git
+    git: https://github.com/Goutte/Worker.git
   #worker: ">=0.3.11 <0.4.0"
   ansicolor: ">=0.0.9 <0.1.0"
 dev_dependencies:
