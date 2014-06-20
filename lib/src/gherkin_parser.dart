@@ -14,7 +14,6 @@ class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg);
 }
 
-
 class GherkinParserTask implements Task {
 
   List<String> contents;
@@ -28,6 +27,21 @@ class GherkinParserTask implements Task {
    * which is a List of lines.
    */
   Future<Feature> execute() {
+    return new Future.value(new GherkinParser().parse(contents, filePath: filePath));
+  }
+
+}
+
+
+class GherkinParser {
+
+  /**
+   * Returns a fully populated Feature,
+   * from the Gherkin feature statements in [contents].
+   * If [contents] come from a File, you may provide a [filePath]
+   * that will be used as helper in the output.
+   */
+  Feature parse(List<String> contents, { filePath }) {
     LoggerFactory.config[".*"].debugEnabled = false; // TODO key off options
 
     Feature feature;
@@ -131,6 +145,6 @@ class GherkinParserTask implements Task {
 
     }
 
-    return new Future.value(feature);
+    return feature;
   }
 }
