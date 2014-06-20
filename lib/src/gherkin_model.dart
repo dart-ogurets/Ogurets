@@ -30,16 +30,18 @@ class Feature {
   Scenario background = _NOOP;
   List<Scenario> scenarios = [];
 
+  Location location;
+
   int okScenariosCount = 0;
   int koScenariosCount = 0;
 
-  Feature(this.name);
+  Feature(this.name, this.location);
 
   Future execute(Worker worker, ResultBuffer buffer, runTags) {
 
     if (_tagsMatch(tags, runTags)) {
 
-      buffer.write("Feature: $name");
+      buffer.write("Feature: $name $location");
 
       var completer = new Completer();
       var results = [];
@@ -70,10 +72,11 @@ class Feature {
         }
       }).whenComplete(() {
         Future.wait(results).whenComplete(() {
-          buffer.write("Scenarios passed: $okScenariosCount", color: 'green');
+          buffer.writeln("-------------------");
+          buffer.writeln("Scenarios passed: $okScenariosCount", color: 'green');
 
           if (koScenariosCount > 0) {
-            buffer.write("Scenarios failed: $koScenariosCount", color: 'red');
+            buffer.writeln("Scenarios failed: $koScenariosCount", color: 'red');
           }
 
           buffer.flush();
@@ -109,7 +112,9 @@ class Scenario {
 
   bool hasFailed = false;
 
-  Scenario(this.name);
+  Location location;
+
+  Scenario(this.name, this.location);
 
   void execute(ResultBuffer buffer, Map<RegExp, Function> stepDefs) {
     if (examples._table.isEmpty) {
@@ -123,7 +128,8 @@ class Scenario {
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
       var row = tableIter.current;
-      buffer.write("\n\tScenario: $name");
+      buffer.writeln("\n\tScenario: $name $location");
+
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
@@ -162,9 +168,11 @@ class Scenario {
           color = "red";
         } finally {
           if (step.pyString != null) {
-            buffer.write("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+            buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
           } else {
-            buffer.write("\t\t${step.verbiage}$extra", color: color);
+            buffer.write("\t\t${step.verbiage}", color: color);
+            buffer.write("\t${step.location}");
+            buffer.writeln(extra, color: color);
           }
         }
       }
@@ -184,8 +192,9 @@ class Step {
   String verbiage;
   String pyString;
   GherkinTable table = new GherkinTable();
+  Location location;
 
-  Step(this.verbiage);
+  Step(this.verbiage, this.location);
 
   String toString() {
     if (pyString != null) {
@@ -193,6 +202,17 @@ class Step {
     } else {
       return "$verbiage $table";
     }
+  }
+}
+
+class Location {
+  String srcFilePath;
+  int srcLineNumber;
+
+  Location(this.srcFilePath, this.srcLineNumber);
+
+  String toString() {
+    return " # $srcFilePath:$srcLineNumber";
   }
 }
 
@@ -215,12 +235,9 @@ class GherkinTable {
 
 class StepDef {
   final String verbiage;
-
   const StepDef(this.verbiage);
 }
 
-class StepDefUndefined implements Exception {
+class StepDefUndefined implements Exception {}
 
-}
-
-final _NOOP = new Scenario("NOOP");
+final _NOOP = new Scenario("NOOP", new Location("", -1));

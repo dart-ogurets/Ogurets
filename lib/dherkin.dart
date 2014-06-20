@@ -40,7 +40,7 @@ Future run(args) {
   return Future.forEach(featureFiles, (filePath) {
     Completer c = new Completer();
     new File(filePath).readAsLines().then((List<String> contents) {
-      return worker.handle(new GherkinParserTask(contents)).then((feature) {
+      return worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
         futures.add(feature.execute(worker, _buffer, runTags));
         c.complete();
       });

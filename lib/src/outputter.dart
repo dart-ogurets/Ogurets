@@ -2,11 +2,9 @@ part of dherkin_core;
 
 abstract class ResultBuffer {
   void write(message, {color: "white"});
-
+  void writeln(message, {color: "white"});
   void missingStepDef(steps, columnNames);
-
   void merge(ResultBuffer buffer);
-
   void flush();
 }
 
@@ -26,7 +24,11 @@ class ConsoleBuffer implements ResultBuffer {
     _missingStepDefs.add(step);
   }
 
-  void write(message, {color : "white"}) {
+  void write(message, {color: "white"}) {
+    _buffer.write("${colors[color]}$message${ANSI_ESC}0m");
+  }
+
+  void writeln(message, {color : "white"}) {
     _buffer.writeln("${colors[color]}$message${ANSI_ESC}0m");
   }
 
