@@ -10,7 +10,7 @@ RegExp stepPattern       = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseS
 RegExp pyStringPattern   = new RegExp(r'^\s*("""|```)$');
 
 
-class GherkinSyntaxError extends Exception {
+class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg) {}
 }
 

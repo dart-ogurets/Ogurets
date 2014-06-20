@@ -152,7 +152,7 @@ class Scenario {
         };
         try {
           stepDefs[found](ctx,params, row);
-        } on StepDefUndefined {
+        } on StepDefUndefined catch(e) {
           color = "yellow";
         } catch (e, s) {
           hasFailed = true;
