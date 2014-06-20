@@ -3,9 +3,9 @@ part of dherkin_core;
 class ScenarioExecutionTask implements Task {
 
   Scenario scenario;
-  ResultBuffer buffer;
+  ResultBuffer buffer = new ConsoleBuffer(); // TODO create appropriate type
 
-  ScenarioExecutionTask(this.scenario, this.buffer);
+  ScenarioExecutionTask(this.scenario);
 
   Future execute() {
     LoggerFactory.config[".*"].debugEnabled = false;  // TODO key off options
@@ -40,8 +40,8 @@ class Feature {
   Future execute(Worker worker, ResultBuffer buffer, runTags) {
 
     if (_tagsMatch(tags, runTags)) {
-
-      buffer.write("Feature: $name $location");
+      buffer.write("\nFeature: $name");
+      buffer.writeln("$location", color: 'gray');
 
       var completer = new Completer();
       var results = [];
@@ -52,7 +52,7 @@ class Feature {
 
           scenario.background = background;
 
-          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, buffer));
+          Future scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario));
 
           scenarioFuture.then((output) {
             buffer.merge(output[0]);
@@ -128,7 +128,8 @@ class Scenario {
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
       var row = tableIter.current;
-      buffer.writeln("\n\tScenario: $name $location");
+      buffer.write("\n\tScenario: $name");
+      buffer.writeln("$location", color: 'gray');
 
       var iter = steps.iterator;
       while (iter.moveNext()) {
@@ -171,7 +172,7 @@ class Scenario {
             buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
           } else {
             buffer.write("\t\t${step.verbiage}", color: color);
-            buffer.write("\t${step.location}");
+            buffer.write("\t${step.location}", color: 'gray');
             buffer.writeln(extra, color: color);
           }
         }
