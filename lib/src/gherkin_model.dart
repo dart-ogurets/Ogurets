@@ -11,7 +11,7 @@ class ScenarioExecutionTask implements Task {
     Completer c = new Completer();
     // We cannot have stepDefs as injected dependency, (object is closure),
     // so we re-seek them in this task.
-    findStepRunners().then((stepDefs){
+    findStepRunners().then((stepDefs) {
       scenario.execute(buffer, stepDefs);
       _log.debug("Done executing: ${scenario.name}");
       c.complete([buffer, scenario.hasFailed]);
@@ -34,7 +34,7 @@ class Feature {
 
   Feature(this.name);
 
-  Future execute(Worker worker, ResultBuffer buffer, Map<RegExp,Function> stepDefs, runTags) {
+  Future execute(Worker worker, ResultBuffer buffer, Map<RegExp, Function> stepDefs, runTags) {
 
     if (doesTagsMatch(tags, runTags)) {
 
@@ -54,13 +54,13 @@ class Feature {
           scenarioFuture.then((output) {
             buffer.merge(output[0]);
 
-            if(output[1]) {
+            if (output[1]) {
               okScenariosCount++;
             } else {
               koScenariosCount++;
             }
-          }).catchError((e,s){
-            _log.debug("ERROOOOOOOOOOOOOR $e \n $s");
+          }).catchError((e, s) {
+            _log.debug("ERROR $e \n $s");
           });
 
           results.add(scenarioFuture);
@@ -71,7 +71,7 @@ class Feature {
         Future.wait(results).whenComplete(() {
           buffer.write("Scenarios passed: $okScenariosCount", color: 'green');
 
-          if(koScenariosCount > 0) {
+          if (koScenariosCount > 0) {
             buffer.write("Scenarios failed: $koScenariosCount", color: 'red');
           }
 
@@ -101,7 +101,7 @@ class Scenario {
 
   List<String> tags;
 
-   Scenario background;
+  Scenario background;
 
   List<Step> steps = [];
   GherkinTable examples = new GherkinTable();
@@ -110,7 +110,7 @@ class Scenario {
 
   Scenario(this.name);
 
-  void execute(ResultBuffer buffer, Map<RegExp,Function> stepDefs) {
+  void execute(ResultBuffer buffer, Map<RegExp, Function> stepDefs) {
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
@@ -148,10 +148,10 @@ class Scenario {
         var extra = "";
 
         var ctx = {
-          "table": step.table
+            "table": step.table
         };
         try {
-          stepDefs[found](ctx,params, row);
+          stepDefs[found](ctx, params, row);
         } on StepDefUndefined catch(e) {
           color = "yellow";
         } catch (e, s) {
@@ -168,8 +168,6 @@ class Scenario {
         }
       }
     }
-
-//    return buffer;
   }
 
   void addStep(Step step) {
