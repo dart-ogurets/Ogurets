@@ -38,7 +38,7 @@ class Feature {
 
   Future execute(ResultBuffer buffer, Map<RegExp, Function> stepRunners,
                  { List<String> runTags, Worker worker }) {
-
+    if (runTags == null) runTags = [];
     if (_tagsMatch(tags, runTags)) {
       buffer.write("\nFeature: $name");
       buffer.writeln("$location", color: 'gray');
