@@ -50,9 +50,9 @@ Future run(args) {
           Future f = feature.execute(stepRunners, runTags: runTags, worker: worker, debug: options["debug"]);
           f.then((FeatureStatus featureStatus){
             if (featureStatus.failed) {
-              runStatus.failedFeatures.add(feature);
+              runStatus.failedFeatures.add(featureStatus);
             } else {
-              runStatus.passedFeatures.add(feature);
+              runStatus.passedFeatures.add(featureStatus);
             }
             _buffer.merge(featureStatus.buffer);
             _buffer.flush();

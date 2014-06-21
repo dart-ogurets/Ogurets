@@ -163,12 +163,14 @@ class Scenario {
           stepRunners[found](ctx, params, row);
         } catch (e, s) {
           _log.debug("Step failed: $step");
+          var failure = new StepFailure();
           if (e is Exception) {
-            stepStatus.error = e;
+            failure.error = e;
           } else {
-            stepStatus.error = new Exception(e.toString());
+            failure.error = new Exception(e.toString());
           }
-          stepStatus.trace = s.toString();
+          failure.trace = s.toString();
+          stepStatus.failure = failure;
           scenarioStatus.failedSteps.add(stepStatus);
         } finally {
           if (!stepStatus.failed) {
@@ -281,6 +283,11 @@ class StepsExecutionStatus extends BufferedStatus {
 /// Feedback from a run of one or more features
 class RunStatus extends StepsExecutionStatus {
 
+  /// Has the run [passed] ? (all features passed)
+  bool get passed => failedFeaturesCount == 0;
+  /// Has the run [failed] ? (any feature failed)
+  bool get failed => failedFeaturesCount > 0;
+
   /// Features. (could also add skipped features)
   int get passedFeaturesCount => passedFeatures.length;
   int get failedFeaturesCount => failedFeatures.length;
@@ -293,10 +300,7 @@ class RunStatus extends StepsExecutionStatus {
     return all;
   }
 
-  /// Has the run [passed] ? (all features passed)
-  bool get passed => failedFeaturesCount == 0;
-  /// Has the run [failed] ? (any feature failed)
-  bool get failed => failedFeaturesCount > 0;
+
 
   RunStatus() : super();
 }
@@ -325,7 +329,7 @@ class FeatureStatus extends StepsExecutionStatus {
   List<ScenarioStatus> failedScenarios = [];
   int get passedScenariosCount => passedScenarios.length;
   int get failedScenariosCount => failedScenarios.length;
-
+  /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
     for (ScenarioStatus s in scenarios) {
@@ -334,6 +338,17 @@ class FeatureStatus extends StepsExecutionStatus {
     return list;
   }
   int get undefinedStepsCount => undefinedSteps.length;
+  /// Failures
+  List<StepFailure> get failures {
+    List<StepFailure> _failures = new List();
+    for (ScenarioStatus scenario in scenarios) {
+      if (scenario.failed) {
+        _failures.addAll(scenario.failures);
+      }
+    }
+    return _failures;
+  }
+  String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
 
   FeatureStatus() : super();
 }
@@ -350,12 +365,28 @@ class ScenarioStatus extends StepsExecutionStatus {
   /// Has the [scenario] [failed] ? (any step failed)
   bool get failed => failedStepsCount > 0;
   /// Steps.
+  List<StepStatus> get steps {
+    List<ScenarioStatus> all = [];
+    all.addAll(passedSteps);
+    all.addAll(failedSteps);
+    return all;
+  }
   List<Step> passedSteps = [];
   List<Step> failedSteps = [];
   List<Step> undefinedSteps = [];
   int get passedStepsCount => passedSteps.length;
   int get failedStepsCount => failedSteps.length;
   int get undefinedStepsCount => undefinedSteps.length;
+
+  List<StepFailure> get failures {
+    List<StepFailure> _failures = new List();
+    for (StepStatus stepStatus in steps) {
+      if (stepStatus.failed) {
+        _failures.add(stepStatus.failure);
+      }
+    }
+    return _failures;
+  }
 
   ScenarioStatus() : super();
 }
@@ -366,19 +397,16 @@ class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
   Step step;
   /// Has the [step] [passed] ?
-  bool get passed => error == null;
+  bool get passed => failure == null;
   /// Has the [step] [failed] ?
-  bool get failed => error != null;
+  bool get failed => failure != null;
   /// Has the [step] [crashed] ?
-  bool get crashed => error != null && !(error is AssertionError);
+  bool get crashed => failure != null && !(failure is AssertionError);
   /// Was the [step] [defined] ?
   bool defined = true;
 
-  /// The [error] raised on failure.
-  Exception error;
-  /// The stack [trace] on failure.
-  String trace;
-  //StackTrace trace; // Illegal argument in isolate message : (object is a stacktrace)
+  /// A possible [failure].
+  StepFailure failure;
 
   StepStatus() : super();
 
@@ -390,7 +418,7 @@ class StepStatus extends BufferedStatus {
     }
     if (failed) {
       color = "red";
-      extra = "\n${error}\n${trace}";
+      extra = "\n${failure.error}\n${failure.trace}";
     }
     if (step.pyString != null) {
       buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
@@ -401,6 +429,13 @@ class StepStatus extends BufferedStatus {
     }
   }
 }
+
+class StepFailure {
+  Exception error;
+  String trace; // Note: StackTrace yields Illegal argument in isolate message.
+  // maybe Location, too ?
+}
+
 
 
 class Location {
