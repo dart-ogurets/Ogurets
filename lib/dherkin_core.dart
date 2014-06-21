@@ -7,6 +7,7 @@ import "package:log4dart/log4dart.dart";
 import "package:worker/worker.dart";
 import "package:ansicolor/ansicolor.dart";
 
+part 'src/task.dart';
 part "src/gherkin_model.dart";
 part "src/gherkin_parser.dart";
 part "src/outputter.dart";
