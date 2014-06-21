@@ -231,10 +231,11 @@ class Step {
 
   String _generateFunctionName() {
     var chunks = verbiage.replaceAll(new RegExp("\""), "").replaceAll(new RegExp("[<>]"), r"$").split(new RegExp(" "));
-    var end = chunks.length > 3 ? 4 : chunks.length;
+    var end = chunks.length > 4 ? 5 : chunks.length;
     return chunks.sublist(0, end).join("_").toLowerCase();
   }
 }
+
 
 class StepDef {
   final String verbiage;
@@ -242,8 +243,67 @@ class StepDef {
 }
 
 
+class BufferedStatus {
+  /// Text buffer for the runner to write in.
+  ResultBuffer buffer;
+
+  BufferedStatus() {
+    buffer = new ColoredFragmentsBuffer();
+  }
+}
+
+/// A run/feature/scenario status of multiple steps, maybe with undefined ones.
+class StepsExecutionStatus extends BufferedStatus {
+  /// Undefined steps.
+  List<StepStatus> get undefinedSteps;
+  /// A [boilerplate] (in Dart) of [undefinedSteps].
+  String get boilerplate => _generateBoilerplate();
+
+  String _generateBoilerplate() {
+    String bp = '';
+    List<Step> uniqueSteps = [];
+    for (StepStatus stepStatus in this.undefinedSteps) {
+      if (null == uniqueSteps.firstWhere((Step s) => s.verbiage == stepStatus.step.verbiage, orElse: ()=>null)) {
+        uniqueSteps.add(stepStatus.step);
+      }
+    }
+    for (Step step in uniqueSteps) {
+      bp += step.boilerplate;
+    }
+
+    return bp;
+  }
+
+  StepsExecutionStatus()  : super();
+}
+
+
+/// Feedback from a run of one or more features
+class RunStatus extends StepsExecutionStatus {
+
+  /// Features. (could also add skipped features)
+  int get passedFeaturesCount => passedFeatures.length;
+  int get failedFeaturesCount => failedFeatures.length;
+  List<FeatureStatus> passedFeatures = [];
+  List<FeatureStatus> failedFeatures = [];
+  List<FeatureStatus> get features {
+    List<FeatureStatus> all = [];
+    all.addAll(passedFeatures);
+    all.addAll(failedFeatures);
+    return all;
+  }
+
+  /// Has the run [passed] ? (all features passed)
+  bool get passed => failedFeaturesCount == 0;
+  /// Has the run [failed] ? (any feature failed)
+  bool get failed => failedFeaturesCount > 0;
+
+  RunStatus() : super();
+}
+
+
 /// Feedback from one feature's execution.
-class FeatureStatus {
+class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
   Feature feature;
   /// Was the whole [feature] [skipped] because of mismatching tags ?
@@ -275,37 +335,12 @@ class FeatureStatus {
   }
   int get undefinedStepsCount => undefinedSteps.length;
 
-  String get boilerplate => _generateBoilerplate();
-
-  /// Text buffer for the feature runner to write in.
-  /// Should contain all lines added by the feature and its scenarios.
-  ResultBuffer buffer;
-
-  FeatureStatus() {
-    buffer = new ColoredFragmentsBuffer();
-  }
-
-  /// Good candidate for mixin UndefinedStepsBoilerplateGenerator
-  /// because this is an exact copy of ScenarioStatus._generateBoilerplate
-  String _generateBoilerplate() {
-    String bp = '';
-    List<Step> uniqueSteps = [];
-    for (StepStatus stepStatus in undefinedSteps) {
-      if (null == uniqueSteps.firstWhere((Step s) => s.verbiage == stepStatus.step.verbiage, orElse: ()=>null)) {
-        uniqueSteps.add(stepStatus.step);
-      }
-    }
-    for (Step step in uniqueSteps) {
-      bp += step.boilerplate;
-    }
-
-    return bp;
-  }
+  FeatureStatus() : super();
 }
 
 
 /// Feedback from one scenario's execution.
-class ScenarioStatus {
+class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   Scenario scenario;
   /// Was the [scenario] [skipped] because of mismatching tags ?
@@ -322,37 +357,12 @@ class ScenarioStatus {
   int get failedStepsCount => failedSteps.length;
   int get undefinedStepsCount => undefinedSteps.length;
 
-  String get boilerplate => _generateBoilerplate();
-
-  /// Text buffer for the scenario runner to write in.
-  /// Should contain all lines added by steps during the scenario's execution.
-  ResultBuffer buffer;
-
-  ScenarioStatus() {
-    buffer = new ColoredFragmentsBuffer();
-  }
-
-  /// Good candidate for mixin UndefinedStepsBoilerplateGenerator
-  /// because this is an exact copy of FeatureStatus._generateBoilerplate
-  String _generateBoilerplate() {
-    String bp = '';
-    List<Step> uniqueSteps = [];
-    for (StepStatus stepStatus in undefinedSteps) {
-      if (null == uniqueSteps.firstWhere((Step s) => s.verbiage == stepStatus.step.verbiage, orElse: ()=>null)) {
-        uniqueSteps.add(stepStatus.step);
-      }
-    }
-    for (Step step in uniqueSteps) {
-      bp += step.boilerplate;
-    }
-
-    return bp;
-  }
+  ScenarioStatus() : super();
 }
 
 
 /// Feedback from one step's execution.
-class StepStatus {
+class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
   Step step;
   /// Has the [step] [passed] ?
@@ -370,13 +380,7 @@ class StepStatus {
   String trace;
   //StackTrace trace; // Illegal argument in isolate message : (object is a stacktrace)
 
-  /// Text buffer for the step runner to write in.
-  /// Should contain all lines added by the step's execution, and only them.
-  ResultBuffer buffer;
-
-  StepStatus() {
-    buffer = new ColoredFragmentsBuffer();
-  }
+  StepStatus() : super();
 
   void writeIntoBuffer() {
     var color = "green";
