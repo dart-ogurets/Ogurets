@@ -42,12 +42,32 @@ Future run(args) {
       Completer c = new Completer();
       new File(filePath).readAsLines().then((List<String> contents) {
         return worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
-          futures.add(feature.execute(_buffer, stepRunners, runTags: runTags, worker: worker));
-          c.complete();
+          Future f = feature.execute(stepRunners, runTags: runTags, worker: worker, debug: options["debug"]);
+          f.then((FeatureStatus featureStatus){
+            _buffer.merge(featureStatus.buffer);
+            _buffer.flush();
+            c.complete();
+          });
+          futures.add(f);
         });
       });
       return c.future;
-    }).whenComplete(() => Future.wait(futures).whenComplete(() => worker.close()));
+    }).whenComplete(() => Future.wait(futures).whenComplete((){
+      // tally the missing stepdefs
+      List missingStepDefs = [];
+      for (var f in futures) {
+        f.then((FeatureStatus featureStatus){
+          missingStepDefs.addAll(featureStatus.undefinedSteps);
+        });
+      }
+      Future.wait(futures).whenComplete((){
+        for (StepStatus s in missingStepDefs) {
+          _buffer.write(s.step.boilerplate, color: "yellow");
+        }
+        _buffer.flush();
+      });
+      worker.close();
+    }));
   });
 
 }

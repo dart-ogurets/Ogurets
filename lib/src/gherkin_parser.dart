@@ -14,24 +14,6 @@ class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg);
 }
 
-class GherkinParserTask implements Task {
-
-  List<String> contents;
-  String filePath;
-
-  GherkinParserTask(List<String> this.contents, this.filePath);
-
-  /**
-   * Returns a Future to a fully populated Feature,
-   * from the Gherkin feature statements in [contents],
-   * which is a List of lines.
-   */
-  Future<Feature> execute() {
-    return new Future.value(new GherkinParser().parse(contents, filePath: filePath));
-  }
-
-}
-
 
 class GherkinParser {
 
