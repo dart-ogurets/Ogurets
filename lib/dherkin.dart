@@ -53,17 +53,9 @@ Future run(args) {
       });
       return c.future;
     }).whenComplete(() => Future.wait(futures).whenComplete((){
-      // tally the missing stepdefs
-      List missingStepDefs = [];
-      for (var f in futures) {
-        f.then((FeatureStatus featureStatus){
-          missingStepDefs.addAll(featureStatus.undefinedSteps);
-        });
-      }
-      Future.wait(futures).whenComplete((){
-        for (StepStatus s in missingStepDefs) {
-          _buffer.write(s.step.boilerplate, color: "yellow");
-        }
+      // tally the missing stepdefs boilerplate
+      new UndefinedStepsBoilerplate(futures).toFutureString().then((String boilerplate){
+        _buffer.write(boilerplate, color: "yellow");
         _buffer.flush();
       });
       worker.close();
