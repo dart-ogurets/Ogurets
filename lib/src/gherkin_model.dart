@@ -145,22 +145,21 @@ class Scenario {
         // Also, @Given @When @Then decorators ?
 
         // Parameters from Regex
-        // Todo: num.parse() when it makes sense ?
         var params = [];
         for (var i = 1; i <= match.groupCount; i++) {
-          params.add(match[i]);
+          params.add(step.unserialize(match[i]));
         }
         // PyString
         if (step.pyString != null) {
           params.add(step.pyString);
         }
         // Ctx
-        // About ctx and params... merge them ?
+        // About ctx and params... let's merge them ?
         var ctx = {
             "table": step.table
         };
 
-        try { // to run the step
+        try { // to actually run the step
           stepRunners[found](ctx, params, row);
         } catch (e, s) {
           _log.debug("Step failed: $step");
@@ -172,6 +171,9 @@ class Scenario {
           stepStatus.trace = s.toString();
           scenarioStatus.failedSteps.add(stepStatus);
         } finally {
+          if (!stepStatus.failed) {
+            scenarioStatus.passedSteps.add(stepStatus);
+          }
           stepStatus.writeIntoBuffer();
           scenarioStatus.buffer.merge(stepStatus.buffer);
         }
@@ -197,6 +199,8 @@ class Step {
   GherkinTable table = new GherkinTable();
   Location location;
 
+  String get boilerplate => _generateBoilerplate();
+
   Step(this.verbiage, this.location);
 
   String toString() {
@@ -207,7 +211,19 @@ class Step {
     }
   }
 
-  String get boilerplate {
+  dynamic unserialize(String parameter) {
+    var unserialized = parameter;
+    // Int ?
+    try { unserialized = int.parse(parameter); }
+    on FormatException catch (_) {}
+    // Num ?
+    try { unserialized = num.parse(parameter); }
+    on FormatException catch (_) {}
+
+    return unserialized;
+  }
+
+  String _generateBoilerplate() {
     var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
     var columnsVerbiage = table.length > 0 ? ", { ${table.names.join(", ")} }" : "";
     return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}(ctx, params$columnsVerbiage) {\n  // todo \n}\n");
