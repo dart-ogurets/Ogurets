@@ -1,13 +1,14 @@
 part of dherkin_core;
 
 RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
-RegExp featurePattern = new RegExp(r"Feature\s*:\s*(.+)");
-RegExp scenarioPattern = new RegExp(r"Scenario\s*(?:Outline)?:\s*(.+)");
-RegExp backgroundPattern = new RegExp(r"Background\s*:\s*$");
-RegExp examplesPattern = new RegExp(r"Examples\s*:\s*");
+RegExp featurePattern = new RegExp(r"^\s*Feature\s*:\s*(.+)");
+RegExp scenarioPattern = new RegExp(r"^\s*Scenario\s*(?:Outline)?:\s*(.+)\s*$");
+RegExp backgroundPattern = new RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
+RegExp commentPattern = new RegExp(r"^\s*#");
+RegExp examplesPattern = new RegExp(r"^\s*Examples\s*:\s*");
 RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
-RegExp stepPattern = new RegExp(r"(given|when|then|and|but)\s+(.+)", caseSensitive:false);
-RegExp pyStringPattern = new RegExp(r'^\s*("""|```)$');
+RegExp stepPattern = new RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive:false);
+RegExp pyStringPattern = new RegExp(r'^\s*("""|```)\s*$');
 
 
 class GherkinSyntaxError extends StateError {
@@ -39,6 +40,11 @@ class GherkinParser {
     while (lineIter.moveNext()) {
       var line = lineIter.current;
       lineCounter++;
+
+      // Comments
+      if (commentPattern.hasMatch(line)) {
+        continue;
+      }
 
       //  Tags
       var iter = tagsPattern.allMatches(line).iterator;
@@ -73,8 +79,8 @@ class GherkinParser {
       iter = backgroundPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.debug("Background");
-        currentScenario = new Scenario("Background", new Location(filePath, lineCounter));
+        _log.debug("Background: ${match.group(1)}");
+        currentScenario = new Background(match.group(1), new Location(filePath, lineCounter));
         feature.background = currentScenario;
       }
 
@@ -120,7 +126,6 @@ class GherkinParser {
         var match = iter.current;
         row.add(match[1]);
       }
-
       if (!row.isEmpty) {
         currentTable.addRow(row);
       }

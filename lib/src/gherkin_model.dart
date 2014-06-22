@@ -89,7 +89,16 @@ class Feature {
 }
 
 
+class Background extends Scenario {
+  static String gherkinKeyword = "Background";
+
+  Background(name, location) : super (name, location);
+}
+
+
 class Scenario {
+  static String gherkinKeyword = "Scenario";
+
   String name;
 
   List<String> tags;
@@ -103,96 +112,28 @@ class Scenario {
 
   Scenario(this.name, this.location);
 
+  /// Will execute the backgroud and the scenario.
+  /// If this scenario has an example table, it will execute all the generated scenarios,
+  /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners) {
     Completer allDone = new Completer();
     var scenarioStatus = new ScenarioStatus()
       ..scenario = this;
 
+    List<Future<ScenarioStatus>> subScenarioFutures = [];
+
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
 
-    Future<ScenarioStatus> backgroundStatusFuture = new Future.value();
-    if (background != null) {
-      backgroundStatusFuture = background.execute(stepRunners);
+    var tableIter = examples._table.iterator;
+    while (tableIter.moveNext()) {
+      var exampleRow = tableIter.current;
+      Future subScenarioFuture = _executeSubScenario(scenarioStatus, exampleRow, stepRunners);
+      subScenarioFutures.add(subScenarioFuture);
     }
 
-    backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
-
-      if (backgroundStatus != null) {
-        scenarioStatus.mergeBackground(backgroundStatus);
-      }
-
-      var tableIter = examples._table.iterator;
-      while (tableIter.moveNext()) {
-        var exampleRow = tableIter.current;
-        scenarioStatus.buffer.write("\n\tScenario: $name");
-        scenarioStatus.buffer.writeln("$location", color: 'gray');
-
-        var iter = steps.iterator;
-        while (iter.moveNext()) {
-          var step = iter.current;
-          var stepStatus = new StepStatus()
-            ..step = step;
-
-          var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
-
-          if (found == null) {
-            stepStatus.defined = false;
-            stepStatus.writeIntoBuffer();
-            scenarioStatus.buffer.merge(stepStatus.buffer);
-            scenarioStatus.undefinedSteps.add(stepStatus);
-            continue;
-          }
-
-          var match = found.firstMatch(step.verbiage);
-
-          // (unrelated) Notes :
-          // The FeatureContext class approach for stepdefs makes sense :
-          // - you implement methods and wrap them with annotations.
-          // - you use properties as you want as context shared by steps.
-          // Also, @Given @When @Then decorators ?
-
-          // Parameters from Regex
-          var params = [];
-          for (var i = 1; i <= match.groupCount; i++) {
-            params.add(step.unserialize(match[i]));
-          }
-          // PyString
-          if (step.pyString != null) {
-            params.add(step.pyString);
-          }
-
-          if(!step.table.empty) {
-            exampleRow["table"] = step.table;
-          } else {
-            exampleRow.remove("table");
-          }
-
-          try { // to actually run the step
-            stepRunners[found](params, exampleRow);
-          } catch (e, s) {
-            _log.debug("Step failed: $step");
-            var failure = new StepFailure();
-            if (e is Exception) {
-              failure.error = e;
-            } else {
-              failure.error = new Exception(e.toString());
-            }
-            failure.trace = s.toString();
-            stepStatus.failure = failure;
-            scenarioStatus.failedSteps.add(stepStatus);
-          } finally {
-            if (!stepStatus.failed) {
-              scenarioStatus.passedSteps.add(stepStatus);
-            }
-            stepStatus.writeIntoBuffer();
-            scenarioStatus.buffer.merge(stepStatus.buffer);
-          }
-
-        }
-      }
-
+    Future.wait(subScenarioFutures).whenComplete((){
       allDone.complete(scenarioStatus);
     });
 
@@ -205,6 +146,108 @@ class Scenario {
 
   String toString() {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
+  }
+
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners) {
+    Completer allDone = new Completer();
+
+//    new Future((){
+
+//    print("SCENARIO ${scenarioStatus.scenario}");
+
+    Future<ScenarioStatus> backgroundStatusFuture;
+    if (background != null) {
+//      new Future((){
+//      print('Executing background');
+      backgroundStatusFuture = background.execute(stepRunners);
+//      });
+    } else {
+//      print('No background');
+      backgroundStatusFuture = new Future(()=>null);
+    }
+
+    backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
+
+//      print('BACKGROUND THEN $backgroundStatus');
+
+
+      if (backgroundStatus != null) {
+        // fixme: if first, don't merge buffer
+        scenarioStatus.mergeBackground(backgroundStatus);
+      }
+
+      scenarioStatus.buffer.write("\n\t${gherkinKeyword}: $name");
+      scenarioStatus.buffer.writeln("$location", color: 'gray');
+
+      var iter = steps.iterator;
+      while (iter.moveNext()) {
+        var step = iter.current;
+        var stepStatus = new StepStatus()
+          ..step = step;
+
+        var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
+
+        if (found == null) {
+          stepStatus.defined = false;
+          stepStatus.writeIntoBuffer();
+          scenarioStatus.buffer.merge(stepStatus.buffer);
+          scenarioStatus.undefinedSteps.add(stepStatus);
+          continue;
+        }
+
+        var match = found.firstMatch(step.verbiage);
+
+        // (unrelated) Notes :
+        // The FeatureContext class approach for stepdefs makes sense :
+        // - you implement methods and wrap them with annotations.
+        // - you use properties as you want as context shared by steps.
+        // Also, @Given @When @Then decorators ?
+
+        // Parameters from Regex
+        var params = [];
+        for (var i = 1; i <= match.groupCount; i++) {
+          params.add(step.unserialize(match[i]));
+        }
+        // PyString
+        if (step.pyString != null) {
+          params.add(step.pyString);
+        }
+
+        if(!step.table.empty) {
+          exampleRow["table"] = step.table;
+        } else {
+          exampleRow.remove("table");
+        }
+
+        try { // to actually run the step
+          stepRunners[found](params, exampleRow);
+        } catch (e, s) {
+          _log.debug("Step failed: $step");
+          var failure = new StepFailure();
+          if (e is Exception) {
+            failure.error = e;
+          } else {
+            failure.error = new Exception(e.toString());
+          }
+          failure.trace = s.toString();
+          stepStatus.failure = failure;
+          scenarioStatus.failedSteps.add(stepStatus);
+        } finally {
+          if (!stepStatus.failed) {
+            scenarioStatus.passedSteps.add(stepStatus);
+          }
+          stepStatus.writeIntoBuffer();
+          scenarioStatus.buffer.merge(stepStatus.buffer);
+        }
+
+      }
+
+      allDone.complete(scenarioStatus);
+    });
+
+//    });
+
+    return allDone.future;
   }
 }
 

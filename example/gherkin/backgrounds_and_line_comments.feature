@@ -1,4 +1,6 @@
-Feature: Supporting Backgrounds
+Feature: Supporting Backgrounds and Comments
+
+  # Note: inlined comments are not supported in gherkin.
 
   # Backgrounds are written to buffer only once,
   # but executed once per scenario (outline example).
@@ -22,3 +24,7 @@ Feature: Supporting Backgrounds
     |col1|col2 |
     |imus|nocte|
     |igni|genus|
+
+# Scenario: Commented Scenario
+#   Given this is a commented scenario
+#    Then this step should never run
