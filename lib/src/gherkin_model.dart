@@ -104,84 +104,99 @@ class Scenario {
   Scenario(this.name, this.location);
 
   Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners) {
-    if (examples._table.isEmpty) {
-      examples._table.add({});
-    }
-    if (background != null) {
-      background.execute(stepRunners);
-    }
-
+    Completer allDone = new Completer();
     var scenarioStatus = new ScenarioStatus()
       ..scenario = this;
 
-    var tableIter = examples._table.iterator;
-    while (tableIter.moveNext()) {
-      var exampleRow = tableIter.current;
-      scenarioStatus.buffer.write("\n\tScenario: $name");
-      scenarioStatus.buffer.writeln("$location", color: 'gray');
-
-      var iter = steps.iterator;
-      while (iter.moveNext()) {
-        var step = iter.current;
-        var stepStatus = new StepStatus()
-          ..step = step;
-
-        var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
-
-        if (found == null) {
-          stepStatus.defined = false;
-          stepStatus.writeIntoBuffer();
-          scenarioStatus.buffer.merge(stepStatus.buffer);
-          scenarioStatus.undefinedSteps.add(stepStatus);
-          continue;
-        }
-
-        var match = found.firstMatch(step.verbiage);
-
-        // (unrelated) Notes :
-        // The FeatureContext class approach for stepdefs makes sense :
-        // - you implement methods and wrap them with annotations.
-        // - you use properties as you want as context shared by steps.
-        // Also, @Given @When @Then decorators ?
-
-        // Parameters from Regex
-        // Todo: num.parse() when it makes sense ?
-        var params = [];
-        for (var i = 1; i <= match.groupCount; i++) {
-          params.add(match[i]);
-        }
-        // PyString
-        if (step.pyString != null) {
-          params.add(step.pyString);
-        }
-
-        if(!step.table.empty) {
-          exampleRow["table"] = step.table;
-        } else {
-          exampleRow.remove("table");
-        }
-
-        try { // to run the step
-          _log.info("Executing step ${step.verbiage} ${step.table} $exampleRow");
-          stepRunners[found](params, exampleRow);
-        } catch (e, s) {
-          _log.debug("Step failed: $step");
-          if (e is Exception) {
-            stepStatus.error = e;
-          } else {
-            stepStatus.error = new Exception(e.toString());
-          }
-          stepStatus.trace = s.toString();
-          scenarioStatus.failedSteps.add(stepStatus);
-        } finally {
-          stepStatus.writeIntoBuffer();
-          scenarioStatus.buffer.merge(stepStatus.buffer);
-        }
-
-      }
+    if (examples._table.isEmpty) {
+      examples._table.add({});
     }
 
-    return new Future.value(scenarioStatus);
+    Future<ScenarioStatus> backgroundStatusFuture = new Future.value();
+    if (background != null) {
+      backgroundStatusFuture = background.execute(stepRunners);
+    }
+
+    backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
+
+      if (backgroundStatus != null) {
+        scenarioStatus.mergeBackground(backgroundStatus);
+      }
+
+      var tableIter = examples._table.iterator;
+      while (tableIter.moveNext()) {
+        var exampleRow = tableIter.current;
+        scenarioStatus.buffer.write("\n\tScenario: $name");
+        scenarioStatus.buffer.writeln("$location", color: 'gray');
+
+        var iter = steps.iterator;
+        while (iter.moveNext()) {
+          var step = iter.current;
+          var stepStatus = new StepStatus()
+            ..step = step;
+
+          var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
+
+          if (found == null) {
+            stepStatus.defined = false;
+            stepStatus.writeIntoBuffer();
+            scenarioStatus.buffer.merge(stepStatus.buffer);
+            scenarioStatus.undefinedSteps.add(stepStatus);
+            continue;
+          }
+
+          var match = found.firstMatch(step.verbiage);
+
+          // (unrelated) Notes :
+          // The FeatureContext class approach for stepdefs makes sense :
+          // - you implement methods and wrap them with annotations.
+          // - you use properties as you want as context shared by steps.
+          // Also, @Given @When @Then decorators ?
+
+          // Parameters from Regex
+          var params = [];
+          for (var i = 1; i <= match.groupCount; i++) {
+            params.add(step.unserialize(match[i]));
+          }
+          // PyString
+          if (step.pyString != null) {
+            params.add(step.pyString);
+          }
+
+          if(!step.table.empty) {
+            exampleRow["table"] = step.table;
+          } else {
+            exampleRow.remove("table");
+          }
+
+          try { // to actually run the step
+            stepRunners[found](params, exampleRow);
+          } catch (e, s) {
+            _log.debug("Step failed: $step");
+            var failure = new StepFailure();
+            if (e is Exception) {
+              failure.error = e;
+            } else {
+              failure.error = new Exception(e.toString());
+            }
+            failure.trace = s.toString();
+            stepStatus.failure = failure;
+            scenarioStatus.failedSteps.add(stepStatus);
+          } finally {
+            if (!stepStatus.failed) {
+              scenarioStatus.passedSteps.add(stepStatus);
+            }
+            stepStatus.writeIntoBuffer();
+            scenarioStatus.buffer.merge(stepStatus.buffer);
+          }
+
+        }
+      }
+
+      allDone.complete(scenarioStatus);
+    });
+
+    return allDone.future;
   }
 
   void addStep(Step step) {
@@ -199,6 +214,8 @@ class Step {
   GherkinTable table = new GherkinTable();
   Location location;
 
+  String get boilerplate => _generateBoilerplate();
+
   Step(this.verbiage, this.location);
 
   String toString() {
@@ -209,7 +226,19 @@ class Step {
     }
   }
 
-  String get boilerplate {
+  dynamic unserialize(String parameter) {
+    var unserialized = parameter;
+    // Int ?
+    try { unserialized = int.parse(parameter); }
+    on FormatException catch (_) {}
+    // Num ?
+    try { unserialized = num.parse(parameter); }
+    on FormatException catch (_) {}
+
+    return unserialized;
+  }
+
+  String _generateBoilerplate() {
     var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
     var columnsVerbiage = table.length > 0 ? ", { ${table.names.join(", ")} }" : "";
     return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}(params$columnsVerbiage) {\n  // todo \n}\n");
@@ -217,10 +246,11 @@ class Step {
 
   String _generateFunctionName() {
     var chunks = verbiage.replaceAll(new RegExp("\""), "").replaceAll(new RegExp("[<>]"), r"$").split(new RegExp(" "));
-    var end = chunks.length > 3 ? 4 : chunks.length;
+    var end = chunks.length > 4 ? 5 : chunks.length;
     return chunks.sublist(0, end).join("_").toLowerCase();
   }
 }
+
 
 class StepDef {
   final String verbiage;
@@ -228,47 +258,121 @@ class StepDef {
 }
 
 
+class BufferedStatus {
+  /// Text buffer for the runner to write in.
+  ResultBuffer buffer;
+
+  BufferedStatus() {
+    buffer = new ColoredFragmentsBuffer();
+  }
+}
+
+/// A run/feature/scenario status of multiple steps, maybe with undefined ones.
+class StepsExecutionStatus extends BufferedStatus {
+  /// Undefined steps.
+  List<StepStatus> get undefinedSteps;
+  /// A [boilerplate] (in Dart) of [undefinedSteps].
+  String get boilerplate => _generateBoilerplate();
+
+  String _generateBoilerplate() {
+    String bp = '';
+    List<Step> uniqueSteps = [];
+    for (StepStatus stepStatus in this.undefinedSteps) {
+      if (null == uniqueSteps.firstWhere((Step s) => s.verbiage == stepStatus.step.verbiage, orElse: ()=>null)) {
+        uniqueSteps.add(stepStatus.step);
+      }
+    }
+    for (Step step in uniqueSteps) {
+      bp += step.boilerplate;
+    }
+
+    return bp;
+  }
+
+  StepsExecutionStatus()  : super();
+}
+
+
+/// Feedback from a run of one or more features
+class RunStatus extends StepsExecutionStatus {
+
+  /// Has the run [passed] ? (all features passed)
+  bool get passed => failedFeaturesCount == 0;
+  /// Has the run [failed] ? (any feature failed)
+  bool get failed => failedFeaturesCount > 0;
+
+  /// Features. (could also add skipped features)
+  int get passedFeaturesCount => passedFeatures.length;
+  int get failedFeaturesCount => failedFeatures.length;
+  List<FeatureStatus> passedFeatures = [];
+  List<FeatureStatus> failedFeatures = [];
+  List<FeatureStatus> get features {
+    List<FeatureStatus> all = [];
+    all.addAll(passedFeatures);
+    all.addAll(failedFeatures);
+    return all;
+  }
+
+
+
+  RunStatus() : super();
+}
+
+
 /// Feedback from one feature's execution.
-class FeatureStatus {
+class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
   Feature feature;
-  /// Was this [feature] [skipped] because of mismatching tags ?
+  /// Was the whole [feature] [skipped] because of mismatching tags ?
+  /// It does not care about internal scenario skipping.
+  /// idea: if all scenarios are individually skipped, mark feature as skipped ?
   bool skipped = false;
   /// Has the [feature] [passed] ? (all scenarios passed)
   bool get passed => failedScenariosCount == 0;
   /// Has the [feature] [failed] ? (any scenario failed)
   bool get failed => failedScenariosCount > 0;
-  /// Scenarios. (could also add zapped scenarios)
+  /// Scenarios. (could also add skipped scenarios)
+  List<ScenarioStatus> get scenarios {
+    List<ScenarioStatus> all = [];
+    all.addAll(passedScenarios);
+    all.addAll(failedScenarios);
+    return all;
+  }
   List<ScenarioStatus> passedScenarios = [];
   List<ScenarioStatus> failedScenarios = [];
   int get passedScenariosCount => passedScenarios.length;
   int get failedScenariosCount => failedScenarios.length;
-
+  /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
-    for (ScenarioStatus s in passedScenarios) {
-      list.addAll(s.undefinedSteps);
-    }
-    for (ScenarioStatus s in failedScenarios) {
+    for (ScenarioStatus s in scenarios) {
       list.addAll(s.undefinedSteps);
     }
     return list;
   }
-
-  /// Text buffer for the feature runner to write in.
-  /// Should contain all lines added by the feature and its scenarios.
-  ResultBuffer buffer;
-
-  FeatureStatus() {
-    buffer = new ColoredFragmentsBuffer();
+  int get undefinedStepsCount => undefinedSteps.length;
+  /// Failures
+  List<StepFailure> get failures {
+    List<StepFailure> _failures = new List();
+    for (ScenarioStatus scenario in scenarios) {
+      if (scenario.failed) {
+        _failures.addAll(scenario.failures);
+      }
+    }
+    return _failures;
   }
+  String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+
+  FeatureStatus() : super();
 }
 
 
 /// Feedback from one scenario's execution.
-class ScenarioStatus {
+class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   Scenario scenario;
+  /// An optional [background] that enriched this status information.
+  Scenario background;
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
   /// Has the [scenario] [passed] ? (all steps passed)
@@ -276,6 +380,12 @@ class ScenarioStatus {
   /// Has the [scenario] [failed] ? (any step failed)
   bool get failed => failedStepsCount > 0;
   /// Steps.
+  List<StepStatus> get steps {
+    List<ScenarioStatus> all = [];
+    all.addAll(passedSteps);
+    all.addAll(failedSteps);
+    return all;
+  }
   List<Step> passedSteps = [];
   List<Step> failedSteps = [];
   List<Step> undefinedSteps = [];
@@ -283,42 +393,45 @@ class ScenarioStatus {
   int get failedStepsCount => failedSteps.length;
   int get undefinedStepsCount => undefinedSteps.length;
 
-  /// Text buffer for the scenario runner to write in.
-  /// Should contain all lines added by steps during the scenario's execution.
-  ResultBuffer buffer;
+  List<StepFailure> get failures {
+    List<StepFailure> _failures = new List();
+    for (StepStatus stepStatus in steps) {
+      if (stepStatus.failed) {
+        _failures.add(stepStatus.failure);
+      }
+    }
+    return _failures;
+  }
 
-  ScenarioStatus() {
-    buffer = new ColoredFragmentsBuffer();
+  ScenarioStatus() : super();
+
+  void mergeBackground(ScenarioStatus other) {
+    background = other.scenario;
+    passedSteps.addAll(other.passedSteps);
+    failedSteps.addAll(other.failedSteps);
+    undefinedSteps.addAll(other.undefinedSteps);
+    buffer.merge(other.buffer);
   }
 }
 
 
 /// Feedback from one step's execution.
-class StepStatus {
+class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
   Step step;
   /// Has the [step] [passed] ?
-  bool get passed => error == null;
+  bool get passed => failure == null;
   /// Has the [step] [failed] ?
-  bool get failed => error != null;
+  bool get failed => failure != null;
   /// Has the [step] [crashed] ?
-  bool get crashed => error != null && !(error is AssertionError);
+  bool get crashed => failure != null && !(failure is AssertionError);
   /// Was the [step] [defined] ?
   bool defined = true;
 
-  /// The [error] raised on failure.
-  Exception error;
-  /// The stack [trace] on failure.
-  String trace;
-  //StackTrace trace; // Illegal argument in isolate message : (object is a stacktrace)
+  /// A possible [failure].
+  StepFailure failure;
 
-  /// Text buffer for the step runner to write in.
-  /// Should contain all lines added by the step's execution, and only them.
-  ResultBuffer buffer;
-
-  StepStatus() {
-    buffer = new ColoredFragmentsBuffer();
-  }
+  StepStatus() : super();
 
   void writeIntoBuffer() {
     var color = "green";
@@ -328,7 +441,7 @@ class StepStatus {
     }
     if (failed) {
       color = "red";
-      extra = "\n${error}\n${trace}";
+      extra = "\n${failure.error}\n${failure.trace}";
     }
     if (step.pyString != null) {
       buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
@@ -339,6 +452,13 @@ class StepStatus {
     }
   }
 }
+
+class StepFailure {
+  Exception error;
+  String trace; // Note: StackTrace yields Illegal argument in isolate message.
+  // maybe Location, too ?
+}
+
 
 
 class Location {
