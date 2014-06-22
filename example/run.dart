@@ -76,29 +76,23 @@ the_phase_of_the(arg1, arg2, arg3) {
 
 /// PyStrings ------------------------------------------------------------------
 
-List stepParameters;
+String actualPyString;
 String expectedPyString = """
 line 1
 line 2
 """;
 
 @StepDef("I have the following PyString:")
-i_have_the_following_pystring(params) {
-  stepParameters = params;
+i_have_the_following_pystring(pyString) {
+  actualPyString = pyString;
 }
 
 @StepDef("the above Step should have the PyString as last parameter.")
-the_above_stepdef_should_have_the_pystring(params) {
-  // maybe we could use the matchers/unittest package ? Assertions make sense here.
-  if (stepParameters != null && stepParameters.length > 0) {
-    String actualPyString = stepParameters.last;
-    if (actualPyString != expectedPyString) {
-      throw new Exception("PyString was not as expected :\n[actual]\n$actualPyString\n[expected]\n$expectedPyString");
-    }
-  } else {
-    throw new Exception("No parameters were found in above step.");
+the_above_stepdef_should_have_the_pystring() {
+  // maybe we could use the `matchers` package ? Assertions make sense here.
+  if (actualPyString != expectedPyString) {
+    throw new Exception("PyString was not as expected :\n[actual]\n$actualPyString\n[expected]\n$expectedPyString");
   }
-
 
 }
 
