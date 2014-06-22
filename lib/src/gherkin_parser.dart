@@ -11,6 +11,13 @@ RegExp stepPattern = new RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSen
 RegExp pyStringPattern = new RegExp(r'^\s*("""|```)\s*$');
 
 
+/// Could this hold the above regexes and misc vocabulary, so
+/// that we can let user provide his, for I18N and other uses ?
+/// Note: statics are not suited for inheritance, and it'd be nice
+///       to be able to extend this and override only what we want.
+class GherkinVocabulary {}
+
+
 class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg);
 }
