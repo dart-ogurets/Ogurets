@@ -34,7 +34,7 @@ Future<Map<RegExp,Function>> findStepRunners() {
           Future.forEach(filteredMetadata, (InstanceMirror im) {
             _log.debug(im.reflectee.verbiage);
             stepRunners[new RegExp(im.reflectee.verbiage)] = (params, Map namedParams) {
-              _log.info("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+              _log.debug("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
               var converted = namedParams.keys.map((key) => new Symbol(key));
               lib.invoke(mm.simpleName, params, new Map.fromIterables(converted, namedParams.values));
             };
