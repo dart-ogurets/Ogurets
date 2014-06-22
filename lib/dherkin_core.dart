@@ -33,10 +33,10 @@ Future<Map<RegExp,Function>> findStepRunners() {
           var filteredMetadata = mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
           Future.forEach(filteredMetadata, (InstanceMirror im) {
             _log.debug(im.reflectee.verbiage);
-            stepRunners[new RegExp(im.reflectee.verbiage)] = (ctx, params, Map namedParams) {
-              _log.debug("Executing ${mm.simpleName} with params: ${[ctx, params]} named: ${namedParams}");
+            stepRunners[new RegExp(im.reflectee.verbiage)] = (params, Map namedParams) {
+              _log.info("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
               var converted = namedParams.keys.map((key) => new Symbol(key));
-              lib.invoke(mm.simpleName, [ctx, params], new Map.fromIterables(converted, namedParams.values));
+              lib.invoke(mm.simpleName, params, new Map.fromIterables(converted, namedParams.values));
             };
           });
         });

@@ -116,7 +116,7 @@ class Scenario {
 
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
-      var row = tableIter.current;
+      var exampleRow = tableIter.current;
       scenarioStatus.buffer.write("\n\tScenario: $name");
       scenarioStatus.buffer.writeln("$location", color: 'gray');
 
@@ -154,14 +154,16 @@ class Scenario {
         if (step.pyString != null) {
           params.add(step.pyString);
         }
-        // Ctx
-        // About ctx and params... merge them ?
-        var ctx = {
-            "table": step.table
-        };
+
+        if(!step.table.empty) {
+          exampleRow["table"] = step.table;
+        } else {
+          exampleRow.remove("table");
+        }
 
         try { // to run the step
-          stepRunners[found](ctx, params, row);
+          _log.info("Executing step ${step.verbiage} ${step.table} $exampleRow");
+          stepRunners[found](params, exampleRow);
         } catch (e, s) {
           _log.debug("Step failed: $step");
           if (e is Exception) {
@@ -210,7 +212,7 @@ class Step {
   String get boilerplate {
     var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
     var columnsVerbiage = table.length > 0 ? ", { ${table.names.join(", ")} }" : "";
-    return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}(ctx, params$columnsVerbiage) {\n  // todo \n}\n");
+    return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}(params$columnsVerbiage) {\n  // todo \n}\n");
   }
 
   String _generateFunctionName() {
@@ -356,6 +358,8 @@ class GherkinTable {
   List<Map> _table = [];
 
   int get length => _table.length;
+
+  bool get empty => _table.isEmpty;
 
   List<String> get names => _columnNames;
 
