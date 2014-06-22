@@ -299,7 +299,6 @@ class RunStatus extends StepsExecutionStatus {
   bool get passed => failedFeaturesCount == 0;
   /// Has the run [failed] ? (any feature failed)
   bool get failed => failedFeaturesCount > 0;
-
   /// Features. (could also add skipped features)
   int get passedFeaturesCount => passedFeatures.length;
   int get failedFeaturesCount => failedFeatures.length;
@@ -311,6 +310,15 @@ class RunStatus extends StepsExecutionStatus {
     all.addAll(failedFeatures);
     return all;
   }
+  /// Undefined steps
+  List<StepStatus> get undefinedSteps {
+    List<StepStatus> list = [];
+    for (FeatureStatus feature in features) {
+      list.addAll(feature.undefinedSteps);
+    }
+    return list;
+  }
+  int get undefinedStepsCount => undefinedSteps.length;
 
 
 
@@ -344,8 +352,8 @@ class FeatureStatus extends StepsExecutionStatus {
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
-    for (ScenarioStatus s in scenarios) {
-      list.addAll(s.undefinedSteps);
+    for (ScenarioStatus senario in scenarios) {
+      list.addAll(senario.undefinedSteps);
     }
     return list;
   }

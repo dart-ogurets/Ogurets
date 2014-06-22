@@ -73,10 +73,8 @@ Future run(args) {
       }
       _buffer.flush();
       // Tally the missing stepdefs boilerplate
-      new UndefinedStepsBoilerplate(featureFutures).toFutureString().then((String boilerplate){
-        _buffer.write(boilerplate, color: "yellow");
-        _buffer.flush();
-      });
+      _buffer.write(runStatus.boilerplate, color: "yellow");
+      _buffer.flush();
       // Close the runner
       worker.close();
       allDone.complete(runStatus);
