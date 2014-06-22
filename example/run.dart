@@ -81,7 +81,7 @@ the_phase_of_the(arg1, arg2, arg3) {
 String background_setup_variable = 'default';
 
 @StepDef("I have a background setting a variable to a (default|different) value")
-i_have_a_background_setting(defaultOrDifferent) {
+i_have_a_background_setting_a_variable(defaultOrDifferent) {
   i_set_the_background_setup_variable(defaultOrDifferent);
 }
 

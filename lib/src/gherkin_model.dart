@@ -6,7 +6,7 @@ class Feature {
   String name;
   List<String> tags;
 
-  Scenario background = _NOOP;
+  Scenario background;
   List<Scenario> scenarios = [];
 
   Location location;
@@ -25,6 +25,7 @@ class Feature {
 
       var completer = new Completer();
       var results = [];
+      bool isFirstScenario = true;
       Future.forEach(scenarios, (Scenario scenario) {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
@@ -33,12 +34,14 @@ class Feature {
           scenario.background = background;
 
           Future scenarioFuture;
-          if (worker != null) {
+          if (worker != null) {   // fixme
             // the Task will re-fetch the stepRunners, as we can't send them here.
-            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, debug: debug));
+            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, isFirst: isFirstScenario, debug: debug));
           } else {
-            scenarioFuture = scenario.execute(stepRunners);
+            scenarioFuture = scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
           }
+
+          isFirstScenario = false;
 
           scenarioFuture.then((ScenarioStatus scenarioStatus) {
 
@@ -90,14 +93,16 @@ class Feature {
 
 
 class Background extends Scenario {
-  static String gherkinKeyword = "Background";
+  String gherkinKeyword = "Background";
+
+  //bool bufferIsMerged = false;
 
   Background(name, location) : super (name, location);
 }
 
 
 class Scenario {
-  static String gherkinKeyword = "Scenario";
+  String gherkinKeyword = "Scenario";
 
   String name;
 
@@ -115,10 +120,11 @@ class Scenario {
   /// Will execute the backgroud and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners) {
+  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, { isFirstOfFeature: true }) {
     Completer allDone = new Completer();
     var scenarioStatus = new ScenarioStatus()
-      ..scenario = this;
+      ..scenario = this
+      ..background = this.background;
 
     List<Future<ScenarioStatus>> subScenarioFutures = [];
 
@@ -129,7 +135,7 @@ class Scenario {
     var tableIter = examples._table.iterator;
     while (tableIter.moveNext()) {
       var exampleRow = tableIter.current;
-      Future subScenarioFuture = _executeSubScenario(scenarioStatus, exampleRow, stepRunners);
+      Future subScenarioFuture = _executeSubScenario(scenarioStatus, exampleRow, stepRunners, isFirstOfFeature: isFirstOfFeature);
       subScenarioFutures.add(subScenarioFuture);
     }
 
@@ -148,32 +154,20 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners) {
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, {isFirstOfFeature: true}) {
     Completer allDone = new Completer();
-
-//    new Future((){
-
-//    print("SCENARIO ${scenarioStatus.scenario}");
 
     Future<ScenarioStatus> backgroundStatusFuture;
     if (background != null) {
-//      new Future((){
-//      print('Executing background');
       backgroundStatusFuture = background.execute(stepRunners);
-//      });
     } else {
-//      print('No background');
       backgroundStatusFuture = new Future(()=>null);
     }
 
     backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
 
-//      print('BACKGROUND THEN $backgroundStatus');
-
-
       if (backgroundStatus != null) {
-        // fixme: if first, don't merge buffer
-        scenarioStatus.mergeBackground(backgroundStatus);
+        scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
       }
 
       scenarioStatus.buffer.write("\n\t${gherkinKeyword}: $name");
@@ -244,8 +238,6 @@ class Scenario {
 
       allDone.complete(scenarioStatus);
     });
-
-//    });
 
     return allDone.future;
   }
@@ -421,9 +413,11 @@ class FeatureStatus extends StepsExecutionStatus {
 /// Feedback from one scenario's execution.
 class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
+  /// If this ScenarioStatus is one of a Background, it is here.
   Scenario scenario;
   /// An optional [background] that enriched this status information.
-  Scenario background;
+  /// Backgrounds have no [background].
+  Background background;
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
   /// Has the [scenario] [passed] ? (all steps passed)
@@ -456,12 +450,22 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   ScenarioStatus() : super();
 
-  void mergeBackground(ScenarioStatus other) {
-    background = other.scenario;
-    passedSteps.addAll(other.passedSteps);
-    failedSteps.addAll(other.failedSteps);
-    undefinedSteps.addAll(other.undefinedSteps);
-    buffer.merge(other.buffer);
+  void mergeBackground(ScenarioStatus other, { isFirst: true }) {
+    if (other.scenario is Background) {
+      background = other.scenario;
+      passedSteps.addAll(other.passedSteps);
+      failedSteps.addAll(other.failedSteps);
+      undefinedSteps.addAll(other.undefinedSteps);
+      if (isFirst) {
+        // If we write to background within the worker task
+        // the others don't have the updated value,
+        // so we use the parameter isFirst.
+        // background.bufferIsMerged = true;
+        buffer.merge(other.buffer);
+      }
+    } else {
+      throw new Exception("$other is not a Background");
+    }
   }
 }
 
