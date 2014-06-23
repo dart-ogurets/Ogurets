@@ -78,7 +78,7 @@ the_phase_of_the(arg1, arg2, arg3) {
 
 /// BACKGROUNDS ----------------------------------------------------------------
 
-String background_setup_variable = 'default';
+String background_setup_variable = 'not_set';
 
 @StepDef("I have a background setting a variable to a (default|different) value")
 i_have_a_background_setting_a_variable(defaultOrDifferent) {
@@ -92,7 +92,13 @@ i_set_the_background_setup_variable(defaultOrDifferent, {col1, col2}) {
 
 @StepDef("the background-setup variable should hold the (default|different) value")
 the_background_setup_variable_should_hold(defaultOrDifferent, {col1, col2}) {
-  assert(background_setup_variable == defaultOrDifferent);
+  if (background_setup_variable == 'not_set') {
+    throw new Exception("Background was never ran.");
+  }
+  if (background_setup_variable != defaultOrDifferent) {
+    throw new Exception("Background-setup variable holds '$background_setup_variable'"+
+                        ", expected '$defaultOrDifferent'.");
+  }
 }
 
 @StepDef("this scenario(?: outline example)? has ran the background first")

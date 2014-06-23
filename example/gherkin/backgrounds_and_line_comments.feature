@@ -9,7 +9,8 @@ Feature: Supporting Backgrounds and Comments
     Given I have a background setting a variable to a default value
 
   Scenario: First Scenario
-    Given I set the background-setup variable to a different value
+    Given this scenario has ran the background first
+     When I set the background-setup variable to a different value
      Then the background-setup variable should hold the different value
 
   Scenario: Second Scenario
