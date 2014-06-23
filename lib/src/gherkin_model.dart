@@ -199,12 +199,11 @@ class Scenario {
         // The FeatureContext class approach for stepdefs makes sense :
         // - you implement methods and wrap them with annotations.
         // - you use properties as you want as context shared by steps.
-        // Also, @Given @When @Then decorators ?
 
         // Parameters from Regex
         var params = [];
         for (var i = 1; i <= match.groupCount; i++) {
-          params.add(step.unserialize(match[i]));
+          params.add(Step.unserialize(match.group(i)));
         }
         // PyString
         if (step.pyString != null) {
@@ -265,14 +264,21 @@ class Step {
     }
   }
 
-  dynamic unserialize(String parameter) {
+  /// Unserializes if int or num, and leaves as-is if neither.
+  /// see https://github.com/dkornishev/dherkin/issues/27
+  static dynamic unserialize(String parameter) {
     var unserialized = parameter;
+    var test = null;
     // Int ?
-    try { unserialized = int.parse(parameter); }
+    try { test = int.parse(parameter); }
     on FormatException catch (_) {}
     // Num ?
-    try { unserialized = num.parse(parameter); }
+    try { test = num.parse(parameter); }
     on FormatException catch (_) {}
+
+    if (test != null) {
+      unserialized = test;
+    }
 
     return unserialized;
   }
