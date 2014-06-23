@@ -64,19 +64,17 @@ Future run(args) {
       return c.future;
     }).whenComplete(() => Future.wait(featureFutures).whenComplete((){
       // Tally the failed / passed features
-      _buffer.writeln("-------------------");
+      _buffer.writeln("==================");
       if (runStatus.passedFeaturesCount > 0) {
-        _buffer.writeln("Passed features : ${runStatus.passedFeaturesCount}", color: "green");
+        _buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}", color: "green");
       }
       if (runStatus.failedFeaturesCount > 0) {
-        _buffer.writeln("Failed features : ${runStatus.failedFeaturesCount}", color: "red");
+        _buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}", color: "red");
       }
       _buffer.flush();
       // Tally the missing stepdefs boilerplate
-      new UndefinedStepsBoilerplate(featureFutures).toFutureString().then((String boilerplate){
-        _buffer.write(boilerplate, color: "yellow");
-        _buffer.flush();
-      });
+      _buffer.write(runStatus.boilerplate, color: "yellow");
+      _buffer.flush();
       // Close the runner
       worker.close();
       allDone.complete(runStatus);

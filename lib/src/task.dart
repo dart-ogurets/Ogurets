@@ -23,8 +23,9 @@ class ScenarioExecutionTask implements Task {
 
   Scenario scenario;
   bool debug;
+  bool isFirst;
 
-  ScenarioExecutionTask(this.scenario, {this.debug: false});
+  ScenarioExecutionTask(this.scenario, {this.debug: false, this.isFirst: true});
 
   Future execute() {
     LoggerFactory.config[".*"].debugEnabled = debug;
@@ -32,7 +33,7 @@ class ScenarioExecutionTask implements Task {
     // We cannot have stepRunners as injected dependency, (object is closure),
     // so we re-seek them in this task.
     findStepRunners().then((stepRunners) {
-      c.complete(scenario.execute(stepRunners));
+      c.complete(scenario.execute(stepRunners, isFirstOfFeature: isFirst));
     });
 
     return c.future;

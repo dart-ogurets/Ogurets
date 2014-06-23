@@ -16,8 +16,6 @@ part "src/outputter.dart";
 /// The pupose of this file is to expose the internals of dherkin
 /// without requiring dart:io, so that it can be used in the browser.
 
-final _STEPDEF_NOTFOUND = new RegExp("###");
-
 Logger _log = LoggerFactory.getLogger("dherkin");
 
 ///  Scans the entirety of the vm for step definitions executables
@@ -25,7 +23,6 @@ Logger _log = LoggerFactory.getLogger("dherkin");
 Future<Map<RegExp,Function>> findStepRunners() {
   Completer comp = new Completer();
   Map<RegExp,Function> stepRunners = new Map();
-  stepRunners[_STEPDEF_NOTFOUND] = (ctx, params, named) { throw new StepDefUndefined(); };
   Future.forEach(currentMirrorSystem().libraries.values, (LibraryMirror lib) {
     return new Future.sync(() {
       Future.forEach(lib.declarations.values.where((DeclarationMirror dm) => dm is MethodMirror), (MethodMirror mm) {

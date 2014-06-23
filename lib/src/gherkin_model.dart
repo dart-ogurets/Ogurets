@@ -6,7 +6,7 @@ class Feature {
   String name;
   List<String> tags;
 
-  Scenario background = _NOOP;
+  Scenario background;
   List<Scenario> scenarios = [];
 
   Location location;
@@ -25,6 +25,7 @@ class Feature {
 
       var completer = new Completer();
       var results = [];
+      bool isFirstScenario = true;
       Future.forEach(scenarios, (Scenario scenario) {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
@@ -33,12 +34,14 @@ class Feature {
           scenario.background = background;
 
           Future scenarioFuture;
-          if (worker != null) {
+          if (worker != null) {   // fixme
             // the Task will re-fetch the stepRunners, as we can't send them here.
-            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, debug: debug));
+            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, isFirst: isFirstScenario, debug: debug));
           } else {
-            scenarioFuture = scenario.execute(stepRunners);
+            scenarioFuture = scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
           }
+
+          isFirstScenario = false;
 
           scenarioFuture.then((ScenarioStatus scenarioStatus) {
 
@@ -89,7 +92,18 @@ class Feature {
 }
 
 
+class Background extends Scenario {
+  String gherkinKeyword = "Background";
+
+  //bool bufferIsMerged = false;
+
+  Background(name, location) : super (name, location);
+}
+
+
 class Scenario {
+  String gherkinKeyword = "Scenario";
+
   String name;
 
   List<String> tags;
@@ -103,96 +117,29 @@ class Scenario {
 
   Scenario(this.name, this.location);
 
-  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners) {
+  /// Will execute the backgroud and the scenario.
+  /// If this scenario has an example table, it will execute all the generated scenarios,
+  /// each with its own background, but background will be added to this scenario's buffer only once.
+  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, { isFirstOfFeature: true }) {
     Completer allDone = new Completer();
     var scenarioStatus = new ScenarioStatus()
-      ..scenario = this;
+      ..scenario = this
+      ..background = this.background;
+
+    List<Future<ScenarioStatus>> subScenarioFutures = [];
 
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
 
-    Future<ScenarioStatus> backgroundStatusFuture = new Future.value();
-    if (background != null) {
-      backgroundStatusFuture = background.execute(stepRunners);
+    var tableIter = examples._table.iterator;
+    while (tableIter.moveNext()) {
+      var exampleRow = tableIter.current;
+      Future subScenarioFuture = _executeSubScenario(scenarioStatus, exampleRow, stepRunners, isFirstOfFeature: isFirstOfFeature);
+      subScenarioFutures.add(subScenarioFuture);
     }
 
-    backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
-
-      if (backgroundStatus != null) {
-        scenarioStatus.mergeBackground(backgroundStatus);
-      }
-
-      var tableIter = examples._table.iterator;
-      while (tableIter.moveNext()) {
-        var exampleRow = tableIter.current;
-        scenarioStatus.buffer.write("\n\tScenario: $name");
-        scenarioStatus.buffer.writeln("$location", color: 'gray');
-
-        var iter = steps.iterator;
-        while (iter.moveNext()) {
-          var step = iter.current;
-          var stepStatus = new StepStatus()
-            ..step = step;
-
-          var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
-
-          if (found == null) {
-            stepStatus.defined = false;
-            stepStatus.writeIntoBuffer();
-            scenarioStatus.buffer.merge(stepStatus.buffer);
-            scenarioStatus.undefinedSteps.add(stepStatus);
-            continue;
-          }
-
-          var match = found.firstMatch(step.verbiage);
-
-          // (unrelated) Notes :
-          // The FeatureContext class approach for stepdefs makes sense :
-          // - you implement methods and wrap them with annotations.
-          // - you use properties as you want as context shared by steps.
-          // Also, @Given @When @Then decorators ?
-
-          // Parameters from Regex
-          var params = [];
-          for (var i = 1; i <= match.groupCount; i++) {
-            params.add(step.unserialize(match[i]));
-          }
-          // PyString
-          if (step.pyString != null) {
-            params.add(step.pyString);
-          }
-
-          if(!step.table.empty) {
-            exampleRow["table"] = step.table;
-          } else {
-            exampleRow.remove("table");
-          }
-
-          try { // to actually run the step
-            stepRunners[found](params, exampleRow);
-          } catch (e, s) {
-            _log.debug("Step failed: $step");
-            var failure = new StepFailure();
-            if (e is Exception) {
-              failure.error = e;
-            } else {
-              failure.error = new Exception(e.toString());
-            }
-            failure.trace = s.toString();
-            stepStatus.failure = failure;
-            scenarioStatus.failedSteps.add(stepStatus);
-          } finally {
-            if (!stepStatus.failed) {
-              scenarioStatus.passedSteps.add(stepStatus);
-            }
-            stepStatus.writeIntoBuffer();
-            scenarioStatus.buffer.merge(stepStatus.buffer);
-          }
-
-        }
-      }
-
+    Future.wait(subScenarioFutures).whenComplete((){
       allDone.complete(scenarioStatus);
     });
 
@@ -205,6 +152,94 @@ class Scenario {
 
   String toString() {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
+  }
+
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, {isFirstOfFeature: true}) {
+    Completer allDone = new Completer();
+
+    Future<ScenarioStatus> backgroundStatusFuture;
+    if (background != null) {
+      backgroundStatusFuture = background.execute(stepRunners);
+    } else {
+      backgroundStatusFuture = new Future(()=>null);
+    }
+
+    backgroundStatusFuture.then((ScenarioStatus backgroundStatus) {
+
+      if (backgroundStatus != null) {
+        scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
+      }
+
+      scenarioStatus.buffer.write("\n\t${gherkinKeyword}: $name");
+      scenarioStatus.buffer.writeln("$location", color: 'gray');
+
+      var iter = steps.iterator;
+      while (iter.moveNext()) {
+        var step = iter.current;
+        var stepStatus = new StepStatus()
+          ..step = step;
+
+        var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
+
+        if (found == null) {
+          stepStatus.defined = false;
+          stepStatus.writeIntoBuffer();
+          scenarioStatus.buffer.merge(stepStatus.buffer);
+          scenarioStatus.undefinedSteps.add(stepStatus);
+          continue;
+        }
+
+        var match = found.firstMatch(step.verbiage);
+
+        // (unrelated) Notes :
+        // The FeatureContext class approach for stepdefs makes sense :
+        // - you implement methods and wrap them with annotations.
+        // - you use properties as you want as context shared by steps.
+        // Also, @Given @When @Then decorators ?
+
+        // Parameters from Regex
+        var params = [];
+        for (var i = 1; i <= match.groupCount; i++) {
+          params.add(step.unserialize(match[i]));
+        }
+        // PyString
+        if (step.pyString != null) {
+          params.add(step.pyString);
+        }
+
+        if(!step.table.empty) {
+          exampleRow["table"] = step.table;
+        } else {
+          exampleRow.remove("table");
+        }
+
+        try { // to actually run the step
+          stepRunners[found](params, exampleRow);
+        } catch (e, s) {
+          _log.debug("Step failed: $step");
+          var failure = new StepFailure();
+          if (e is Exception) {
+            failure.error = e;
+          } else {
+            failure.error = new Exception(e.toString());
+          }
+          failure.trace = s.toString();
+          stepStatus.failure = failure;
+          scenarioStatus.failedSteps.add(stepStatus);
+        } finally {
+          if (!stepStatus.failed) {
+            scenarioStatus.passedSteps.add(stepStatus);
+          }
+          stepStatus.writeIntoBuffer();
+          scenarioStatus.buffer.merge(stepStatus.buffer);
+        }
+
+      }
+
+      allDone.complete(scenarioStatus);
+    });
+
+    return allDone.future;
   }
 }
 
@@ -300,7 +335,6 @@ class RunStatus extends StepsExecutionStatus {
   bool get passed => failedFeaturesCount == 0;
   /// Has the run [failed] ? (any feature failed)
   bool get failed => failedFeaturesCount > 0;
-
   /// Features. (could also add skipped features)
   int get passedFeaturesCount => passedFeatures.length;
   int get failedFeaturesCount => failedFeatures.length;
@@ -312,6 +346,15 @@ class RunStatus extends StepsExecutionStatus {
     all.addAll(failedFeatures);
     return all;
   }
+  /// Undefined steps
+  List<StepStatus> get undefinedSteps {
+    List<StepStatus> list = [];
+    for (FeatureStatus feature in features) {
+      list.addAll(feature.undefinedSteps);
+    }
+    return list;
+  }
+  int get undefinedStepsCount => undefinedSteps.length;
 
 
 
@@ -345,8 +388,8 @@ class FeatureStatus extends StepsExecutionStatus {
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
-    for (ScenarioStatus s in scenarios) {
-      list.addAll(s.undefinedSteps);
+    for (ScenarioStatus senario in scenarios) {
+      list.addAll(senario.undefinedSteps);
     }
     return list;
   }
@@ -370,9 +413,11 @@ class FeatureStatus extends StepsExecutionStatus {
 /// Feedback from one scenario's execution.
 class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
+  /// If this ScenarioStatus is one of a Background, it is here.
   Scenario scenario;
   /// An optional [background] that enriched this status information.
-  Scenario background;
+  /// Backgrounds have no [background].
+  Background background;
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
   /// Has the [scenario] [passed] ? (all steps passed)
@@ -405,12 +450,22 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   ScenarioStatus() : super();
 
-  void mergeBackground(ScenarioStatus other) {
-    background = other.scenario;
-    passedSteps.addAll(other.passedSteps);
-    failedSteps.addAll(other.failedSteps);
-    undefinedSteps.addAll(other.undefinedSteps);
-    buffer.merge(other.buffer);
+  void mergeBackground(ScenarioStatus other, { isFirst: true }) {
+    if (other.scenario is Background) {
+      background = other.scenario;
+      passedSteps.addAll(other.passedSteps);
+      failedSteps.addAll(other.failedSteps);
+      undefinedSteps.addAll(other.undefinedSteps);
+      if (isFirst) {
+        // If we write to background within the worker task
+        // the others don't have the updated value,
+        // so we use the parameter isFirst.
+        // background.bufferIsMerged = true;
+        buffer.merge(other.buffer);
+      }
+    } else {
+      throw new Exception("$other is not a Background");
+    }
   }
 }
 

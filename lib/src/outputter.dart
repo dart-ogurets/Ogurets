@@ -86,39 +86,3 @@ class ConsoleBuffer implements ResultBuffer {
     _buffer.clear();
   }
 }
-
-
-/// Maybe rename this FeatureStatusFuturesCollection and add other responsibilities,
-/// like tallying the count of passing/failing features.
-class UndefinedStepsBoilerplate {
-
-  List<Future<FeatureStatus>> featureStatusFutures;
-  List<Step> missingSteps = [];
-
-  UndefinedStepsBoilerplate(List<Future<FeatureStatus>> this.featureStatusFutures) {
-    for (Future<Feature> f in featureStatusFutures) {
-      f.then((FeatureStatus featureStatus){
-        for (StepStatus stepStatus in featureStatus.undefinedSteps) {
-          // make sure we have no duplicates
-          if (null == missingSteps.firstWhere((Step step) => step.verbiage == stepStatus.step.verbiage, orElse: ()=>null)) {
-            missingSteps.add(stepStatus.step);
-          }
-        }
-      });
-    }
-  }
-
-  Future<String> toFutureString() {
-    Completer c = new Completer();
-    String s = '';
-    Future.wait(featureStatusFutures).whenComplete((){
-      for (Step step in missingSteps) {
-        s += step.boilerplate;
-      }
-      c.complete(s);
-    });
-    return c.future;
-  }
-
-}
-
