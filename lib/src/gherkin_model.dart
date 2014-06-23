@@ -412,6 +412,7 @@ class FeatureStatus extends StepsExecutionStatus {
     return _failures;
   }
   String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+  String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
   FeatureStatus() : super();
 }
