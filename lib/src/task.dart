@@ -36,8 +36,6 @@ class ScenarioExecutionTask implements Task {
       c.complete(scenario.execute(stepRunners, isFirstOfFeature: isFirst));
     });
 
-    scenario.test = true;
-
     return c.future;
   }
 }
