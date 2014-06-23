@@ -1,5 +1,4 @@
 part of dherkin_core;
-part of dherkin_core;
 
 
 class Feature {
