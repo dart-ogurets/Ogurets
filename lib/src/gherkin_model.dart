@@ -1,4 +1,5 @@
 part of dherkin_core;
+part of dherkin_core;
 
 
 class Feature {
@@ -272,13 +273,12 @@ class Step {
     // Int ?
     try { test = int.parse(parameter); }
     on FormatException catch (_) {}
+    if (test != null) unserialized = test;
     // Num ?
     try { test = num.parse(parameter); }
     on FormatException catch (_) {}
+    if (test != null) unserialized = test;
 
-    if (test != null) {
-      unserialized = test;
-    }
 
     return unserialized;
   }
