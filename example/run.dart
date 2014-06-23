@@ -92,7 +92,10 @@ i_set_the_background_setup_variable(defaultOrDifferent, {col1, col2}) {
 
 @StepDef("the background-setup variable should hold the (default|different) value")
 the_background_setup_variable_should_hold(defaultOrDifferent, {col1, col2}) {
-  assert(background_setup_variable == defaultOrDifferent);
+  if(background_setup_variable != defaultOrDifferent) {
+    throw new Exception("Background-setup variable holds '$background_setup_variable'"+
+                        ", expected '$defaultOrDifferent'.");
+  }
 }
 
 @StepDef("this scenario(?: outline example)? has ran the background first")

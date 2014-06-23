@@ -2,6 +2,7 @@ library dherkin_core;
 
 import "dart:async";
 import "dart:mirrors";
+import "dart:collection";
 
 import "package:log4dart/log4dart.dart";
 import "package:worker/worker.dart";

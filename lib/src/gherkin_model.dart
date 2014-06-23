@@ -27,6 +27,7 @@ class Feature {
       var results = [];
       bool isFirstScenario = true;
       Future.forEach(scenarios, (Scenario scenario) {
+        Completer scenarioIsDone = new Completer();
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
@@ -34,7 +35,7 @@ class Feature {
           scenario.background = background;
 
           Future scenarioFuture;
-          if (worker != null) {   // fixme
+          if (worker != null) {
             // the Task will re-fetch the stepRunners, as we can't send them here.
             scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, isFirst: isFirstScenario, debug: debug));
           } else {
@@ -53,6 +54,8 @@ class Feature {
               featureStatus.passedScenarios.add(scenarioStatus);
             }
 
+            scenarioIsDone.complete(featureStatus);
+
           }).catchError((e, s) {
             _log.debug("ERROR $e \n $s");
           });
@@ -61,6 +64,9 @@ class Feature {
         } else {
           _log.debug("Skipping Scenario: $scenario");
         }
+
+        return scenarioIsDone.future;
+
       }).whenComplete(() {
         Future.wait(results).whenComplete(() {
           featureStatus.buffer.writeln("-------------------");
@@ -93,8 +99,8 @@ class Feature {
 
 
 class Background extends Scenario {
+  // todo: Fetch this from GherkinVocabulary or something
   String gherkinKeyword = "Background";
-
   //bool bufferIsMerged = false;
 
   Background(name, location) : super (name, location);
@@ -102,6 +108,7 @@ class Background extends Scenario {
 
 
 class Scenario {
+  // todo: Fetch this from GherkinVocabulary or something
   String gherkinKeyword = "Scenario";
 
   String name;
@@ -132,16 +139,13 @@ class Scenario {
       examples._table.add({});
     }
 
-    var tableIter = examples._table.iterator;
-    while (tableIter.moveNext()) {
-      var exampleRow = tableIter.current;
-      Future subScenarioFuture = _executeSubScenario(scenarioStatus, exampleRow, stepRunners, isFirstOfFeature: isFirstOfFeature);
+    Future.forEach(examples, (Map example) {
+      Future subScenarioFuture = _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature);
       subScenarioFutures.add(subScenarioFuture);
-    }
-
-    Future.wait(subScenarioFutures).whenComplete((){
+      return subScenarioFuture;
+    }).whenComplete((){
       allDone.complete(scenarioStatus);
-    });
+    });;
 
     return allDone.future;
   }
@@ -356,8 +360,6 @@ class RunStatus extends StepsExecutionStatus {
   }
   int get undefinedStepsCount => undefinedSteps.length;
 
-
-
   RunStatus() : super();
 }
 
@@ -528,9 +530,11 @@ class Location {
 }
 
 
-class GherkinTable {
+class GherkinTable extends IterableBase {
   List<String> _columnNames = [];
   List<Map> _table = [];
+
+  Iterator get iterator => _table.iterator;
 
   int get length => _table.length;
 
