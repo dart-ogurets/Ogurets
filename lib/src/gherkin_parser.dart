@@ -1,7 +1,7 @@
 part of dherkin_core;
 
 RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
-RegExp featurePattern = new RegExp(r"^\s*Feature\s*:\s*(.+)");
+RegExp featurePattern = new RegExp(r"\s*Feature\s*:\s*(.+)");
 RegExp scenarioPattern = new RegExp(r"^\s*Scenario\s*(?:Outline)?:\s*(.+)\s*$");
 RegExp backgroundPattern = new RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
 RegExp commentPattern = new RegExp(r"^\s*#");
