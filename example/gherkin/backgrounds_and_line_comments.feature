@@ -3,7 +3,7 @@ Feature: Supporting Backgrounds and Comments
   # Note: inlined comments are not supported in gherkin.
 
   # Backgrounds are written to buffer only once,
-  # but executed once per scenario (outline example).
+  # but executed once per scenario and scenario outline example.
 
   Background:
     Given I have a background setting a variable to a default value
