@@ -4,7 +4,6 @@ import "package:log4dart/log4dart.dart";
 import '../lib/dherkin.dart';
 
 void main(args) {
-  //args = ["gherkin/everything.feature","gherkin/pystrings.feature","gherkin/test_feature.feature"];
   run(args).whenComplete(() => print("ALL DONE"));
 }
 
