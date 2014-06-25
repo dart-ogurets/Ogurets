@@ -26,8 +26,9 @@ void main(args) {
     directory.list(followLinks: true, recursive: true).where((FileSystemEntity entity) => entity is File && entity.path.endsWith(".dart")).listen((File file) {
       sink.writeln("import '${file.absolute.path}';");
     }).onDone(() {
+      sink.writeln("import 'dart:io';");
       sink.writeln("import 'package:dherkin/dherkin.dart';");
-      sink.writeln("\nvoid main(args) {run(args);}");
+      sink.writeln("\nvoid main(args) {run(args).whenComplete(() => exit(0));}");
       sink.close().whenComplete(() => Isolate.spawnUri(new Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
         iss.addOnExitListener(receiver.sendPort);
       }));
