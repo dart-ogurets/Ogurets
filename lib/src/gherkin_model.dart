@@ -249,12 +249,13 @@ class Scenario {
 class Step {
   String verbiage;
   String pyString;
+  Scenario scenario;
   GherkinTable table = new GherkinTable();
   Location location;
 
   String get boilerplate => _generateBoilerplate();
 
-  Step(this.verbiage, this.location);
+  Step(this.verbiage, this.location, this.scenario);
 
   String toString() {
     if (pyString != null) {
@@ -284,8 +285,20 @@ class Step {
 
   String _generateBoilerplate() {
     var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
-    var columnsVerbiage = table.length > 0 ? ", { ${table.names.join(", ")} }" : "";
-    return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}(params$columnsVerbiage) {\n  // todo \n}\n");
+    
+    var params = "";
+    var counter = 1;
+    "w\+\?".allMatches(matchString).forEach((_) {
+      params+="arg$counter,";
+      counter++;
+    });
+    
+    params = params.replaceAll(new RegExp(",\$"), "");
+    
+    var columnsVerbiage = scenario.examples.length > 1 ? "{ ${scenario.examples.names.join(", ")} ${!table.empty ? ", table" : ""} }" : "";
+    var tableVerbiage = columnsVerbiage.isEmpty && !table.empty ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}" : "";
+    var separator = !params.isEmpty && !columnsVerbiage.isEmpty ? ", " : "";
+    return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");
   }
 
   String _generateFunctionName() {

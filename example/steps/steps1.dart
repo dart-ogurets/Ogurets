@@ -54,6 +54,7 @@ i_read_$column1$({column1, column2}) {
 @StepDef("I evaluate table with example <column2>")
 i_evaluate_table_with({ column1, column2, column3, column4, table }) {
   print("Step with table on scenario with example");
+  print("TABLE: $table");
 }
 
 @StepDef("I am a table step \"(\\w+?)\"")
