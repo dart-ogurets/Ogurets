@@ -35,11 +35,11 @@
   @Example
   Scenario Outline:  Outline with a table step
     Given I read <column1>
-    And I evaluate table with example <column2>
+    And I "evaluate" table with example <column2>
       | column1 | column2 | column3 | column4 |
       | A       | B       | C       | D       |
       | E       | F       | G       | H       |
   Examples:
-    | column1 | column2 |
+    | exampleColumn1 | exampleColumn2 |
     | hello   | world   |
     | goodbye | world   |

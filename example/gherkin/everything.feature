@@ -26,7 +26,7 @@ Feature: Making sure that parser works
         |A		|B		|C		|D		|
         |E		|F		|G		|H		|
       And I am a step after the table
-      When I am a table step executed
+      When I am a "table" step executed
         |column1|column2|column3|column4|
         |A		|B		|C		|D		|
         |E		|F		|G		|H		|

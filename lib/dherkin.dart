@@ -2,7 +2,6 @@ library dherkin;
 
 import "dart:io";
 import "dart:async";
-import "dart:mirrors";
 
 import 'package:args/args.dart';
 import "package:log4dart/log4dart.dart";
