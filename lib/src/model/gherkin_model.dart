@@ -123,7 +123,7 @@ class Scenario {
 
   Scenario(this.name, this.location);
 
-  /// Will execute the backgroud and the scenario.
+  /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, { isFirstOfFeature: true }) {
@@ -143,8 +143,17 @@ class Scenario {
       subScenarioFutures.add(subScenarioFuture);
       return subScenarioFuture;
     }).whenComplete((){
+      if(!examples.names.isEmpty) {
+        scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
+        var counter = 0;
+        examples.gherkinRows().forEach((row) {
+          scenarioStatus.buffer.writeln(row, color: counter == 0 ? 'magenta' : 'green');
+          counter++;
+        });
+      }
+
       allDone.complete(scenarioStatus);
-    });;
+    });
 
     return allDone.future;
   }

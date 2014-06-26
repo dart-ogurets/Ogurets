@@ -61,8 +61,7 @@ i_am_a_table(arg1, {table}) {
 the_phase_of_the(arg1, arg2, arg3) {
 
 }
-
 @StepDef("I read <column1>")
-i_read_$column1$({ exampleColumn1, exampleColumn2  }) {
+i_read_$column1$({exampleColumn1, exampleColumn2}) {
   // todo
 }
