@@ -9,10 +9,15 @@ import "package:worker/worker.dart";
 import "package:ansicolor/ansicolor.dart";
 
 part 'src/task.dart';
-part "src/gherkin_model.dart";
 part "src/gherkin_parser.dart";
-part "src/outputter.dart";
 
+part "src/status/status.dart";
+
+part 'src/model/gherkin_model.dart';
+part "src/model/common.dart";
+
+part 'src/output/console_buffer.dart';
+part 'src/output/output.dart';
 
 /// The pupose of this file is to expose the internals of dherkin
 /// without requiring dart:io, so that it can be used in the browser.
