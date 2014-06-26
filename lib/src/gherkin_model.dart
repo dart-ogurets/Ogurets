@@ -377,6 +377,18 @@ class RunStatus extends StepsExecutionStatus {
     return list;
   }
   int get undefinedStepsCount => undefinedSteps.length;
+  /// Failures
+  List<StepFailure> get failures {
+    List<StepFailure> _failures = new List();
+    for (FeatureStatus feature in features) {
+      if (feature.failed) {
+        _failures.addAll(feature.failures);
+      }
+    }
+    return _failures;
+  }
+  String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+  String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
   RunStatus() : super();
 }
@@ -425,6 +437,7 @@ class FeatureStatus extends StepsExecutionStatus {
     return _failures;
   }
   String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+  String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
   FeatureStatus() : super();
 }

@@ -1,3 +1,5 @@
+library dherkin_stepdefs_py_strings;
+
 import 'package:dherkin/dherkin.dart';
 
 /// PYSTRINGS ------------------------------------------------------------------
