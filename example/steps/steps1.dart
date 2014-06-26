@@ -46,11 +46,6 @@ i_evaluate_$column2$({column1, column2}) {
   print("COLUMN 2 $column2");
 }
 
-@StepDef("I read <column1>")
-i_read_$column1$({column1, column2}) {
-  print("Columns are working $column1 $column2");
-}
-
 @StepDef("I evaluate table with example <column2>")
 i_evaluate_table_with({ column1, column2, column3, column4, table }) {
   print("Step with table on scenario with example");
@@ -65,4 +60,9 @@ i_am_a_table(arg1, {table}) {
 @StepDef("the \"(\\w+?)\" of the \"(\\w+?)\" is \"(\\w+?)\"")
 the_phase_of_the(arg1, arg2, arg3) {
 
+}
+
+@StepDef("I read <column1>")
+i_read_$column1$({ exampleColumn1, exampleColumn2  }) {
+  // todo
 }

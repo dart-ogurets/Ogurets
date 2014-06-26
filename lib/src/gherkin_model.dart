@@ -285,16 +285,16 @@ class Step {
 
   String _generateBoilerplate() {
     var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
-    
+
     var params = "";
     var counter = 1;
     "w\+\?".allMatches(matchString).forEach((_) {
       params+="arg$counter,";
       counter++;
     });
-    
+
     params = params.replaceAll(new RegExp(",\$"), "");
-    
+
     var columnsVerbiage = scenario.examples.length > 1 ? "{ ${scenario.examples.names.join(", ")} ${!table.empty ? ", table" : ""} }" : "";
     var tableVerbiage = columnsVerbiage.isEmpty && !table.empty ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}" : "";
     var separator = !params.isEmpty && !columnsVerbiage.isEmpty ? ", " : "";
@@ -523,20 +523,26 @@ class StepStatus extends BufferedStatus {
 
   void writeIntoBuffer() {
     var color = "green";
-    var extra = "";
+    var failureMessage = "";
+
     if (!defined) {
       color = "yellow";
     }
     if (failed) {
       color = "red";
-      extra = "\n${failure.error}\n${failure.trace}";
+      failureMessage = "\n${failure.error}\n${failure.trace}";
     }
     if (step.pyString != null) {
-      buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$extra", color: color);
+      buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$failureMessage", color: color);
     } else {
       buffer.write("\t\t${step.verbiage}", color: color);
       buffer.write("\t${step.location}", color: 'gray');
-      buffer.writeln(extra, color: color);
+
+      if (!step.table.isEmpty) {
+        buffer.write("\n${step.table.gherkinRows().join("\n")}", color: 'cyan');
+      }
+
+      buffer.writeln(failureMessage, color: color);
     }
   }
 }
@@ -562,6 +568,9 @@ class Location {
 
 
 class GherkinTable extends IterableBase {
+
+  final String _SPACER = "\t\t  ";
+
   List<String> _columnNames = [];
   List<Map> _table = [];
 
@@ -579,6 +588,23 @@ class GherkinTable extends IterableBase {
     } else {
       _table.add(new Map.fromIterables(_columnNames, row));
     }
+  }
+
+  /**
+   * Gherkin table
+   */
+  String gherkinRows() {
+    var rows = [];
+
+    if(!_table.isEmpty) {
+      rows.add("$_SPACER|${_columnNames.join(" | ")}|");
+
+      for(var row in _table) {
+        rows.add("$_SPACER|${row.values.join(" | ")}|");
+      }
+    }
+
+    return rows;
   }
 
   String toString() {
