@@ -1,6 +1,7 @@
 part of dherkin_core;
 
 class Step {
+  String verb;
   String verbiage;
   String pyString;
   Scenario scenario;
@@ -9,7 +10,7 @@ class Step {
 
   String get boilerplate => _generateBoilerplate();
 
-  Step(this.verbiage, this.location, this.scenario);
+  Step(this.verb, this.verbiage, this.location, this.scenario);
 
   String toString() {
     if (pyString != null) {
@@ -59,7 +60,7 @@ class Step {
     var columnsVerbiage = scenario.examples.length > 1 ? "{exampleRow ${!table.empty ? ", table" : ""}}" : "";
     var tableVerbiage = columnsVerbiage.isEmpty && !table.empty ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}" : "";
     var separator = !params.isEmpty && !columnsVerbiage.isEmpty ? ", " : "";
-    return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");
+    return ("\n@${verb}(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");
   }
 
   String _generateFunctionName() {

@@ -95,7 +95,7 @@ class GherkinParser {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = new Step(match.group(2), new Location(filePath, lineCounter), currentScenario);
+        currentStep = new Step(match.group(1), match.group(2), new Location(filePath, lineCounter), currentScenario);
         currentTable = currentStep.table;
         currentScenario.addStep(currentStep);
       }
