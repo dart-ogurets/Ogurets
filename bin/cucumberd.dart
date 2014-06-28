@@ -30,7 +30,7 @@ void main(args) {
       sink.writeln("import 'package:dherkin/dherkin.dart';");
       sink.writeln("\nvoid main(args) {run(args).whenComplete(() => exit(0));}");
       sink.close().whenComplete(() => Isolate.spawnUri(new Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
-        iss.addOnExitListener(receiver.sendPort);
+        
       }));
     });
   } else {
