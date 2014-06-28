@@ -41,12 +41,12 @@ everything_works_just({out}) {
 }
 
 @StepDef("I evaluate <column2>")
-i_evaluate_$column2$({column1, column2, out}) {
-  out.writeln("COLUMN 2 $column2");
+i_evaluate_$column2$({exampleRow,  out}) {
+  out.writeln("ROW: $exampleRow");
 }
 
 @StepDef("I evaluate table with example <column2>")
-i_evaluate_table_with({ column1, column2, column3, column4, table, out }) {
+i_evaluate_table_with({ exampleRow table, out }) {
   out.writeln("Step with table on scenario with example");
   out.writeln("TABLE: $table");
 }
@@ -60,5 +60,15 @@ the_phase_of_the(arg1, arg2, arg3) {
 
 }
 @StepDef("I read <column1>")
-i_read_$column1$({exampleColumn1, exampleColumn2}) {
+i_read_$column1$({exampleRow}) {
+}
+
+@StepDef("I read another <column1>")
+i_read_another_$column1$({exampleRow }) {
+  // todo
+}
+
+@StepDef("I am a \"(\\w+?)\" step executed")
+i_am_a_table_step2(arg1,{table, out}) {
+  out.writeln("$arg1 $table");
 }

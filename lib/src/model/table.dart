@@ -29,12 +29,10 @@ class GherkinTable extends IterableBase {
   String gherkinRows() {
     var rows = [];
 
-    print(_table);
     if(!_table.isEmpty) {
       rows.add("$_SPACER|${_columnNames.join(" | ")}|");
 
       for(var row in _table) {
-        row.remove("out");  // FIXME hack to prevent output
         rows.add("$_SPACER|${row.values.join(" | ")}|");
       }
     }

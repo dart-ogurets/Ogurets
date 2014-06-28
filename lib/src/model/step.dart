@@ -56,7 +56,7 @@ class Step {
 
     params = params.replaceAll(new RegExp(",\$"), "");
 
-    var columnsVerbiage = scenario.examples.length > 1 ? "{ ${scenario.examples.names.join(", ")} ${!table.empty ? ", table" : ""} }" : "";
+    var columnsVerbiage = scenario.examples.length > 1 ? "{exampleRow ${!table.empty ? ", table" : ""}}" : "";
     var tableVerbiage = columnsVerbiage.isEmpty && !table.empty ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}" : "";
     var separator = !params.isEmpty && !columnsVerbiage.isEmpty ? ", " : "";
     return ("\n@StepDef(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");

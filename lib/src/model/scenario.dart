@@ -41,7 +41,6 @@ class Scenario {
         scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
         var counter = 0;
         examples.gherkinRows().forEach((row) {
-          print("ROW $row");
           scenarioStatus.buffer.writeln(row, color: counter == 0 ? 'magenta' : 'green');
           counter++;
         });
@@ -113,16 +112,20 @@ class Scenario {
           params.add(step.pyString);
         }
 
-        if(!step.table.empty) {
-          exampleRow["table"] = step.table;
-        } else {
-          exampleRow.remove("table");
+        var moreParams = {
+          "out": stepStatus.out
+        };
+
+        if(!exampleRow.isEmpty) {
+          moreParams["exampleRow"] = exampleRow;
         }
 
-        exampleRow["out"] = stepStatus.out;
+        if(!step.table.empty) {
+          moreParams["table"] = step.table;
+        }
 
         try { // to actually run the step
-          stepRunners[found](params, exampleRow);
+          stepRunners[found](params, moreParams);
         } catch (e, s) {
           _log.debug("Step failed: $step");
           var failure = new StepFailure();
