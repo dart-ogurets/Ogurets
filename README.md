@@ -45,5 +45,26 @@ Alternatively, you might opt for writing your own script:
    ```
 Invoke the runner : `$ dart my_bdd_runner.dart my_gherkin.feature`
 
+Anatomy of a stepdef
+--------------------
+A stepdef is a top-level function annotated with one of Gherkin keywords.
+Such a function can take any number of positional parameters, and up to three optional named parameters.
 
+```dart
+@And("I am a table step \"(\\w+?)\"")
+i_am_a_table(arg1, {exampleRow, table, out}) {
+   out.writeln("Executing...${exampleRow['column2']}");
+}
 
+```
+Table found on the step will be passed in as **table**.
+A scenario outline row will be passed in as **exampleRow**
+
+Output
+------
+Due to asynchronous nature of execution, output of *print* statements will not appear near the gherkin step that ran them.
+For that purpose, optional named parameter **out** will be injected if the stepdef function states that it takes it
+
+Parallelism 
+------------
+Features and scenarios are executed in multiple workers, so there is a degree of unpredictability of the order of execution.
