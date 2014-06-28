@@ -13,8 +13,12 @@ part "src/gherkin_parser.dart";
 
 part "src/status/status.dart";
 
-part 'src/model/gherkin_model.dart';
-part "src/model/common.dart";
+part 'src/model/background.dart';
+part 'src/model/feature.dart';
+part 'src/model/runtime.dart';
+part 'src/model/scenario.dart';
+part 'src/model/step.dart';
+part 'src/model/table.dart';
 
 part 'src/output/console_buffer.dart';
 part 'src/output/output.dart';
