@@ -23,7 +23,7 @@ void main(args) {
   }, onDone: () => print("DONE RECEIVER"));
 
   if (directory.existsSync()) {
-    directory.list(followLinks: true, recursive: true).where((FileSystemEntity entity) => entity is File && entity.path.endsWith(".dart")).listen((File file) {
+    directory.list(followLinks: true, recursive: true).where((FileSystemEntity entity) => entity is File && !entity.path.contains("packages") && entity.path.endsWith(".dart")).listen((File file) {
       sink.writeln("import '${file.absolute.path}';");
     }).onDone(() {
       sink.writeln("import 'dart:io';");
@@ -39,8 +39,4 @@ void main(args) {
 
 
 // -> in --src
-
-// generate runner script that imports all of them
-
-// run the script
 }
