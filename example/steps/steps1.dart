@@ -23,7 +23,7 @@ i_run_some({out}) {
 
 @StepDef("I have a table")
 i_have_a_table({out, table}) {
-  out.writeln("Table step");
+  out.writeln("Table step $table");
 }
 
 @StepDef("I am a step after the table")

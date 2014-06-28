@@ -29,6 +29,8 @@ part 'src/output/output.dart';
 
 Logger _log = LoggerFactory.getLogger("dherkin");
 
+var _possibleParams = [new Symbol("out"), new Symbol("table"), new Symbol("exampleRow")];
+
 ///  Scans the entirety of the vm for step definitions executables
 ///  TODO : refactor to be less convoluted.
 Future<Map<RegExp,Function>> findStepRunners() {
@@ -47,15 +49,9 @@ Future<Map<RegExp,Function>> findStepRunners() {
               var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
               var convertedNamedParams = new Map.fromIterables(convertedKeys, namedParams.values);
 
-              var out = false;
-              for(var param in mm.parameters) {
-                if(param.isNamed && param.simpleName == new Symbol("out")) {
-                  out = true;
-                }
-              }
-
-              if(!out) {
-                convertedNamedParams.remove(new Symbol("out"));
+              //  Remove possible optional params if the function doesn't want them
+              for(var possibleParam in _possibleParams) {
+                mm.parameters.firstWhere((param) => param.isNamed && param.simpleName == possibleParam, orElse: () => convertedNamedParams.remove(possibleParam));
               }
 
               lib.invoke(mm.simpleName, params, convertedNamedParams);
