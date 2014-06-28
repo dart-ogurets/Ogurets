@@ -204,6 +204,8 @@ class StepStatus extends BufferedStatus {
   /// A possible [failure].
   StepFailure failure;
 
+  StringBuffer out = new StringBuffer();
+
   StepStatus() : super();
 
   void writeIntoBuffer() {
@@ -225,6 +227,11 @@ class StepStatus extends BufferedStatus {
 
       if (!step.table.isEmpty) {
         buffer.write("\n${step.table.gherkinRows().join("\n")}", color: 'cyan');
+      }
+
+      if(out.isNotEmpty) {
+        buffer.write("\n");
+        buffer.write(out.toString());
       }
 
       buffer.writeln(failureMessage, color: color);

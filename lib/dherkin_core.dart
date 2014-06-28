@@ -43,8 +43,22 @@ Future<Map<RegExp,Function>> findStepRunners() {
             _log.debug(im.reflectee.verbiage);
             stepRunners[new RegExp(im.reflectee.verbiage)] = (params, Map namedParams) {
               _log.debug("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
-              var converted = namedParams.keys.map((key) => new Symbol(key));
-              lib.invoke(mm.simpleName, params, new Map.fromIterables(converted, namedParams.values));
+
+              var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
+              var convertedNamedParams = new Map.fromIterables(convertedKeys, namedParams.values);
+
+              var out = false;
+              for(var param in mm.parameters) {
+                if(param.isNamed && param.simpleName == new Symbol("out")) {
+                  out = true;
+                }
+              }
+
+              if(!out) {
+                convertedNamedParams.remove(new Symbol("out"));
+              }
+
+              lib.invoke(mm.simpleName, params, convertedNamedParams);
             };
           });
         });

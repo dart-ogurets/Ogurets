@@ -17,6 +17,8 @@ Feature: Making sure that parser works
   Examples:
     | column1 | column2 |
     | hello   | world   |
+    | hello   | world   |
+    | hello   | world   |
 
   @Tables
   Scenario: Tables

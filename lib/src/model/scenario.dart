@@ -41,6 +41,7 @@ class Scenario {
         scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
         var counter = 0;
         examples.gherkinRows().forEach((row) {
+          print("ROW $row");
           scenarioStatus.buffer.writeln(row, color: counter == 0 ? 'magenta' : 'green');
           counter++;
         });
@@ -117,6 +118,8 @@ class Scenario {
         } else {
           exampleRow.remove("table");
         }
+
+        exampleRow["out"] = stepStatus.out;
 
         try { // to actually run the step
           stepRunners[found](params, exampleRow);
