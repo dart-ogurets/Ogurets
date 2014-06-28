@@ -13,6 +13,7 @@ part "src/gherkin_parser.dart";
 
 part "src/status/status.dart";
 
+part 'src/model/anotations.dart';
 part 'src/model/background.dart';
 part 'src/model/feature.dart';
 part 'src/model/runtime.dart';

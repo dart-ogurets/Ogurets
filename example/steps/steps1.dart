@@ -2,22 +2,22 @@ library dherkin_stepdefs_steps1;
 
 import 'package:dherkin/dherkin.dart';
 
-@StepDef("parser is working")
+@Given("parser is working")
 step1() {
   print("Компрессия!");
 }
 
-@StepDef("I run dherkin")
+@But("I run dherkin")
 i_run_dherkin() {
   print("УРА!");
 }
 
-@StepDef("everything \"(\\w+?)\"")
+@When("everything \"(\\w+?)\"")
 everything_works(worksArg) {
   print("Everything Works $worksArg");
 }
 
-@StepDef("I run some background")
+@Then("I run some background")
 i_run_some() {
   print("I run some background");
 }
@@ -52,7 +52,7 @@ i_evaluate_table_with({ column1, column2, column3, column4, table }) {
   print("TABLE: $table");
 }
 
-@StepDef("I am a table step \"(\\w+?)\"")
+@And("I am a table step \"(\\w+?)\"")
 i_am_a_table(arg1, {table}) {
 
 }
