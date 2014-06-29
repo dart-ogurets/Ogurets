@@ -76,7 +76,8 @@ class Scenario {
         scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
       }
 
-      scenarioStatus.buffer.write("\n\t${gherkinKeyword}: $name");
+      var outline = examples.isEmpty || this is Background ? "" : " Outline";
+      scenarioStatus.buffer.write("\n\t${gherkinKeyword}$outline: $name");
       scenarioStatus.buffer.writeln("$location", color: 'gray');
 
       var iter = steps.iterator;
