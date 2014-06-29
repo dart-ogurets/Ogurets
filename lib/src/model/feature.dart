@@ -26,7 +26,6 @@ class Feature {
       var results = [];
       bool isFirstScenario = true;
       Future.forEach(scenarios, (Scenario scenario) {
-        Completer scenarioIsDone = new Completer();
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
@@ -52,9 +51,6 @@ class Feature {
             } else {
               featureStatus.passedScenarios.add(scenarioStatus);
             }
-
-            scenarioIsDone.complete(featureStatus);
-
           }).catchError((e, s) {
             _log.debug("ERROR $e \n $s");
           });
@@ -63,9 +59,6 @@ class Feature {
         } else {
           _log.debug("Skipping Scenario: $scenario");
         }
-
-        return scenarioIsDone.future;
-
       }).whenComplete(() {
         Future.wait(results).whenComplete(() {
           featureStatus.buffer.writeln("-------------------");

@@ -45,7 +45,7 @@ Future run(args) {
     Future.forEach(featureFiles, (filePath) {
       Completer c = new Completer();
       new File(filePath).readAsLines().then((List<String> contents) {
-        return worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
+        worker.handle(new GherkinParserTask(contents, filePath)).then((feature) {
           Future f = feature.execute(stepRunners, runTags: runTags, worker: worker, debug: options["debug"]);
           f.then((FeatureStatus featureStatus){
             if (featureStatus.failed) {
@@ -55,9 +55,9 @@ Future run(args) {
             }
             _buffer.merge(featureStatus.buffer);
             _buffer.flush();
-            c.complete();
           });
           featureFutures.add(f);
+          c.complete();
         });
       });
       return c.future;
