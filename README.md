@@ -1,13 +1,11 @@
 dherkin
 =======
+Gherkin/cucumber implementation in dart.
 
-Gherkin parser and runner for dart.
-for Behavior Driven Development (BDD).
-
+For information on gherkin syntax and Behavior Driven Development (BDD) please see: http://cukes.info/
 
 Usage
 =====
-
 Dherkin can be executed in a number of ways.
 
 cucumberd
