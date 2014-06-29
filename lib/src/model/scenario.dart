@@ -19,7 +19,8 @@ class Scenario {
 
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
-  /// each with its own background, but background will be added to this scenario's buffer only once.
+  /// each with its own background, but background will be added to this scenario's buffer only once,
+  /// and so will the scenario outline and example table.
   Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, { isFirstOfFeature: true }) {
     Completer allDone = new Completer();
     var scenarioStatus = new ScenarioStatus()
@@ -32,9 +33,11 @@ class Scenario {
       examples._table.add({});
     }
 
+    bool isFirstOfOutline = true;
     Future.forEach(examples, (Map example) {
-      Future subScenarioFuture = _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature);
+      Future subScenarioFuture = _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature, isFirstOfOutline: isFirstOfOutline);
       subScenarioFutures.add(subScenarioFuture);
+      isFirstOfOutline = false;
       return subScenarioFuture;
     }).whenComplete((){
       if(!examples.names.isEmpty) {
@@ -60,7 +63,7 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, {isFirstOfFeature: true}) {
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, {isFirstOfFeature: true, isFirstOfOutline: true}) {
     Completer allDone = new Completer();
 
     Future<ScenarioStatus> backgroundStatusFuture;
@@ -76,9 +79,11 @@ class Scenario {
         scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
       }
 
-      var outline = examples.isEmpty || this is Background ? "" : " Outline";
-      scenarioStatus.buffer.write("\n\t${gherkinKeyword}$outline: $name");
-      scenarioStatus.buffer.writeln("$location", color: 'gray');
+      if (isFirstOfOutline) {
+        var outline = exampleRow.isEmpty || this is Background ? "" : " Outline";
+        scenarioStatus.buffer.write("\n\t${gherkinKeyword}$outline: $name");
+        scenarioStatus.buffer.writeln("$location", color: 'gray');
+      }
 
       var iter = steps.iterator;
       while (iter.moveNext()) {
@@ -91,7 +96,9 @@ class Scenario {
         if (found == null) {
           stepStatus.defined = false;
           stepStatus.writeIntoBuffer();
-          scenarioStatus.buffer.merge(stepStatus.buffer);
+          if (isFirstOfOutline) {
+            scenarioStatus.buffer.merge(stepStatus.buffer);
+          }
           scenarioStatus.undefinedSteps.add(stepStatus);
           continue;
         }
@@ -143,7 +150,9 @@ class Scenario {
             scenarioStatus.passedSteps.add(stepStatus);
           }
           stepStatus.writeIntoBuffer();
-          scenarioStatus.buffer.merge(stepStatus.buffer);
+          if (isFirstOfOutline) {
+            scenarioStatus.buffer.merge(stepStatus.buffer);
+          }
         }
 
       }
