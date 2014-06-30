@@ -34,7 +34,8 @@ void main(args) {
       }));
     });
   } else {
-    print("$directory does not exist");
+    print("Source $directory does not exist");
+    exit(1);
   }
 
 
