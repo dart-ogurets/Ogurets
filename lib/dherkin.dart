@@ -21,6 +21,7 @@ ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
  * We should continue on the OO design pattern and make a DherkinRunner or something.
  */
 Future run(args) {
+  var sw = new Stopwatch()..start();
   var options = _parseArguments(args);
 
   LoggerFactory.config[".*"].debugEnabled = options["debug"];
@@ -73,6 +74,9 @@ Future run(args) {
       _buffer.flush();
       // Tally the missing stepdefs boilerplate
       _buffer.write(runStatus.boilerplate, color: "yellow");
+      _buffer.write("----------------------------------------------------");
+      _buffer.write("\nExecuted ${runStatus.passedFeaturesCount + runStatus.failedFeaturesCount} features in ${sw.elapsed.inSeconds} seconds\n", color: 'white');
+      _buffer.write("----------------------------------------------------");
       _buffer.flush();
       // Close the runner
       worker.close();
