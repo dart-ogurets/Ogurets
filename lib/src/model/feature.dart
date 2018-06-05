@@ -1,7 +1,6 @@
 part of dherkin_core;
 
 class Feature {
-
   String name;
   List<String> tags;
 
@@ -12,72 +11,46 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(Map<RegExp, Function> stepRunners,
-                                { List<String> runTags, Worker worker, bool debug: false }) {
+  Future<FeatureStatus> execute(Map<RegExp, Function> stepRunners, {List<String> runTags, bool debug: false}) async {
     if (runTags == null) runTags = [];
-    FeatureStatus featureStatus = new FeatureStatus()
-      ..feature = this;
+    FeatureStatus featureStatus = new FeatureStatus()..feature = this;
 
     if (_tagsMatch(tags, runTags)) {
       featureStatus.buffer.write("\nFeature: $name");
       featureStatus.buffer.writeln("$location", color: 'gray');
 
-      var completer = new Completer();
-      var results = [];
       bool isFirstScenario = true;
-      Future.forEach(scenarios, (Scenario scenario) {
+      for (Scenario scenario in scenarios) {
         _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
           _log.debug("Executing Scenario: $scenario");
 
           scenario.background = background;
-
-          Future scenarioFuture;
-          if (worker != null) {
-            // the Task will re-fetch the stepRunners, as we can't send them here.
-            scenarioFuture = worker.handle(new ScenarioExecutionTask(scenario, isFirst: isFirstScenario, debug: debug));
-          } else {
-            scenarioFuture = scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
-          }
-
+          ScenarioStatus scenarioStatus = await scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
           isFirstScenario = false;
+          featureStatus.buffer.merge(scenarioStatus.buffer);
 
-          scenarioFuture.then((ScenarioStatus scenarioStatus) {
-
-            featureStatus.buffer.merge(scenarioStatus.buffer);
-
-            if (scenarioStatus.failed) {
-              featureStatus.failedScenarios.add(scenarioStatus);
-            } else {
-              featureStatus.passedScenarios.add(scenarioStatus);
-            }
-          }).catchError((e, s) {
-            _log.debug("ERROR $e \n $s");
-          });
-
-          results.add(scenarioFuture);
+          if (scenarioStatus.failed) {
+            featureStatus.failedScenarios.add(scenarioStatus);
+          } else {
+            featureStatus.passedScenarios.add(scenarioStatus);
+          }
         } else {
           _log.debug("Skipping Scenario: $scenario");
         }
-      }).whenComplete(() {
-        Future.wait(results).whenComplete(() {
-          featureStatus.buffer.writeln("-------------------");
-          featureStatus.buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}", color: 'green');
+      }
+      featureStatus.buffer.writeln("-------------------");
+      featureStatus.buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}", color: 'green');
 
-          if (featureStatus.failedScenariosCount > 0) {
-            featureStatus.buffer.writeln("Scenarios failed: ${featureStatus.failedScenariosCount}", color: 'red');
-          }
-
-          completer.complete(featureStatus);
-        });
-      });
-
-      return completer.future;
+      if (featureStatus.failedScenariosCount > 0) {
+        featureStatus.buffer.writeln("Scenarios failed: ${featureStatus.failedScenariosCount}", color: 'red');
+      }
+      return featureStatus;
     } else {
       _log.info("Skipping feature $name due to tags not matching");
       featureStatus.skipped = true;
 
-      return new Future.value(featureStatus);
+      return featureStatus;
     }
   }
 
