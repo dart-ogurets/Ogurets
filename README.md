@@ -4,6 +4,13 @@ Gherkin/cucumber implementation in dart.
 
 For information on gherkin syntax and Behavior Driven Development (BDD) please see: http://cukes.info/
 
+Fork
+====
+The fork of the project removed all Future-implementations and replaced them with the Dart2 async/await semantics.
+With this implementation the actual step implementations require a Completer as the first parameter that must be
+completed at the end of each test step. The reason is that the implementation uses the LibraryMirror.invoke method
+that cannot be used with await.
+
 Usage
 =====
 Dherkin can be executed in a number of ways.

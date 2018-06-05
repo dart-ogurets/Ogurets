@@ -1,15 +1,13 @@
-name: dherkin
-version: 0.5.3
-author: Danil Kornishev <danil.kornishev@gmail.com>
+name: dherkin2
+version: 1.0.0
+authors:
+- Danil Kornishev <danil.kornishev@gmail.com>
+- Florian Huonder <florian.huonder@prolutions.ch>
+- Sacha Dolski <sacha.dolski@prolutions.ch>
 description: Gherkin/Cucumber implementation in dart
-homepage: https://github.com/dkornishev/dherkin
+homepage: https://github.com/prolutionsGmbH/dherkin
 dependencies:
   log4dart: ">=1.4.10 <1.5.0"
-  args: ">=0.11.0+1 <0.12.0"
-  # A version of worker that does not depend on dart:io
-  # Should closely match the current version of worker.
-  #worker:
-  #  git: https://github.com/Goutte/Worker.git
-  worker: ">=0.3.11 <0.4.0"
+  args: "1.4.3"
   ansicolor: ">=0.0.9 <0.1.0"
 dev_dependencies:
