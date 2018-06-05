@@ -2,7 +2,11 @@
 packages
 .project
 .settings
-pubspec.lock
 .idea
 .settings
 *.iml
+.packages
+.dart_tool/
+
+#Not checked in because this project is a library (https://stackoverflow.com/a/16136740).
+pubspec.lock
