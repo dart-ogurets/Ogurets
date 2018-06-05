@@ -1,6 +1,6 @@
 library dherkin_stepdefs_py_strings;
 
-import 'package:dherkin/dherkin.dart';
+import 'package:dherkin2/dherkin.dart';
 
 /// PYSTRINGS ------------------------------------------------------------------
 

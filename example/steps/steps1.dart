@@ -1,6 +1,6 @@
 library dherkin_stepdefs_steps1;
 
-import 'package:dherkin/dherkin.dart';
+import 'package:dherkin2/dherkin.dart';
 
 @Given("parser is working")
 step1({out}) {

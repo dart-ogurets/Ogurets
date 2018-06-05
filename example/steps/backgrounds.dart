@@ -1,6 +1,6 @@
 library dherkin_stepdefs_backgrounds;
 
-import 'package:dherkin/dherkin.dart';
+import 'package:dherkin2/dherkin.dart';
 
 /// BACKGROUNDS ----------------------------------------------------------------
 

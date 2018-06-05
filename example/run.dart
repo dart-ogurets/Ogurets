@@ -1,6 +1,6 @@
 library dherkin_example;
 
-import 'package:dherkin/dherkin.dart';
+import 'package:dherkin2/dherkin.dart';
 
 import 'steps/backgrounds.dart';
 import 'steps/py_strings.dart';
