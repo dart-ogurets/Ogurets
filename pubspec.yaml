@@ -4,10 +4,11 @@ authors:
 - Danil Kornishev <danil.kornishev@gmail.com>
 - Florian Huonder <florian.huonder@prolutions.ch>
 - Sacha Dolski <sacha.dolski@prolutions.ch>
-description: Gherkin/Cucumber implementation in dart
+description: Gherkin/Cucumber implementation in dart (migrated to Dart2's async/await semantics).
 homepage: https://github.com/prolutionsGmbH/dherkin
+environment:
+  sdk: '>=2.0.0 <3.0.0'
 dependencies:
   log4dart: ">=1.4.10 <1.5.0"
-  args: "1.4.3"
+  args: ">=1.4.3 <1.5.0"
   ansicolor: ">=0.0.9 <0.1.0"
-dev_dependencies:
