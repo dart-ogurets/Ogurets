@@ -1,7 +1,6 @@
 library dherkin;
 
 import "dart:io";
-import "dart:async";
 
 import 'package:args/args.dart';
 import "package:log4dart/log4dart.dart";
@@ -10,7 +9,6 @@ import 'dherkin_core.dart';
 export 'dherkin_core.dart';
 
 
-Logger _log = LoggerFactory.getLogger("dherkin");
 ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
 
 /**
@@ -23,9 +21,6 @@ run(args) async {
   var options = _parseArguments(args);
 
   LoggerFactory.config[".*"].debugEnabled = options["debug"];
-
-  int okScenariosCount = 0;
-  int koScenariosCount = 0;
 
   var runTags = [];
   if (options["tags"] != null) {

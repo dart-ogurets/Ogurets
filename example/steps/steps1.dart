@@ -46,7 +46,7 @@ i_evaluate_$column2$({exampleRow,  out}) {
 }
 
 @StepDef("I evaluate table with example <column2>")
-i_evaluate_table_with({ exampleRow table, out }) {
+i_evaluate_table_with({ exampleRow, table, out }) {
   out.writeln("Step with table on scenario with example");
   out.writeln("TABLE: $table");
 }

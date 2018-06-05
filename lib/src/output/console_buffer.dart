@@ -9,7 +9,7 @@ class ConsoleBuffer implements ResultBuffer {
   Map _columns = {};
   StringBuffer _buffer = new StringBuffer();
 
-  String buffer() {
+  StringBuffer buffer() {
     return _buffer;
   }
 

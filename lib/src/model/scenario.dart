@@ -25,13 +25,11 @@ class Scenario {
       ..scenario = this
       ..background = this.background;
 
-    List<ScenarioStatus> subScenarioStatuses = [];
-
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
     for (Map example in examples) {
-      ScenarioStatus subScenarioStatus = await _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature);
+      await _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature);
     }
     if (!examples.names.isEmpty) {
       scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
@@ -97,7 +95,7 @@ class Scenario {
         params.add(step.pyString);
       }
 
-      var moreParams = {
+      Map<String, dynamic> moreParams = {
         "out": stepStatus.out
       };
 

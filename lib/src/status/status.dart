@@ -10,7 +10,7 @@ class BufferedStatus {
 }
 
 /// A run/feature/scenario status of multiple steps, maybe with undefined ones.
-class StepsExecutionStatus extends BufferedStatus {
+abstract class StepsExecutionStatus extends BufferedStatus {
   /// Undefined steps.
   List<StepStatus> get undefinedSteps;
   /// A [boilerplate] (in Dart) of [undefinedSteps].
@@ -144,14 +144,14 @@ class ScenarioStatus extends StepsExecutionStatus {
   bool get failed => failedStepsCount > 0;
   /// Steps.
   List<StepStatus> get steps {
-    List<ScenarioStatus> all = [];
+    List<BufferedStatus> all = [];
     all.addAll(passedSteps);
     all.addAll(failedSteps);
     return all;
   }
-  List<Step> passedSteps = [];
-  List<Step> failedSteps = [];
-  List<Step> undefinedSteps = [];
+  List<StepStatus> passedSteps = [];
+  List<StepStatus> failedSteps = [];
+  List<StepStatus> undefinedSteps = [];
   int get passedStepsCount => passedSteps.length;
   int get failedStepsCount => failedSteps.length;
   int get undefinedStepsCount => undefinedSteps.length;

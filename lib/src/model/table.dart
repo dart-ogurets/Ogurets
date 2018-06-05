@@ -26,7 +26,7 @@ class GherkinTable extends IterableBase {
   /**
    * Gherkin table
    */
-  String gherkinRows() {
+  List<String> gherkinRows() {
     var rows = [];
 
     if(!_table.isEmpty) {

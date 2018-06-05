@@ -122,7 +122,6 @@ class GherkinParser {
       //  Examples
       iter = examplesPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
-        var match = iter.current;
         currentTable = currentScenario.examples;
       }
 
