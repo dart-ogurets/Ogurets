@@ -21,9 +21,9 @@ class Feature {
 
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
-        _log.debug("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
+        _log.fine("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
         if (_tagsMatch(scenario.tags, runTags)) {
-          _log.debug("Executing Scenario: $scenario");
+          _log.fine("Executing Scenario: $scenario");
 
           scenario.background = background;
           ScenarioStatus scenarioStatus = await scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
@@ -36,7 +36,7 @@ class Feature {
             featureStatus.passedScenarios.add(scenarioStatus);
           }
         } else {
-          _log.debug("Skipping Scenario: $scenario");
+          _log.fine("Skipping Scenario: $scenario");
         }
       }
       featureStatus.buffer.writeln("-------------------");

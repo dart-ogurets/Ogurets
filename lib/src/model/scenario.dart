@@ -110,7 +110,7 @@ class Scenario {
       try { // to actually run the step
         await stepRunners[found](params, moreParams);
       } catch (e, s) {
-        _log.debug("Step failed: $step");
+        _log.fine("Step failed: $step");
         var failure = new StepFailure();
         if (e is Exception) {
           failure.error = e;

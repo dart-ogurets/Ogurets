@@ -4,7 +4,7 @@ import "dart:async";
 import "dart:mirrors";
 import "dart:collection";
 
-import "package:log4dart/log4dart.dart";
+import "package:logging/logging.dart";
 import "package:ansicolor/ansicolor.dart";
 
 part 'src/task.dart';
@@ -23,7 +23,7 @@ part 'src/output/output.dart';
 /// The pupose of this file is to expose the internals of dherkin
 /// without requiring dart:io, so that it can be used in the browser.
 
-Logger _log = LoggerFactory.getLogger("dherkin");
+final Logger _log = new Logger('dherkin');
 
 var _possibleParams = [new Symbol("out"), new Symbol("table"), new Symbol("exampleRow")];
 
@@ -35,9 +35,9 @@ Future<Map<RegExp, Function>> findStepRunners() async {
     for (MethodMirror mm in lib.declarations.values.where((DeclarationMirror dm) => dm is MethodMirror)) {
       var filteredMetadata = mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
       for (InstanceMirror im in filteredMetadata) {
-        _log.debug(im.reflectee.verbiage);
+        _log.fine(im.reflectee.verbiage);
         stepRunners[new RegExp(im.reflectee.verbiage)] = (params, Map namedParams) async {
-          _log.debug("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+          _log.fine("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
           var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
           var convertedNamedParams = new Map.fromIterables(convertedKeys, namedParams.values);

@@ -32,7 +32,7 @@ class GherkinParser {
    * that will be used as helper in the output.
    */
   Feature parse(List<String> contents, { filePath }) {
-    LoggerFactory.config[".*"].debugEnabled = false; // TODO key off options
+    Logger.root.level = Level.INFO;
 
     Feature feature;
     Scenario currentScenario;
@@ -57,7 +57,7 @@ class GherkinParser {
       var iter = tagsPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.debug(match.group(1));
+        _log.fine(match.group(1));
         tags.add(match.group(1));
       }
 
@@ -65,7 +65,7 @@ class GherkinParser {
       iter = featurePattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.debug(match.group(1));
+        _log.fine(match.group(1));
         feature = new Feature(match.group(1), new Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
@@ -75,7 +75,7 @@ class GherkinParser {
       iter = scenarioPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.debug(match.group(1));
+        _log.fine(match.group(1));
         currentScenario = new Scenario(match.group(1), new Location(filePath, lineCounter));
         currentScenario.tags = tags;
         feature.scenarios.add(currentScenario);
@@ -86,7 +86,7 @@ class GherkinParser {
       iter = backgroundPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.debug("Background: ${match.group(1)}");
+        _log.fine("Background: ${match.group(1)}");
         currentScenario = new Background(match.group(1), new Location(filePath, lineCounter));
         feature.background = currentScenario;
       }

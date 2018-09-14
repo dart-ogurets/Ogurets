@@ -3,7 +3,7 @@ library dherkin;
 import "dart:io";
 
 import 'package:args/args.dart';
-import "package:log4dart/log4dart.dart";
+import "package:logging/logging.dart";
 
 import 'dherkin_core.dart';
 export 'dherkin_core.dart';
@@ -19,8 +19,12 @@ ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
  */
 run(args) async {
   var options = _parseArguments(args);
-
-  LoggerFactory.config[".*"].debugEnabled = options["debug"];
+  var debug = options["debug"];
+  if(debug){
+    Logger.root.level = Level.FINE;
+  } else {
+    Logger.root.level = Level.INFO;
+  }
 
   var runTags = [];
   if (options["tags"] != null) {
@@ -34,7 +38,7 @@ run(args) async {
   for (String filePath in featureFiles) {
     List<String> contents = await new File(filePath).readAsLines();
     Feature feature = await new GherkinParserTask(contents, filePath).execute();
-    FeatureStatus featureStatus = await feature.execute(stepRunners, runTags: runTags, debug: options["debug"]);
+    FeatureStatus featureStatus = await feature.execute(stepRunners, runTags: runTags, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
     } else {

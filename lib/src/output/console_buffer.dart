@@ -45,7 +45,7 @@ class ConsoleBuffer implements ResultBuffer {
   }
 
   void flush() {
-    _log.debug("Flushing");
+    _log.fine("Flushing");
     print(_buffer.toString());
 
     _buffer.clear();
