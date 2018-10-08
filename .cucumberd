@@ -1,7 +1,0 @@
-import '/Users/yadaniyil/flutter-projects/dherkin2/example/steps/backgrounds.dart';
-import '/Users/yadaniyil/flutter-projects/dherkin2/example/steps/steps1.dart';
-import '/Users/yadaniyil/flutter-projects/dherkin2/example/steps/py_strings.dart';
-import 'dart:io';
-import 'package:dherkin2/dherkin.dart';
-
-void main(args) {run(args).whenComplete(() => exit(0));}
