@@ -40,7 +40,7 @@ class GherkinParser {
     GherkinTable currentTable;
     String pyString;
 
-    var tags = [];
+    List<String> tags = [];
 
     var lineIter = contents.iterator;
     var lineCounter = 0;
@@ -126,7 +126,7 @@ class GherkinParser {
       }
 
       //  Tables
-      var row = [];
+      List<String> row = [];
       iter = tablePattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;

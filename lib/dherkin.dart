@@ -19,6 +19,12 @@ ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
  */
 run(args) async {
   var options = _parseArguments(args);
+
+  // Use this to run with argument in IDE. Useful for debug.
+//  if (options.arguments == null || options.arguments.isEmpty) {
+//    var hardcodedArg = ['example/gherkin/test_feature.feature'];
+//    options = _parseArguments(hardcodedArg);
+//  }
   var debug = options["debug"];
   if(debug){
     Logger.root.level = Level.FINE;
@@ -26,7 +32,7 @@ run(args) async {
     Logger.root.level = Level.INFO;
   }
 
-  var runTags = [];
+  List<String> runTags = [];
   if (options["tags"] != null) {
     runTags = options["tags"].split(",");
   }

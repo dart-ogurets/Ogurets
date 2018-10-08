@@ -68,7 +68,7 @@ class Scenario {
       var stepStatus = new StepStatus()
         ..step = step;
 
-      var found = stepRunners.keys.firstWhere((key) => key.hasMatch(step.verbiage), orElse: () => null);
+      var found = stepRunners.keys.firstWhere((RegExp key) => key.hasMatch(step.verbiage), orElse: () => null);
 
       if (found == null) {
         stepStatus.defined = false;
