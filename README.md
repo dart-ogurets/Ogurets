@@ -13,7 +13,7 @@ that cannot be used with await.
 
 Usage
 =====
-Dherkin can be executed in a number of ways.
+Dherkin2 can be executed in a number of ways.
 
 cucumberd
 ---------
@@ -21,12 +21,13 @@ Library comes with an executable runner script **cucumberd** in bin/ directory.
 Create symbolic link in a directory on your path, like /usr/local/bin:
 ```
 cd /usr/local/bin
-ln -s path/to/dherkin/bin/cucumberd .
+ln -s path/to/dherkin/bin/cucumberd.dart cucumberd
+cd -
 ```
 
 Execute:
 ```
-cucumberd examples/test_feature.feature
+cucumberd example/gherkin/test_feature.feature
 ```
 
 Note: **cucumberd** will auto-include all step definitions in *steps/* sub-directory.
