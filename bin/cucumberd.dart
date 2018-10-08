@@ -3,7 +3,7 @@
 import "dart:io";
 import "dart:isolate";
 
-final _STEPS_SRC = "steps";
+final _STEPS_SRC = "example/steps";
 
 void main(args) {
   File runFile = new File(".cucumberd");
@@ -25,7 +25,7 @@ void main(args) {
       sink.writeln("import '${fileSystemEntity.absolute.path}';");
     }).onDone(() {
       sink.writeln("import 'dart:io';");
-      sink.writeln("import 'package:dherkin/dherkin.dart';");
+      sink.writeln("import 'package:dherkin2/dherkin.dart';");
       sink.writeln("\nvoid main(args) {run(args).whenComplete(() => exit(0));}");
       sink.close().whenComplete(() => Isolate.spawnUri(new Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
 
