@@ -12,22 +12,22 @@ i_run_dherkin() {
 }
 
 @When("everything \"(\\w+?)\"")
-everything_works(worksArg, {out}) {
+everything_works(worksArg, StringBuffer out) {
   out.writeln("Everything Works $worksArg");
 }
 
 @Then("I run some background")
-i_run_some({out}) {
+i_run_some(out) {
   out.writeln("I run some background");
 }
 
 @StepDef("I have a table")
-i_have_a_table({out, table}) {
+i_have_a_table(StringBuffer out, GherkinTable table) {
   out.writeln("Table step $table");
 }
 
 @StepDef("I am a step after the table")
-i_am_a_step_after({out}) {
+i_am_a_step_after(StringBuffer out) {
   out.writeln("Table2");
 }
 
@@ -36,7 +36,7 @@ i_am_a_table_step({out}) {
 }
 
 @StepDef("everything works just fine")
-everything_works_just({out}) {
+everything_works_just(StringBuffer out) {
   out.writeln("Table4");
 }
 

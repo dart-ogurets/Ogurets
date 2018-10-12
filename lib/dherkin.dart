@@ -21,10 +21,10 @@ run(args) async {
   var options = _parseArguments(args);
 
   // Use this to run with argument in IDE. Useful for debug.
-//  if (options.arguments == null || options.arguments.isEmpty) {
-//    var hardcodedArg = ['example/gherkin/test_feature.feature'];
-//    options = _parseArguments(hardcodedArg);
-//  }
+  if (options.arguments == null || options.arguments.isEmpty) {
+    var hardcodedArg = ['example/gherkin/test_feature.feature'];
+    options = _parseArguments(hardcodedArg);
+  }
   var debug = options["debug"];
   if(debug){
     Logger.root.level = Level.FINE;
