@@ -1,9 +1,10 @@
-name: dherkin2
-version: 1.0.1+1
+name: dherkin3
+version: 3.1.1
 authors:
 - Danil Kornishev <danil.kornishev@gmail.com>
 - Florian Huonder <florian.huonder@prolutions.ch>
 - Sacha Dolski <sacha.dolski@prolutions.ch>
+- Richard Vowles <richard@bluetrainsoftware.com>
 description: Gherkin/Cucumber implementation in dart (migrated to Dart2's async/await semantics).
 homepage: https://github.com/prolutionsGmbH/dherkin
 dependencies:

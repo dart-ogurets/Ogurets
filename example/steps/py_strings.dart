@@ -1,6 +1,6 @@
 library dherkin_stepdefs_py_strings;
 
-import 'package:dherkin2/dherkin.dart';
+import 'package:dherkin3/dherkin.dart';
 
 /// PYSTRINGS ------------------------------------------------------------------
 
@@ -11,12 +11,12 @@ line 2
 """;
 
 @StepDef("I have the following PyString:")
-i_have_the_following_pystring(pyString) {
+i_have_the_following_pystring(pyString) async {
   actualPyString = pyString;
 }
 
 @StepDef("the above Step should have the PyString as last parameter.")
-the_above_stepdef_should_have_the_pystring() {
+the_above_stepdef_should_have_the_pystring() async {
   // maybe we could use the `matchers` package ? Assertions make sense here.
   // also, dherkin could recognize crash errors from assertions errors using core's AssertionError
   if (actualPyString != expectedPyString) {

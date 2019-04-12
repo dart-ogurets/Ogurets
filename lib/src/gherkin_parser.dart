@@ -1,4 +1,4 @@
-part of dherkin_core;
+part of dherkin_core3;
 
 RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = new RegExp(r"\s*Feature\s*:\s*(.+)");

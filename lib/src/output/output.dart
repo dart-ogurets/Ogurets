@@ -1,4 +1,4 @@
-part of dherkin_core;
+part of dherkin_core3;
 
 abstract class ResultBuffer {
   void write(message, {color});

@@ -17,6 +17,7 @@
     And the "phase" of the "moon" is "favorable"
     Then everything "works"
     But work still goes on
+    And Shared instance count is still 1
 
 
   @Tables

@@ -1,4 +1,4 @@
-part of dherkin_core;
+part of dherkin_core3;
 
 class Scenario {
   // todo: Fetch this from GherkinVocabulary or something
@@ -20,7 +20,7 @@ class Scenario {
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, { isFirstOfFeature: true }) async {
+  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, Map<Type, InstanceMirror> instances, { isFirstOfFeature: true }) async {
     var scenarioStatus = new ScenarioStatus()
       ..scenario = this
       ..background = this.background;
@@ -29,7 +29,7 @@ class Scenario {
       examples._table.add({});
     }
     for (Map example in examples) {
-      await _executeSubScenario(scenarioStatus, example, stepRunners, isFirstOfFeature: isFirstOfFeature);
+      await _executeSubScenario(scenarioStatus, example, stepRunners, instances, isFirstOfFeature: isFirstOfFeature);
     }
     if (!examples.names.isEmpty) {
       scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
@@ -50,10 +50,10 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, {isFirstOfFeature: true}) async {
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, Map<Type, InstanceMirror> instances, {isFirstOfFeature: true}) async {
     ScenarioStatus backgroundStatus;
     if (background != null) {
-      backgroundStatus = await background.execute(stepRunners);
+      backgroundStatus = await background.execute(stepRunners, instances);
     }
     if (backgroundStatus != null) {
       scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
@@ -108,7 +108,7 @@ class Scenario {
       }
 
       try { // to actually run the step
-        await stepRunners[found](params, moreParams);
+        await stepRunners[found](params, moreParams, instances);
       } catch (e, s) {
         _log.fine("Step failed: $step");
         var failure = new StepFailure();

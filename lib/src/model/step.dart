@@ -1,4 +1,4 @@
-part of dherkin_core;
+part of dherkin_core3;
 
 class Step {
   String verb;

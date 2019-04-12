@@ -1,4 +1,4 @@
-part of dherkin_core;
+part of dherkin_core3;
 
 class Feature {
   String name;
@@ -11,7 +11,8 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(Map<RegExp, Function> stepRunners, {List<String> runTags, bool debug: false}) async {
+  Future<FeatureStatus> execute(DherkinState state, {List<String> runTags, bool debug: false}) async {
+    Map<RegExp, Function> stepRunners = state.stepRunners;
     if (runTags == null) runTags = [];
     FeatureStatus featureStatus = new FeatureStatus()..feature = this;
 
@@ -22,11 +23,13 @@ class Feature {
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
         _log.fine("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
-        if (_tagsMatch(scenario.tags, runTags)) {
+        if (_tagsMatch(scenario.tags, runTags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))) {
           _log.fine("Executing Scenario: $scenario");
 
+          Map<Type, InstanceMirror> instances = {}..addAll(state.existingInstances);
+
           scenario.background = background;
-          ScenarioStatus scenarioStatus = await scenario.execute(stepRunners, isFirstOfFeature: isFirstScenario);
+          ScenarioStatus scenarioStatus = await scenario.execute(stepRunners, instances, isFirstOfFeature: isFirstScenario);
           isFirstScenario = false;
           featureStatus.buffer.merge(scenarioStatus.buffer);
 
