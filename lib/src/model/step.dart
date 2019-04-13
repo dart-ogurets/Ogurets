@@ -24,25 +24,23 @@ class Step {
   /// see https://github.com/dkornishev/dherkin/issues/27
 
   static dynamic unserialize(String parameter) {
-    var unserialized = parameter;
-    var test = null;
     // Int ?
     try {
-      test = int.parse(parameter);
+      var i = int.parse(parameter);
+      return i;
     }
     on FormatException catch (_) {
     }
-    if (test != null) unserialized = test;
+
     // Num ?
     try {
-      test = num.parse(parameter);
+      var n = num.parse(parameter);
+      return n;
     }
     on FormatException catch (_) {
     }
-    if (test != null) unserialized = test;
 
-
-    return unserialized;
+    return parameter;
   }
 
   String _generateBoilerplate() {

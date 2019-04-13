@@ -13,8 +13,9 @@ void main(args) {
    ..feature("example/gherkin")
    ..debug()
    ..instance(new SharedInstance())
+   ..failOnMissingSteps(false)
    ..step(Backgrounds)
-    ..step(SharedInstanceStepdef)
+   ..step(SharedInstanceStepdef)
    ..step(SampleSteps);
 
   def.run();

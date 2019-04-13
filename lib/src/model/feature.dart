@@ -33,7 +33,7 @@ class Feature {
           isFirstScenario = false;
           featureStatus.buffer.merge(scenarioStatus.buffer);
 
-          if (scenarioStatus.failed) {
+          if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
             featureStatus.failedScenarios.add(scenarioStatus);
           } else {
             featureStatus.passedScenarios.add(scenarioStatus);

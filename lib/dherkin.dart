@@ -48,7 +48,7 @@ run(args) async {
     List<String> contents = await new File(filePath).readAsLines();
     Feature feature = await new GherkinParserTask(contents, filePath).execute();
     FeatureStatus featureStatus = await feature.execute(
-        new DherkinState(stepRunners, null, {}), runTags: runTags, debug: debug);
+        new DherkinState(stepRunners, null, {}, false), runTags: runTags, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
     } else {
@@ -90,38 +90,38 @@ class DherkinOpts {
   Map<Type, InstanceMirror> _instances = {};
   bool _debug = false;
   String _tags = null;
+  bool _failedOnMissingSteps = true;
 
-  DherkinOpts features(String folderOrFile) {
+  void features(String folderOrFile) {
     _features.add(folderOrFile);
-    return this;
   }
 
-  DherkinOpts feature(String folderOrFile) {
-    return features(folderOrFile);
+  void feature(String folderOrFile) {
+    features(folderOrFile);
   }
 
-  DherkinOpts steps(Type clazz) {
-    return step(clazz);
+  void steps(Type clazz) {
+    step(clazz);
   }
 
-  DherkinOpts step(Type clazz) {
+  void step(Type clazz) {
     _stepdefs.add(clazz);
-    return this;
   }
 
-  DherkinOpts instance(Object o) {
+  void instance(Object o) {
     _instances[o.runtimeType] = reflect(o);
-    return this;
   }
 
-  DherkinOpts debug() {
+  void debug() {
     _debug = true;
-    return this;
   }
 
-  DherkinOpts tags(String tags) {
+  void tags(String tags) {
     _tags = tags;
-    return this;
+  }
+
+  void failOnMissingSteps(bool f) {
+    _failedOnMissingSteps = f;
   }
 
   String get scenario {
@@ -178,7 +178,7 @@ class DherkinOpts {
     return files;
   }
 
-  void run() async {
+  Future<RunStatus> run() async {
     Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
@@ -203,7 +203,7 @@ class DherkinOpts {
       List<String> contents = await new File(filePath).readAsLines();
       Feature feature = await new GherkinParserTask(contents, filePath).execute();
       FeatureStatus featureStatus = await feature.execute(
-          new DherkinState(stepRunners, _scenario, _instances), runTags: runTags, debug: _debug);
+          new DherkinState(stepRunners, _scenario, _instances, _failedOnMissingSteps), runTags: runTags, debug: _debug);
       if (featureStatus.failed) {
         runStatus.failedFeatures.add(featureStatus);
       } else {
@@ -224,6 +224,8 @@ class DherkinOpts {
     // Tally the missing stepdefs boilerplate
     _buffer.write(runStatus.boilerplate, color: "yellow");
     _buffer.flush();
+
+    return runStatus;
   }
 }
 

@@ -40,8 +40,9 @@ class DherkinState {
   Map<RegExp, Function> stepRunners;
   String scenarioToRun;
   Map<Type, InstanceMirror> existingInstances;
+  bool failOnMissingSteps;
 
-  DherkinState(this.stepRunners, this.scenarioToRun, this.existingInstances);
+  DherkinState(this.stepRunners, this.scenarioToRun, this.existingInstances, this.failOnMissingSteps);
 }
 
 List<Symbol> _possibleParams = [
@@ -49,6 +50,19 @@ List<Symbol> _possibleParams = [
   new Symbol("table"),
   new Symbol("exampleRow")
 ];
+
+String _transformCucumberExpression(String stepName) {
+  if (stepName.startsWith("^") &&
+      !(stepName.contains("{string}") || stepName.contains("{int}") || stepName.contains("{float}"))) return stepName;
+
+  String nameIs = "^" +stepName.replaceAll("\{string\}", "\"([^\"]*)\"")
+      .replaceAll("{int}", "(\\d+)")
+      .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") + r"$";
+
+  _log.info("transformed ${stepName} to ${nameIs}");
+
+  return nameIs;
+}
 
 ///  Scans the entirety of the vm for step definitions executables
 ///  TODO : refactor to be less convoluted.
@@ -61,7 +75,7 @@ Future<Map<RegExp, Function>> findStepRunners() async {
           mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
       for (InstanceMirror im in filteredMetadata) {
         _log.fine(im.reflectee.verbiage);
-        stepRunners[new RegExp(im.reflectee.verbiage)] =
+        stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
             (params, Map namedParams, Map<Type, Object> instances) async {
           _log.fine(
               "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
@@ -146,6 +160,7 @@ InstanceMirror _newInstance(ClassMirror cm, Map<Type, InstanceMirror> instances)
 }
 
 Future<Map<RegExp, Function>> mergeClassStepRunners(List<Type> types, Map<RegExp, Function> stepRunners) async {
+  final TypeMirror stringMirror = reflectType(String);
   for (final Type type in types) {
     final ClassMirror lib = reflectClass(type);
     for (MethodMirror mm in lib.declarations.values
@@ -154,7 +169,7 @@ Future<Map<RegExp, Function>> mergeClassStepRunners(List<Type> types, Map<RegExp
       mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
       for (InstanceMirror im in filteredMetadata) {
         _log.fine(im.reflectee.verbiage);
-        stepRunners[new RegExp(im.reflectee.verbiage)] =
+        stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
             (List params, Map namedParams, Map<Type, InstanceMirror> instances) async {
           _log.fine(
               "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
@@ -169,10 +184,21 @@ Future<Map<RegExp, Function>> mergeClassStepRunners(List<Type> types, Map<RegExp
           Map<Symbol, dynamic> convertedNamedParams =
           new Map.fromIterables(convertedKeys, namedParams.values);
 
-          // add to the end the missing params
+          // add to the end the missing params, however i think this can put
+          // TODO: them in the wrong order?
           for (ParameterMirror pm in mm.parameters) {
             if (!pm.isNamed && convertedKeys.contains(pm.simpleName)) {
-              params.add(convertedNamedParams[pm.simpleName]);
+              var convertedNamedParam = convertedNamedParams[pm.simpleName];
+
+              params.add(convertedNamedParam);
+            }
+          }
+
+          // force them to strings if the parameters want them as such
+          for (int count = 0; count < mm.parameters.length; count ++) {
+            ParameterMirror pm = mm.parameters[count];
+            if (pm.type == stringMirror && !(params[count] is String)) {
+              params[count] = params[count].toString();
             }
           }
 
