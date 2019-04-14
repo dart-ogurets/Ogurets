@@ -4,6 +4,7 @@ import "dart:async";
 import "dart:mirrors";
 import "dart:collection";
 
+import 'package:dherkin3/src/model/scenario_session.dart';
 import "package:logging/logging.dart";
 import "package:ansicolor/ansicolor.dart";
 
@@ -37,195 +38,210 @@ part 'src/output/output.dart';
 final Logger _log = new Logger('dherkin');
 
 class DherkinState {
-  Map<RegExp, Function> stepRunners;
+  Map<RegExp, Function> stepRunners = {};
+  Map<String, List<Function>> namedBeforeTagRunners = {};
+  Map<String, List<Function>> namedAfterTagRunners = {};
+  List<Type> steps = [];
+  List<Function> beforeRunners = [];
+  List<Function> afterRunners = [];
   String scenarioToRun;
-  Map<Type, InstanceMirror> existingInstances;
+  Map<Type, InstanceMirror> existingInstances = {};
   bool failOnMissingSteps;
 
-  DherkinState(this.stepRunners, this.scenarioToRun, this.existingInstances, this.failOnMissingSteps);
-}
+  void build() async {
+    await this._findMethodStyleStepRunners();
 
-List<Symbol> _possibleParams = [
-  new Symbol("out"),
-  new Symbol("table"),
-  new Symbol("exampleRow")
-];
+    if (steps != null && steps.length > 0) {
+      await this._findClassStyleStepRunners();
+      await findHooks(Before, namedBeforeTagRunners, beforeRunners);
+      await findHooks(After, namedAfterTagRunners, afterRunners);
+    }
+  }
 
-String _transformCucumberExpression(String stepName) {
-  if (stepName.startsWith("^") &&
-      !(stepName.contains("{string}") || stepName.contains("{int}") || stepName.contains("{float}"))) return stepName;
+  List<Symbol> _possibleParams = [
+    new Symbol("out"),
+    new Symbol("table"),
+    new Symbol("exampleRow")
+  ];
 
-  String nameIs = "^" +stepName.replaceAll("\{string\}", "\"([^\"]*)\"")
-      .replaceAll("{int}", "(\\d+)")
-      .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") + r"$";
+  final TypeMirror _stringMirror = reflectType(String);
 
-  _log.info("transformed ${stepName} to ${nameIs}");
+  String _transformCucumberExpression(String stepName) {
+    if (stepName.startsWith("^") &&
+        !(stepName.contains("{string}") || stepName.contains("{int}") || stepName.contains("{float}"))) return stepName;
 
-  return nameIs;
-}
+    String nameIs = "^" +stepName.replaceAll("\{string\}", "\"([^\"]*)\"")
+        .replaceAll("{int}", "(\\d+)")
+        .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") + r"$";
 
-///  Scans the entirety of the vm for step definitions executables
-///  TODO : refactor to be less convoluted.
-Future<Map<RegExp, Function>> findStepRunners() async {
-  Map<RegExp, Function> stepRunners = new Map();
-  for (LibraryMirror lib in currentMirrorSystem().libraries.values) {
-    for (MethodMirror mm in lib.declarations.values
-        .where((DeclarationMirror dm) => dm is MethodMirror)) {
-      var filteredMetadata =
-          mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
-      for (InstanceMirror im in filteredMetadata) {
-        _log.fine(im.reflectee.verbiage);
-        stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
-            (params, Map namedParams, Map<Type, Object> instances) async {
-          _log.fine(
-              "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+    _log.info("transformed ${stepName} to ${nameIs}");
 
-          var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
-          Map<Symbol, dynamic> convertedNamedParams =
-              new Map.fromIterables(convertedKeys, namedParams.values);
-
-          for (ParameterMirror pm in mm.parameters) {
-            if (!pm.isNamed && convertedKeys.contains(pm.simpleName)) {
-              params.add(convertedNamedParams[pm.simpleName]);
-            }
-          }
-
-          //  Remove possible optional params if the function doesn't want them
-          for (Symbol possibleParam in _possibleParams) {
-            mm.parameters.firstWhere(
-                (ParameterMirror param) =>
-                    param.isNamed && param.simpleName == possibleParam,
-                orElse: () {
-                  convertedNamedParams.remove(possibleParam);
-                  return null;
-                });
-          }
+    return nameIs;
+  }
+  
+  Future<DherkinState> findHooks(Type hookType, Map<String, List<Function>> tagRunners, List<Function> globalRunners) async {
+    for (final Type type in steps) {
+      final ClassMirror lib = reflectClass(type);
+      
+      for (MethodMirror mm in lib.declarations.values
+          .where((DeclarationMirror dm) =>
+            dm is MethodMirror && dm.isRegularMethod)) {
+          var filteredMetadata =
+              mm.metadata.where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
           
-          var scenarioStep =
-              () => lib.invoke(mm.simpleName, params, convertedNamedParams);
-          await scenarioStep();
-        };
+          for (InstanceMirror im in filteredMetadata) {
+            var func = (DherkinScenarioSession scenarioSession) async {
+              List<dynamic> params = [];
+
+              // find the parameters, creating them if necessary
+              for (ParameterMirror pm in mm.parameters) {
+                if (!pm.isNamed ) {
+                  if (pm.type.reflectedType == DherkinScenarioSession) {
+                    params.add(scenarioSession);
+                  } else {
+                    params.add(scenarioSession.getInstance(pm.type.reflectedType).reflectee);
+                  }
+                }
+              }
+
+              InstanceMirror instance = scenarioSession.getInstance(type);
+
+              await instance.invoke(mm.simpleName, params);
+            };
+            if (im.reflectee.tag != null) {
+              _log.fine("Tag ${im.reflectee.tag} Hook -> ${mm.simpleName}");
+              if (tagRunners[im.reflectee.tag] == null) {
+                tagRunners[im.reflectee.tag] = [];
+              }
+              tagRunners[im.reflectee.tag].add(func);
+            } else {
+              globalRunners.add(func);
+            }
+          }
       }
     }
+
+    return this;
   }
-  return stepRunners;
-}
 
-List<DeclarationMirror> _constructors(ClassMirror mirror) {
-  return List.from(
-    mirror.declarations.values.where((declare) {
-      return declare is MethodMirror && declare.isConstructor;
-    }));
-}
+  ///  Scans the entirety of the vm for step definitions executables
+  ///  This only picks up method level steps, not those in classes.
+  Future<DherkinState> _findMethodStyleStepRunners() async {
+    for (LibraryMirror lib in currentMirrorSystem().libraries.values) {
+      for (MethodMirror mm in lib.declarations.values
+          .where((DeclarationMirror dm) => dm is MethodMirror)) {
+        var filteredMetadata =
+        mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
+        for (InstanceMirror im in filteredMetadata) {
+          _log.fine(im.reflectee.verbiage);
+          stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
+              (params, Map namedParams, DherkinScenarioSession scenarioSession) async {
+            _log.fine(
+                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
-List<ParameterMirror> _params(var methodMirror) {
-  if (methodMirror is MethodMirror) {
-    return methodMirror.parameters;
-  } else {
-    return [];
-  }
-}
+            Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
 
-// recursively construct the object if necessary and stick each one into
-// the instances map
-InstanceMirror _newInstance(ClassMirror cm, Map<Type, InstanceMirror> instances) {
-  InstanceMirror newInst;
-
-  List<DeclarationMirror> c = _constructors(cm);
-  if (c.length > 0) {
-    DeclarationMirror constructor = c[0];
-    List<ParameterMirror> params = _params(constructor);
-    List<Object> positionalArgs = [];
-    // find the positional arguments in the existing instances map, and if they aren't
-    // there try and recursively create them. This will of course explode with a stack overflow
-    // if we have a circular situation.
-    params.forEach((p) {
-      InstanceMirror inst = instances[p.type.reflectedType];
-      if (inst == null) {
-        inst = _newInstance(reflectClass(p.type.reflectedType), instances);
+            await lib.invoke(mm.simpleName, params, convertedNamedParams);
+          };
+        }
       }
-      positionalArgs.add(inst.reflectee);
+    }
+
+    return this;
+  }
+
+
+  Future<DherkinState> _findClassStyleStepRunners() async {
+    for (final Type type in steps) {
+      final ClassMirror lib = reflectClass(type);
+      for (MethodMirror mm in lib.declarations.values
+          .where((DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+        var filteredMetadata =
+        mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
+        for (InstanceMirror im in filteredMetadata) {
+          _log.fine(im.reflectee.verbiage);
+          stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
+              (List params, Map namedParams, DherkinScenarioSession scenarioSession) async {
+            _log.fine(
+                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+
+            InstanceMirror instance = scenarioSession.getInstance(type);
+
+            // these are the named parameters that were found in the scenario itself
+            Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
+
+            await instance.invoke(mm.simpleName, params, convertedNamedParams);
+          };
+        }
+      }
+    }
+    return this;
+  }
+
+  Map<Symbol, dynamic> _createParameters(Map namedParams, MethodMirror mm, List params, TypeMirror stringMirror) {
+    var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
+    Map<Symbol, dynamic> convertedNamedParams =
+    new Map.fromIterables(convertedKeys, namedParams.values);
+
+    // add to the end the missing params, however i think this can put
+    // TODO: them in the wrong order?
+    for (ParameterMirror pm in mm.parameters) {
+      if (!pm.isNamed && convertedKeys.contains(pm.simpleName)) {
+        var convertedNamedParam = convertedNamedParams[pm.simpleName];
+
+        params.add(convertedNamedParam);
+      }
+    }
+
+    // force them to strings if the parameters want them as such
+    for (int count = 0; count < mm.parameters.length; count ++) {
+      ParameterMirror pm = mm.parameters[count];
+      if (pm.type == stringMirror && !(params[count] is String)) {
+        params[count] = params[count].toString();
+      }
+    }
+
+    //  Remove possible optional params if the function doesn't want them
+    for (Symbol possibleParam in _possibleParams) {
+      mm.parameters.firstWhere(
+              (ParameterMirror param) =>
+          param.isNamed && param.simpleName == possibleParam,
+          orElse: () {
+            convertedNamedParams.remove(possibleParam);
+            return null;
+          });
+    }
+    return convertedNamedParams;
+  }
+
+  /// Do any of the [tags] match one of [expectedTags] ?
+  /// If [expectedTags] is empty, anything matches.
+  bool tagsMatch(List<String> tags, List<String> expectedTags) {
+    return expectedTags.isEmpty ||
+        tags.any((element) => expectedTags.contains(element));
+  }
+
+  void runBeforeTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
+    await beforeRunners.forEach((f) async => await f(scenarioSession));
+
+    await tags.forEach((t) async {
+      var funcList = namedBeforeTagRunners[t.substring(1)];
+      if (funcList != null) {
+        funcList.forEach((func) async => await func(scenarioSession));
+      }
     });
-
-    Symbol constName = constructor.simpleName == cm.simpleName ? const Symbol("") : constructor.simpleName;
-    newInst = cm.newInstance(constName, positionalArgs);
-    instances[cm.reflectedType] = newInst;
-
-  } else {
-    newInst = cm.newInstance(const Symbol(""), []);
-    instances[cm.reflectedType] = newInst;
   }
 
-  return newInst;
-}
+  void runAfterTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
+    await afterRunners.forEach((f) async => await f(scenarioSession));
 
-Future<Map<RegExp, Function>> mergeClassStepRunners(List<Type> types, Map<RegExp, Function> stepRunners) async {
-  final TypeMirror stringMirror = reflectType(String);
-  for (final Type type in types) {
-    final ClassMirror lib = reflectClass(type);
-    for (MethodMirror mm in lib.declarations.values
-        .where((DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
-      var filteredMetadata =
-      mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
-      for (InstanceMirror im in filteredMetadata) {
-        _log.fine(im.reflectee.verbiage);
-        stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
-            (List params, Map namedParams, Map<Type, InstanceMirror> instances) async {
-          _log.fine(
-              "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
-
-          InstanceMirror instance = instances[type];
-          if (instance == null) {
-            instance = _newInstance(lib, instances);
-          }
-
-          // these are the named parameters that were found in the scenario itself
-          var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
-          Map<Symbol, dynamic> convertedNamedParams =
-          new Map.fromIterables(convertedKeys, namedParams.values);
-
-          // add to the end the missing params, however i think this can put
-          // TODO: them in the wrong order?
-          for (ParameterMirror pm in mm.parameters) {
-            if (!pm.isNamed && convertedKeys.contains(pm.simpleName)) {
-              var convertedNamedParam = convertedNamedParams[pm.simpleName];
-
-              params.add(convertedNamedParam);
-            }
-          }
-
-          // force them to strings if the parameters want them as such
-          for (int count = 0; count < mm.parameters.length; count ++) {
-            ParameterMirror pm = mm.parameters[count];
-            if (pm.type == stringMirror && !(params[count] is String)) {
-              params[count] = params[count].toString();
-            }
-          }
-
-          //  Remove possible optional params if the function doesn't want them
-          for (Symbol possibleParam in _possibleParams) {
-            mm.parameters.firstWhere(
-                    (ParameterMirror param) =>
-                param.isNamed && param.simpleName == possibleParam,
-                orElse: () {
-                  convertedNamedParams.remove(possibleParam);
-                  return null;
-                });
-          }
-
-          var scenarioStep =
-              () => instance.invoke(mm.simpleName, params, convertedNamedParams);
-          await scenarioStep();
-        };
+    await tags.forEach((t) async {
+      var funcList = namedBeforeTagRunners[t.substring(1)];
+      if (funcList != null) {
+        funcList.forEach((func) async => await func(scenarioSession));
       }
-    }
+    });
   }
-  return stepRunners;
 }
 
-/// Do any of the [tags] match one of [expectedTags] ?
-/// If [expectedTags] is empty, anything matches.
-bool _tagsMatch(List<String> tags, List<String> expectedTags) {
-  return expectedTags.isEmpty ||
-      tags.any((element) => expectedTags.contains(element));
-}
+

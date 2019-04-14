@@ -12,32 +12,38 @@ class Feature {
   Feature(this.name, this.location);
 
   Future<FeatureStatus> execute(DherkinState state, {List<String> runTags, bool debug: false}) async {
-    Map<RegExp, Function> stepRunners = state.stepRunners;
     if (runTags == null) runTags = [];
     FeatureStatus featureStatus = new FeatureStatus()..feature = this;
 
-    if (_tagsMatch(tags, runTags)) {
+    if (state.tagsMatch(tags, runTags)) {
       featureStatus.buffer.write("\nFeature: $name");
       featureStatus.buffer.writeln("$location", color: 'gray');
 
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
         _log.fine("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
-        if (_tagsMatch(scenario.tags, runTags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))) {
+        if (state.tagsMatch(scenario.tags, runTags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))) {
           _log.fine("Executing Scenario: $scenario");
 
-          Map<Type, InstanceMirror> instances = {}..addAll(state.existingInstances);
+          DherkinScenarioSession scenarioSession = new DherkinScenarioSession({}..addAll(state.existingInstances));
 
-          scenario.background = background;
-          ScenarioStatus scenarioStatus = await scenario.execute(stepRunners, instances, isFirstOfFeature: isFirstScenario);
-          isFirstScenario = false;
-          featureStatus.buffer.merge(scenarioStatus.buffer);
+          await state.runBeforeTags(scenario.tags, scenarioSession);
 
-          if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
-            featureStatus.failedScenarios.add(scenarioStatus);
-          } else {
-            featureStatus.passedScenarios.add(scenarioStatus);
+          try {
+            scenario.background = background;
+            ScenarioStatus scenarioStatus = await scenario.execute(state, scenarioSession, isFirstOfFeature: isFirstScenario);
+            isFirstScenario = false;
+            featureStatus.buffer.merge(scenarioStatus.buffer);
+
+            if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
+              featureStatus.failedScenarios.add(scenarioStatus);
+            } else {
+              featureStatus.passedScenarios.add(scenarioStatus);
+            }
+          } finally { // make sure we run the after tags
+            await state.runAfterTags(scenario.tags, scenarioSession);
           }
+
         } else {
           _log.fine("Skipping Scenario: $scenario");
         }

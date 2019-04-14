@@ -20,7 +20,7 @@ class Scenario {
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<ScenarioStatus> execute(Map<RegExp, Function> stepRunners, Map<Type, InstanceMirror> instances, { isFirstOfFeature: true }) async {
+  Future<ScenarioStatus> execute(DherkinState state, DherkinScenarioSession scenarioSession, { isFirstOfFeature: true }) async {
     var scenarioStatus = new ScenarioStatus()
       ..scenario = this
       ..background = this.background;
@@ -29,7 +29,7 @@ class Scenario {
       examples._table.add({});
     }
     for (Map example in examples) {
-      await _executeSubScenario(scenarioStatus, example, stepRunners, instances, isFirstOfFeature: isFirstOfFeature);
+      await _executeSubScenario(scenarioStatus, example, state, scenarioSession, isFirstOfFeature: isFirstOfFeature);
     }
     if (!examples.names.isEmpty) {
       scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
@@ -50,10 +50,10 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, stepRunners, Map<Type, InstanceMirror> instances, {isFirstOfFeature: true}) async {
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, DherkinState state, DherkinScenarioSession scenarioSession, {isFirstOfFeature: true}) async {
     ScenarioStatus backgroundStatus;
     if (background != null) {
-      backgroundStatus = await background.execute(stepRunners, instances);
+      backgroundStatus = await background.execute(state, scenarioSession);
     }
     if (backgroundStatus != null) {
       scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
@@ -68,7 +68,7 @@ class Scenario {
       var stepStatus = new StepStatus()
         ..step = step;
 
-      var found = stepRunners.keys.firstWhere((RegExp key) => key.hasMatch(step.verbiage), orElse: () => null);
+      var found = state.stepRunners.keys.firstWhere((RegExp key) => key.hasMatch(step.verbiage), orElse: () => null);
 
       if (found == null) {
         stepStatus.defined = false;
@@ -108,7 +108,7 @@ class Scenario {
       }
 
       try { // to actually run the step
-        await stepRunners[found](params, moreParams, instances);
+        await state.stepRunners[found](params, moreParams, scenarioSession);
       } catch (e, s) {
         _log.fine("Step failed: $step");
         var failure = new StepFailure();

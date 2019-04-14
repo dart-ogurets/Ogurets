@@ -42,5 +42,5 @@
       | E       | F       | G       | H       |
   Examples:
     | exampleColumn1 | exampleColumn2 |
-    | hello   | world   |
-    | goodbye | world   |
+    | hello          | world          |
+    | goodbye        | world          |

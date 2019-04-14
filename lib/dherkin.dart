@@ -42,13 +42,14 @@ run(args) async {
 
   var featureFiles = options.rest;
   RunStatus runStatus = new RunStatus();
+  DherkinState state = new DherkinState();
 
-  var stepRunners = await findStepRunners();
+  await state.build();
+
   for (String filePath in featureFiles) {
     List<String> contents = await new File(filePath).readAsLines();
     Feature feature = await new GherkinParserTask(contents, filePath).execute();
-    FeatureStatus featureStatus = await feature.execute(
-        new DherkinState(stepRunners, null, {}, false), runTags: runTags, debug: debug);
+    FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
     } else {
@@ -105,6 +106,10 @@ class DherkinOpts {
   }
 
   void step(Type clazz) {
+    _stepdefs.add(clazz);
+  }
+
+  void hooks(Type clazz) {
     _stepdefs.add(clazz);
   }
 
@@ -196,14 +201,18 @@ class DherkinOpts {
     var featureFiles = _determineFeatureFiles();
     RunStatus runStatus = new RunStatus();
 
-    var stepRunners = await findStepRunners();
-    await mergeClassStepRunners(_stepdefs, stepRunners);
+    DherkinState state = new DherkinState();
+    state.steps = this._stepdefs;
+    state.failOnMissingSteps = this._failedOnMissingSteps;
+    state.scenarioToRun = this._scenario;
+    state.existingInstances = _instances;
+
+    await state.build();
 
     for (String filePath in featureFiles) {
       List<String> contents = await new File(filePath).readAsLines();
       Feature feature = await new GherkinParserTask(contents, filePath).execute();
-      FeatureStatus featureStatus = await feature.execute(
-          new DherkinState(stepRunners, _scenario, _instances, _failedOnMissingSteps), runTags: runTags, debug: _debug);
+      FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: _debug);
       if (featureStatus.failed) {
         runStatus.failedFeatures.add(featureStatus);
       } else {

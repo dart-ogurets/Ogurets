@@ -8,7 +8,7 @@ import 'steps/py_strings.dart';
 import 'steps/shared_instance_stepdef.dart';
 import 'steps/steps1.dart';
 
-void main(args) {
+void main(args) async {
   var def = new DherkinOpts()
    ..feature("example/gherkin")
    ..debug()
@@ -18,6 +18,6 @@ void main(args) {
    ..step(SharedInstanceStepdef)
    ..step(SampleSteps);
 
-  def.run();
+  await def.run();
 
 }

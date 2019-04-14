@@ -1,5 +1,6 @@
 Feature: Sample expressions
 
+  @CukeExpression
   Scenario: I match each one
     Given I have a "fred" with 1.0
     And A "mary" with 2
