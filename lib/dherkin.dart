@@ -206,8 +206,6 @@ class DherkinOpts {
       } else {
         runStatus.passedFeatures.add(featureStatus);
       }
-
-      state.fmt.done(featureStatus);
     }
 
     state.fmt.eof(runStatus);

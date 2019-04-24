@@ -33,10 +33,16 @@ class Scenario {
     if (!examples.names.isEmpty) {
       state.fmt.examples(examples);
     }
+
+    state.fmt.startOfScenarioLifeCycle(scenarioStatus);
+
     for (Map example in examples) {
       await _executeSubScenario(scenarioStatus, example, state,
           isFirstOfFeature: isFirstOfFeature, scenarioSession: scenarioSession);
     }
+
+    state.fmt.endOfScenarioLifeCycle(scenarioStatus);
+    
     if (!examples.names.isEmpty) {
       state.fmt.examplesEnd();
     }
@@ -71,7 +77,7 @@ class Scenario {
             isFirst: isFirstOfFeature);
       }
 
-      state.fmt.startOfScenarioLifeCycle(scenarioStatus);
+
 
       var iter = steps.iterator;
       while (iter.moveNext()) {
@@ -140,7 +146,7 @@ class Scenario {
         }
       }
 
-      state.fmt.endOfScenarioLifeCycle(scenarioStatus);
+
     } finally {
       await state.runAfterTags(scenarioStatus.scenario.tags, scenarioSession);
     }
