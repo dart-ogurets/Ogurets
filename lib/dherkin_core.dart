@@ -86,7 +86,7 @@ class DherkinState {
         !(stepName.contains("{string}") || stepName.contains("{int}") || stepName.contains("{float}"))) return stepName;
 
     String nameIs = "^" +stepName.replaceAll("\{string\}", "\"([^\"]*)\"")
-        .replaceAll("{int}", "(\\d+)")
+        .replaceAll("{int}", "([-+]?\\d+)")
         .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") + r"$";
 
     _log.info("transformed ${stepName} to ${nameIs}");
@@ -239,23 +239,27 @@ class DherkinState {
   void runBeforeTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
     await beforeRunners.forEach((f) async => await f(scenarioSession));
 
-    await tags.forEach((t) async {
-      var funcList = namedBeforeTagRunners[t.substring(1)];
-      if (funcList != null) {
-        funcList.forEach((func) async => await func(scenarioSession));
-      }
-    });
+    if (tags != null) {
+      await tags.forEach((t) async {
+        var funcList = namedBeforeTagRunners[t.substring(1)];
+        if (funcList != null) {
+          funcList.forEach((func) async => await func(scenarioSession));
+        }
+      });
+    }
   }
 
   void runAfterTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
     await afterRunners.forEach((f) async => await f(scenarioSession));
 
-    await tags.forEach((t) async {
-      var funcList = namedBeforeTagRunners[t.substring(1)];
-      if (funcList != null) {
-        funcList.forEach((func) async => await func(scenarioSession));
-      }
-    });
+    if (tags != null) {
+      await tags.forEach((t) async {
+        var funcList = namedBeforeTagRunners[t.substring(1)];
+        if (funcList != null) {
+          funcList.forEach((func) async => await func(scenarioSession));
+        }
+      });
+    }
   }
 }
 

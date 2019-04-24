@@ -24,23 +24,14 @@ class Feature {
         if (state.tagsMatch(scenario.tags, runTags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))) {
           _log.fine("Executing Scenario: $scenario");
 
-          DherkinScenarioSession scenarioSession = new DherkinScenarioSession({}..addAll(state.existingInstances));
+          scenario.background = background;
+          ScenarioStatus scenarioStatus = await scenario.execute(state, isFirstOfFeature: isFirstScenario);
 
-          await state.runBeforeTags(scenario.tags, scenarioSession);
-
-          try {
-            scenario.background = background;
-            ScenarioStatus scenarioStatus = await scenario.execute(state, scenarioSession, isFirstOfFeature: isFirstScenario);
-
-            if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
-              featureStatus.failedScenarios.add(scenarioStatus);
-            } else {
-              featureStatus.passedScenarios.add(scenarioStatus);
-            }
-          } finally { // make sure we run the after tags
-            await state.runAfterTags(scenario.tags, scenarioSession);
+          if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
+            featureStatus.failedScenarios.add(scenarioStatus);
+          } else {
+            featureStatus.passedScenarios.add(scenarioStatus);
           }
-
         } else {
           _log.fine("Skipping Scenario: $scenario");
         }

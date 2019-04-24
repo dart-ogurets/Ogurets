@@ -17,13 +17,9 @@ class Step {
     var text = verbiage;
     
     exampleRow.forEach((k,v) {
-      if (v is String) {
-        text = text.replaceAll('<${k}>', '"' + v + '"');
-      } else {
-        text = text.replaceAll('<${k}>', v.toString());
-      }
-
+      text = text.replaceAll('<${k}>', v.toString());
     });
+    
     return text;
   }
 

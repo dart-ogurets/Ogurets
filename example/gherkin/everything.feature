@@ -12,14 +12,24 @@ Feature: Making sure that parser works
     Then everything "works"
 
   Scenario Outline:  Outline Some examples
-    Given I read another <column1>
-    And I evaluate <column2>
+    Given I read another "<column1>"
+    And I evaluate "<column2>"
     And Shared instance count is still 1
   Examples:
     | column1 | column2 |
     | hello   | world   |
     | hello   | world   |
     | hello   | world   |
+
+
+  Scenario Outline: Using integers in examples
+    Given I add <amt1>
+    And I add <amt2>
+    Then the total should be <total>
+    Examples:
+    | amt1 | amt2 | total |
+    | 4    | 3    | 7    |
+    | -1   | 8    | 7    |
 
   @Tables
   Scenario: Tables
