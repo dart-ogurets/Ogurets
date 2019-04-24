@@ -1,11 +1,8 @@
 part of dherkin_core3;
 
 class BufferedStatus {
-  /// Text buffer for the runner to write in.
-  ResultBuffer buffer;
-
-  BufferedStatus() {
-    buffer = new ColoredFragmentsBuffer();
+  final Formatter fmt;
+  BufferedStatus(this.fmt) {
   }
 }
 
@@ -31,7 +28,7 @@ abstract class StepsExecutionStatus extends BufferedStatus {
     return bp;
   }
 
-  StepsExecutionStatus()  : super();
+  StepsExecutionStatus(Formatter fmt)  : super(fmt);
 }
 
 
@@ -75,7 +72,7 @@ class RunStatus extends StepsExecutionStatus {
   String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
   String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
-  RunStatus() : super();
+  RunStatus(Formatter fmt) : super(fmt);
 }
 
 
@@ -124,7 +121,7 @@ class FeatureStatus extends StepsExecutionStatus {
   String get trace => failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
   String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
-  FeatureStatus() : super();
+  FeatureStatus(Formatter fmt) : super(fmt);
 }
 
 
@@ -166,7 +163,7 @@ class ScenarioStatus extends StepsExecutionStatus {
     return _failures;
   }
 
-  ScenarioStatus() : super();
+  ScenarioStatus(Formatter fmt) : super(fmt);
 
   void mergeBackground(ScenarioStatus other, { isFirst: true }) {
     if (other.scenario is Background) {
@@ -174,13 +171,13 @@ class ScenarioStatus extends StepsExecutionStatus {
       passedSteps.addAll(other.passedSteps);
       failedSteps.addAll(other.failedSteps);
       undefinedSteps.addAll(other.undefinedSteps);
-      if (isFirst) {
+//      if (isFirst) {
         // If we write to background within the worker task
         // the others don't have the updated value,
         // so we use the parameter isFirst.
         // background.bufferIsMerged = true;
-        buffer.merge(other.buffer);
-      }
+//        buffer.merge(other.buffer);
+//      }
     } else {
       throw new Exception("$other is not a Background");
     }
@@ -206,35 +203,5 @@ class StepStatus extends BufferedStatus {
 
   StringBuffer out = new StringBuffer();
 
-  StepStatus() : super();
-
-  void writeIntoBuffer() {
-    var color = "green";
-    var failureMessage = "";
-
-    if (!defined) {
-      color = "yellow";
-    }
-    if (failed) {
-      color = "red";
-      failureMessage = "\n${failure.error}\n${failure.trace}";
-    }
-    if (step.pyString != null) {
-      buffer.writeln("\t\t${step.verbiage}\n\"\"\"\n${step.pyString}\"\"\"$failureMessage", color: color);
-    } else {
-      buffer.write("\t\t${step.verbiage}", color: color);
-      buffer.write("\t${step.location}", color: 'gray');
-
-      if (!step.table.isEmpty) {
-        buffer.write("\n${step.table.gherkinRows().join("\n")}", color: 'cyan');
-      }
-
-      if(out.isNotEmpty) {
-        buffer.write("\n");
-        buffer.write(out.toString());
-      }
-
-      buffer.writeln(failureMessage, color: color);
-    }
-  }
+  StepStatus(Formatter fmt) : super(fmt);
 }

@@ -13,11 +13,10 @@ class Feature {
 
   Future<FeatureStatus> execute(DherkinState state, {List<String> runTags, bool debug: false}) async {
     if (runTags == null) runTags = [];
-    FeatureStatus featureStatus = new FeatureStatus()..feature = this;
+    FeatureStatus featureStatus = new FeatureStatus(state.fmt)..feature = this;
 
     if (state.tagsMatch(tags, runTags)) {
-      featureStatus.buffer.write("\nFeature: $name");
-      featureStatus.buffer.writeln("$location", color: 'gray');
+      state.fmt.feature(featureStatus);
 
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
@@ -32,8 +31,6 @@ class Feature {
           try {
             scenario.background = background;
             ScenarioStatus scenarioStatus = await scenario.execute(state, scenarioSession, isFirstOfFeature: isFirstScenario);
-            isFirstScenario = false;
-            featureStatus.buffer.merge(scenarioStatus.buffer);
 
             if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
               featureStatus.failedScenarios.add(scenarioStatus);
@@ -48,12 +45,8 @@ class Feature {
           _log.fine("Skipping Scenario: $scenario");
         }
       }
-      featureStatus.buffer.writeln("-------------------");
-      featureStatus.buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}", color: 'green');
 
-      if (featureStatus.failedScenariosCount > 0) {
-        featureStatus.buffer.writeln("Scenarios failed: ${featureStatus.failedScenariosCount}", color: 'red');
-      }
+      state.fmt.done(featureStatus);
       return featureStatus;
     } else {
       _log.info("Skipping feature $name due to tags not matching");

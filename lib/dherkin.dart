@@ -10,8 +10,6 @@ import 'dherkin_core.dart';
 export 'dherkin_core.dart';
 
 
-ResultBuffer _buffer = new ConsoleBuffer(); // TODO instantiate based on args
-
 final Logger _log = new Logger('dherkin');
 
 /**
@@ -41,10 +39,10 @@ run(args) async {
   }
 
   var featureFiles = options.rest;
-  RunStatus runStatus = new RunStatus();
-  DherkinState state = new DherkinState();
-
+  DherkinState state = DherkinState(ConsoleBuffer());
   await state.build();
+
+  RunStatus runStatus = RunStatus(state.fmt);
 
   for (String filePath in featureFiles) {
     List<String> contents = await new File(filePath).readAsLines();
@@ -55,21 +53,10 @@ run(args) async {
     } else {
       runStatus.passedFeatures.add(featureStatus);
     }
-    _buffer.merge(featureStatus.buffer);
-    _buffer.flush();
+    state.fmt.done(featureStatus);
   }
-  // Tally the failed / passed features
-  _buffer.writeln("==================");
-  if (runStatus.passedFeaturesCount > 0) {
-    _buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}", color: "green");
-  }
-  if (runStatus.failedFeaturesCount > 0) {
-    _buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}", color: "red");
-  }
-  _buffer.flush();
-  // Tally the missing stepdefs boilerplate
-  _buffer.write(runStatus.boilerplate, color: "yellow");
-  _buffer.flush();
+
+  state.fmt.eof(runStatus);
 }
 
 /**
@@ -199,15 +186,16 @@ class DherkinOpts {
     List<String> runTags = _tags == null ? [] : _tags.split(",");
 
     var featureFiles = _determineFeatureFiles();
-    RunStatus runStatus = new RunStatus();
 
-    DherkinState state = new DherkinState();
+    DherkinState state = new DherkinState(new ConsoleBuffer());
     state.steps = this._stepdefs;
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;
     state.existingInstances = _instances;
 
     await state.build();
+
+    RunStatus runStatus = new RunStatus(state.fmt);
 
     for (String filePath in featureFiles) {
       List<String> contents = await new File(filePath).readAsLines();
@@ -218,22 +206,12 @@ class DherkinOpts {
       } else {
         runStatus.passedFeatures.add(featureStatus);
       }
-      _buffer.merge(featureStatus.buffer);
-      _buffer.flush();
-    }
-    // Tally the failed / passed features
-    _buffer.writeln("==================");
-    if (runStatus.passedFeaturesCount > 0) {
-      _buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}", color: "green");
-    }
-    if (runStatus.failedFeaturesCount > 0) {
-      _buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}", color: "red");
-    }
-    _buffer.flush();
-    // Tally the missing stepdefs boilerplate
-    _buffer.write(runStatus.boilerplate, color: "yellow");
-    _buffer.flush();
 
+      state.fmt.done(featureStatus);
+    }
+
+    state.fmt.eof(runStatus);
+    
     return runStatus;
   }
 }

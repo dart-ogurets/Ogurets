@@ -7,6 +7,8 @@ import "dart:collection";
 import 'package:dherkin3/src/model/scenario_session.dart';
 import "package:logging/logging.dart";
 import "package:ansicolor/ansicolor.dart";
+import 'package:intl/intl.dart';
+import 'package:sprintf/sprintf.dart';
 
 part 'src/task.dart';
 
@@ -32,6 +34,8 @@ part 'src/output/console_buffer.dart';
 
 part 'src/output/output.dart';
 
+part 'src/output/formatter.dart';
+
 /// The pupose of this file is to expose the internals of dherkin
 /// without requiring dart:io, so that it can be used in the browser.
 
@@ -46,7 +50,12 @@ class DherkinState {
   List<Function> afterRunners = [];
   String scenarioToRun;
   Map<Type, InstanceMirror> existingInstances = {};
-  bool failOnMissingSteps;
+  bool failOnMissingSteps = false;
+  List<Formatter> formatters = [];
+  Formatter fmt;
+  final ResultBuffer resultBuffer;
+
+  DherkinState(this.resultBuffer);
 
   void build() async {
     await this._findMethodStyleStepRunners();
@@ -56,6 +65,12 @@ class DherkinState {
       await findHooks(Before, namedBeforeTagRunners, beforeRunners);
       await findHooks(After, namedAfterTagRunners, afterRunners);
     }
+
+    if (formatters.length == 0) {
+      formatters.add(new BasicFormatter(resultBuffer));
+    }
+    
+    fmt = new DelegatingFormatter(formatters);
   }
 
   List<Symbol> _possibleParams = [

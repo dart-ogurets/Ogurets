@@ -20,24 +20,25 @@ class Scenario {
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<ScenarioStatus> execute(DherkinState state, DherkinScenarioSession scenarioSession, { isFirstOfFeature: true }) async {
-    var scenarioStatus = new ScenarioStatus()
+  Future<ScenarioStatus> execute(
+      DherkinState state, DherkinScenarioSession scenarioSession,
+      {isFirstOfFeature: true}) async {
+    var scenarioStatus = new ScenarioStatus(state.fmt)
       ..scenario = this
       ..background = this.background;
 
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
+    if (!examples.names.isEmpty) {
+      state.fmt.examples(examples);
+    }
     for (Map example in examples) {
-      await _executeSubScenario(scenarioStatus, example, state, scenarioSession, isFirstOfFeature: isFirstOfFeature);
+      await _executeSubScenario(scenarioStatus, example, state, scenarioSession,
+          isFirstOfFeature: isFirstOfFeature);
     }
     if (!examples.names.isEmpty) {
-      scenarioStatus.buffer.writeln("\t  Examples: ", color: 'cyan');
-      var counter = 0;
-      examples.gherkinRows().forEach((row) {
-        scenarioStatus.buffer.writeln(row, color: counter == 0 ? 'magenta' : 'green');
-        counter++;
-      });
+      state.fmt.examplesEnd();
     }
     return scenarioStatus;
   }
@@ -50,30 +51,32 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus, exampleRow, DherkinState state, DherkinScenarioSession scenarioSession, {isFirstOfFeature: true}) async {
+  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus,
+      exampleRow, DherkinState state, DherkinScenarioSession scenarioSession,
+      {isFirstOfFeature: true}) async {
     ScenarioStatus backgroundStatus;
     if (background != null) {
       backgroundStatus = await background.execute(state, scenarioSession);
     }
     if (backgroundStatus != null) {
-      scenarioStatus.mergeBackground(backgroundStatus, isFirst: isFirstOfFeature);
+      scenarioStatus.mergeBackground(backgroundStatus,
+          isFirst: isFirstOfFeature);
     }
 
-    scenarioStatus.buffer.write("\n\t${gherkinKeyword}: $name");
-    scenarioStatus.buffer.writeln("$location", color: 'gray');
+    state.fmt.startOfScenarioLifeCycle(scenarioStatus);
 
     var iter = steps.iterator;
     while (iter.moveNext()) {
       var step = iter.current;
-      var stepStatus = new StepStatus()
-        ..step = step;
+      var stepStatus = new StepStatus(state.fmt)..step = step;
 
-      var found = state.stepRunners.keys.firstWhere((RegExp key) => key.hasMatch(step.verbiage), orElse: () => null);
+      var found = state.stepRunners.keys.firstWhere(
+          (RegExp key) => key.hasMatch(step.verbiage),
+          orElse: () => null);
 
       if (found == null) {
         stepStatus.defined = false;
-        stepStatus.writeIntoBuffer();
-        scenarioStatus.buffer.merge(stepStatus.buffer);
+        state.fmt.step(stepStatus);
         scenarioStatus.undefinedSteps.add(stepStatus);
         continue;
       }
@@ -95,9 +98,7 @@ class Scenario {
         params.add(step.pyString);
       }
 
-      Map<String, dynamic> moreParams = {
-        "out": stepStatus.out
-      };
+      Map<String, dynamic> moreParams = {"out": stepStatus.out};
 
       if (!exampleRow.isEmpty) {
         moreParams["exampleRow"] = exampleRow;
@@ -107,7 +108,8 @@ class Scenario {
         moreParams["table"] = step.table;
       }
 
-      try { // to actually run the step
+      try {
+        // to actually run the step
         await state.stepRunners[found](params, moreParams, scenarioSession);
       } catch (e, s) {
         _log.fine("Step failed: $step");
@@ -124,10 +126,12 @@ class Scenario {
         if (!stepStatus.failed) {
           scenarioStatus.passedSteps.add(stepStatus);
         }
-        stepStatus.writeIntoBuffer();
-        scenarioStatus.buffer.merge(stepStatus.buffer);
+        state.fmt.step(stepStatus);
       }
     }
+
+    state.fmt.endOfScenarioLifeCycle(scenarioStatus);
+
     return scenarioStatus;
   }
 }
