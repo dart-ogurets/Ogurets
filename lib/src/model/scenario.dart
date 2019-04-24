@@ -70,8 +70,10 @@ class Scenario {
       var step = iter.current;
       var stepStatus = new StepStatus(state.fmt)..step = step;
 
+      var decodedVerbiage = step.decodeVerbiage(exampleRow);
+
       var found = state.stepRunners.keys.firstWhere(
-          (RegExp key) => key.hasMatch(step.verbiage),
+          (RegExp key) => key.hasMatch(decodedVerbiage),
           orElse: () => null);
 
       if (found == null) {
@@ -81,7 +83,7 @@ class Scenario {
         continue;
       }
 
-      var match = found.firstMatch(step.verbiage);
+      var match = found.firstMatch(decodedVerbiage);
 
       // (unrelated) Notes :
       // The FeatureContext class approach for stepdefs makes sense :

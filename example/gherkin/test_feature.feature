@@ -35,8 +35,8 @@
 
   @Example
   Scenario Outline:  Outline with a table step
-    Given I read <column1>
-    And I "evaluate" table with example <column2>
+    Given I read <exampleColumn1>
+    And I "evaluate" table with example <exampleColumn2>
       | column1 | column2 | column3 | column4 |
       | A       | B       | C       | D       |
       | E       | F       | G       | H       |

@@ -41,13 +41,13 @@ class SampleSteps {
     out.writeln("Table4");
   }
 
-  @StepDef("I evaluate <column2>")
-  i_evaluate_$column2$({exampleRow, out}) {
+  @StepDef("I evaluate {string}")
+  i_evaluate_$column2$(String eval, {exampleRow, out}) {
     out.writeln("ROW: $exampleRow");
   }
 
-  @StepDef("I evaluate table with example <column2>")
-  i_evaluate_table_with({ exampleRow, table, out }) {
+  @StepDef("I {string} table with example {string}")
+  i_evaluate_table_with(String verb, String col2, { exampleRow, table, out }) {
     out.writeln("Step with table on scenario with example");
     out.writeln("TABLE: $table");
   }
@@ -61,13 +61,14 @@ class SampleSteps {
 
   }
 
-  @StepDef("I read <column1>")
-  i_read_$column1$({exampleRow}) {
+  @StepDef("I read {string}")
+  i_read_$column1$(String name, {out}) {
+    out.writeln("I'm reading a ${name}");
   }
 
-  @StepDef("I read another <column1>")
-  i_read_another_$column1$({exampleRow }) {
-    // todo
+  @StepDef("I read another {string}")
+  i_read_another_$column1$(String name, {out}) {
+    out.writeln("I'm reading another ${name}");
   }
 
   @StepDef("I am a \"(\\w+?)\" step executed")

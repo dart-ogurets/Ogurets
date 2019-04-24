@@ -4,6 +4,7 @@ import 'package:dherkin3/dherkin.dart';
 
 import 'lib/shared_instance.dart';
 import 'steps/backgrounds.dart';
+import 'steps/expressions.dart';
 import 'steps/py_strings.dart';
 import 'steps/shared_instance_stepdef.dart';
 import 'steps/steps1.dart';
@@ -16,6 +17,7 @@ void main(args) async {
    ..failOnMissingSteps(false)
    ..step(Backgrounds)
    ..step(SharedInstanceStepdef)
+   ..step(Expressions)
    ..step(SampleSteps);
 
   await def.run();

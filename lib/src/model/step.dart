@@ -12,6 +12,21 @@ class Step {
 
   Step(this.verb, this.verbiage, this.location, this.scenario);
 
+  // replace all instances of <column1> with 3 where example data has it as such
+  String decodeVerbiage(Map exampleRow) {
+    var text = verbiage;
+    
+    exampleRow.forEach((k,v) {
+      if (v is String) {
+        text = text.replaceAll('<${k}>', '"' + v + '"');
+      } else {
+        text = text.replaceAll('<${k}>', v.toString());
+      }
+
+    });
+    return text;
+  }
+
   String toString() {
     if (pyString != null) {
       return "$verbiage\n\"\"\"\n$pyString\"\"\"\n$table";
