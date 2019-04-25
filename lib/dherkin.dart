@@ -209,7 +209,9 @@ class DherkinOpts {
     }
 
     state.fmt.eof(runStatus);
-    
+
+    state.resultBuffer.flush();
+
     return runStatus;
   }
 }

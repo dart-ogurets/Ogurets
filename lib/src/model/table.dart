@@ -13,6 +13,8 @@ class GherkinTable extends IterableBase {
 
   bool get empty => _table.isEmpty;
 
+  bool get isValid => _columnNames.length > 0;
+
   List<String> get names => _columnNames;
 
   void addRow(row) {

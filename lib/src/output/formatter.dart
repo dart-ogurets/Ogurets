@@ -11,16 +11,14 @@ abstract class Formatter {
   void syntaxError(String var1, String var2, List<String> var3, String var4,
       int var5);
 
-  void uri(String url);
-
   void feature(FeatureStatus featureStatus);
 
 //  void scenarioOutline(ScenarioOutline var1);
 
+  // examples has to be separate so we can ensure text is inserted between the start of the scenario outline and the examples keyword
   void examples(GherkinTable examples);
 
-  void examplesEnd() {}
-
+  // always followed by "examples" if there are examples, but we have to have them as separate steps so we can insert info between them
   void startOfScenarioLifeCycle(ScenarioStatus startScenario);
 
   void background(Background background);
@@ -31,7 +29,7 @@ abstract class Formatter {
 
   void endOfScenarioLifeCycle(ScenarioStatus endScenario);
 
-  void done(BufferedStatus status);
+  void done(Object status);
 
   void close();
 
@@ -67,7 +65,7 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void done(BufferedStatus status) {
+  void done(Object status) {
     formatters.forEach((f) => f.done(status));
   }
 
@@ -110,16 +108,6 @@ class DelegatingFormatter implements Formatter {
   void syntaxError(String var1, String var2, List<String> var3, String var4, int var5) {
     formatters.forEach((f) => f.syntaxError(var1, var2, var3, var4, var5));
   }
-
-  @override
-  void uri(String url) {
-    formatters.forEach((f) => f.uri(url));
-  }
-
-  @override
-  void examplesEnd() {
-    formatters.forEach((f) => f.examplesEnd());
-  }
 }
 
 class BasicFormatter implements Formatter {
@@ -129,16 +117,14 @@ class BasicFormatter implements Formatter {
 
   @override
   void background(Background background) {
-    // TODO: implement background
   }
 
   @override
   void close() {
-    // TODO: implement close
   }
 
   @override
-  void done(BufferedStatus status) {
+  void done(Object status) {
     if (status is FeatureStatus) {
       FeatureStatus featureStatus = status;
       buffer.writeln("-------------------");
@@ -149,12 +135,11 @@ class BasicFormatter implements Formatter {
       }
 
       buffer.flush();
-    }
+    } 
   }
 
   @override
   void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
-    // TODO: implement endOfScenarioLifeCycle
   }
 
   @override
@@ -191,14 +176,19 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void scenario(ScenarioStatus var1) {
-    // TODO: implement scenario
+  void scenario(ScenarioStatus startScenario) {
+    if (!startScenario.exampleTable.isValid) {
+      buffer.write("\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
+      buffer.writeln("${startScenario.scenario.location}", color: 'gray');
+    }
   }
 
   @override
   void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
-    buffer.write("\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
-    buffer.writeln("${startScenario.scenario.location}", color: 'gray');
+    if (startScenario.exampleTable.isValid) {
+      buffer.write("\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
+      buffer.writeln("${startScenario.scenario.location}", color: 'gray');
+    }
   }
 
   @override
@@ -214,9 +204,9 @@ class BasicFormatter implements Formatter {
       failureMessage = "\n${status.failure.error}\n${status.failure.trace}";
     }
     if (status.step.pyString != null) {
-      buffer.writeln("\t\t${status.step.verbiage}\n\"\"\"\n${status.step.pyString}\"\"\"$failureMessage", color: color);
+      buffer.writeln("\t\t${status.decodedVerbiage}\n\"\"\"\n${status.step.pyString}\"\"\"$failureMessage", color: color);
     } else {
-      buffer.write("\t\t${status.step.verbiage}", color: color);
+      buffer.write("\t\t${status.decodedVerbiage}", color: color);
       buffer.write("\t${status.step.location}", color: 'gray');
 
       if (!status.step.table.isEmpty) {
@@ -242,25 +232,33 @@ class BasicFormatter implements Formatter {
     // TODO: implement uri
   }
 
-  @override
-  void examplesEnd() {
-    // TODO: implement examplesEnd
-  }
 
 }
 
 
+/*
+ IDEA needs the format in:
+[testSuiteStarted feature-name|scenario-name|"example:"|example-line]
+  then each step or hook is a test
+[testSuiteEnded name-from-above]
+
+example name is specifically:
+##teamcity[testSuiteStarted timestamp = '2019-04-25T12:00:06.729+1200' locationHint = 'file://' name = 'Examples:']
+ */
 class IntellijFormatter implements Formatter {
   final ResultBuffer buffer;
+  BasicFormatter _basicFormatter;
+
+
   static const String TEAMCITY_PREFIX = "##teamcity";
 
-  static DateFormat DATE_FORMAT = DateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
+  static DateFormat DATE_FORMAT = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
   static const String FILE_RESOURCE_PREFIX = "file://";
 
   static const String TEMPLATE_TEST_STARTED =
       TEAMCITY_PREFIX +
-          "[testStarted timestamp = '%s' locationHint = '%s' captureStandardOutput = 'true' name = '%s']";
+          "[testStarted timestamp = '%s' locationHint = 'file://%s' captureStandardOutput = 'true' name = '%s']";
   static const String TEMPLATE_TEST_FAILED =
       TEAMCITY_PREFIX +
           "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
@@ -297,12 +295,15 @@ class IntellijFormatter implements Formatter {
   static const String TEMPLATE_SCENARIO_FINISHED = TEAMCITY_PREFIX +
       "[customProgressStatus type = 'testFinished' timestamp = '%s']";
 
-  IntellijFormatter(this.buffer);
+  IntellijFormatter(this.buffer) {
+    this._basicFormatter = new BasicFormatter(this.buffer);
+    out(TEMPLATE_ENTER_THE_MATRIX, [getCurrentTime()]);
+    out(TEMPLATE_SCENARIO_COUNTING_STARTED, ["0", getCurrentTime()]);
+  }
 
   bool _endedByNewLine;
   final Queue<String> _queue = new Queue();
   FeatureStatus currentFeature = null;
-  String _uri = "";
 
   static String _escape(String source) {
     if (source == null) {
@@ -319,69 +320,63 @@ class IntellijFormatter implements Formatter {
     return sprintf(command, escapedParameters);
   }
 
-  String _getFeatureName(String featureHeader) {
+  String _getFeatureName(FeatureStatus feature) {
+    String featureHeader = feature.feature.name;
     var lines = featureHeader.split("\n");
     lines.removeWhere((l) =>
     l.length == 0 || l[0] == '#' || l[0] == '@' || l.indexOf(':') < 0);
     if (lines.length > 0) {
-      return lines[0];
+      return 'Feature: ${lines[0]}';
     } else {
-      return featureHeader;
+      return 'Feature: ${featureHeader}';
     }
   }
 
-  void out(String template, List params) {
-    outCommand(template, false, params);
+  void out(String template, List<String> params) {
+    buffer.writeln(_escapeCommand(template, params));
+    buffer.flush();
   }
-
-  void outCommand(String command, bool waitForScenario,
-      List<String> parameters) {
-    String line = _escapeCommand(command, parameters);
-    if (waitForScenario) {
-      _queue.add(line);
-    } else {
-      try {
-        if (!_endedByNewLine) {
-          buffer.write("\n");
-        }
-        buffer.write(line);
-        buffer.write("\n");
-        _endedByNewLine = true;
-      }catch(ignored) {
-      }
-    }
-  }
-
+  
   String getCurrentTime() {
     return DATE_FORMAT.format(DateTime.now());
   }
 
   @override
   void background(Background background) {
-    // TODO: implement background
+    _basicFormatter.background(background);
   }
 
   @override
   void close() {
-    // TODO: implement close
+    _basicFormatter.close();
   }
 
   @override
-  void done(BufferedStatus status) {
+  void done(Object status) {
+    _basicFormatter.done(status);
+
     if (status == currentFeature) {
-      currentFeature = null;
+      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getFeatureName(currentFeature)]);
+    } else if (status is StepStatus) {
+      StepStatus ss = status as StepStatus;
+      if (ss.failed) {
+        out(TEMPLATE_TEST_FAILED, [getCurrentTime(), _location(ss.step.location), ss.decodedVerbiage]);
+      }
+
+      // TODO: add timing to step
+      out(TEMPLATE_TEST_FINISHED, [getCurrentTime(), "1", ss.decodedVerbiage]);
+    } else if (status is GherkinTable) {
+      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), "Examples:"]);
+      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
+    } else if (status is ScenarioStatus) {
+      var scenario = (status as ScenarioStatus);
+      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getScenarioName(scenario)]);
+      if (scenario.failed) {
+        out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
+      }
+
+      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
     }
-  }
-
-  @override
-  void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
-    // TODO: implement endOfScenarioLifeCycle
-  }
-
-
-  @override
-  void examples(GherkinTable examples) {
-    // TODO: implement examples
   }
 
   @override
@@ -390,63 +385,73 @@ class IntellijFormatter implements Formatter {
       done(currentFeature);
     }
     currentFeature = featureStatus;
-    var currentFeatureName = "Feature: " + featureStatus.feature.name;
-    _uri = featureStatus.feature.location.srcFilePath;
-    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _uri + ":" + featureStatus.feature.name, currentFeatureName]);
-  }
+    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(featureStatus.feature.location), _getFeatureName(featureStatus)]);
 
-  void _closeScenario() {
-
+    _basicFormatter.feature(featureStatus);
   }
 
   @override
-  void scenario(ScenarioStatus scenario) {
-//    _closeScenario();
-//    out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-//    if (isRealScenario(scenario)) {
-//      scenarioCount++;
-//      closeScenarioOutline();
-//      currentSteps.clear();
-//    }
-//    currentScenario = scenario;
-//    beforeExampleSection = false;
-//    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario));
-//
-//    while (queue.size() > 0) {
-//      String smMessage = queue.poll();
-//      outCommand(smMessage);
-//    }
+  void examples(GherkinTable examples) {
+    out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
+    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), "", "Examples:"]);
+    _basicFormatter.examples(examples);
   }
 
   @override
   void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
-    // TODO: implement startOfScenarioLifeCycle
+    if (startScenario.exampleTable.isValid) {
+      out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
+      out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(startScenario.scenario.location), _getScenarioName(startScenario)]);
+    }
+    _basicFormatter.startOfScenarioLifeCycle(startScenario);
   }
 
   @override
+  void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
+    if (endScenario.exampleTable.isValid) {
+      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getScenarioName(endScenario)]);
+      if (endScenario.failed) {
+        out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
+      }
+
+      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
+    }
+    _basicFormatter.endOfScenarioLifeCycle(endScenario);
+  }
+
+  @override
+  void scenario(ScenarioStatus scenario) {
+    if (!scenario.exampleTable.isValid) {
+      out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
+      out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(scenario.scenario.location), _getScenarioName(scenario)]);
+    }
+
+    _basicFormatter.scenario(scenario);
+  }
+
+
+  @override
   void step(StepStatus step) {
-    // TODO: implement step
+    out(TEMPLATE_TEST_STARTED, [getCurrentTime(), _location(step.step.location), step.decodedVerbiage]);
+    _basicFormatter.step(step);
+  }
+
+  String _location(Location location) {
+    return "${location.srcFilePath}:${location.srcLineNumber}";
   }
 
   @override
   void syntaxError(String var1, String var2, List<String> var3, String var4,
       int var5) {
-    // TODO: implement syntaxError
-  }
-
-  @override
-  void uri(String url) {
-    // TODO: implement uri
-  }
-
-  @override
-  void examplesEnd() {
-    // TODO: implement examplesEnd
+    _basicFormatter.syntaxError(var1, var2, var3, var4, var5);
   }
 
   @override
   void eof(RunStatus status) {
-    // TODO: implement eof
+    _basicFormatter.eof(status);
   }
 
+  String _getScenarioName(ScenarioStatus startScenario) {
+    return "Scenario: ${startScenario.scenario.name}";
+  }
 }

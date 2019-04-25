@@ -25,26 +25,34 @@ class Scenario {
       {isFirstOfFeature: true, DherkinScenarioSession scenarioSession}) async {
     var scenarioStatus = new ScenarioStatus(state.fmt)
       ..scenario = this
+      ..exampleTable = this.examples
       ..background = this.background;
 
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
-    if (!examples.names.isEmpty) {
-      state.fmt.examples(examples);
-    }
 
     state.fmt.startOfScenarioLifeCycle(scenarioStatus);
 
+    if (examples.isValid) {
+      state.fmt.examples(examples);
+    }
+
     for (Map example in examples) {
-      await _executeSubScenario(scenarioStatus, example, state,
-          isFirstOfFeature: isFirstOfFeature, scenarioSession: scenarioSession);
+      state.fmt.scenario(scenarioStatus);
+
+      try {
+        await _executeSubScenario(scenarioStatus, example, state,
+            isFirstOfFeature: isFirstOfFeature, scenarioSession: scenarioSession);
+      } finally {
+        state.fmt.done(scenarioStatus);
+      }
     }
 
     state.fmt.endOfScenarioLifeCycle(scenarioStatus);
     
     if (!examples.names.isEmpty) {
-      state.fmt.examplesEnd();
+      state.fmt.done(examples);
     }
     return scenarioStatus;
   }
@@ -72,32 +80,35 @@ class Scenario {
       if (background != null) {
         backgroundStatus = await background.execute(state, scenarioSession: scenarioSession);
       }
+
+
       if (backgroundStatus != null) {
         scenarioStatus.mergeBackground(backgroundStatus,
             isFirst: isFirstOfFeature);
       }
 
 
-
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var stepStatus = new StepStatus(state.fmt)..step = step;
+        var stepStatus = new StepStatus(state.fmt)
+          ..step = step
+          ..decodedVerbiage = step.decodeVerbiage(exampleRow);
 
-        var decodedVerbiage = step.decodeVerbiage(exampleRow);
+        state.fmt.step(stepStatus);
 
         var found = state.stepRunners.keys.firstWhere(
-                (RegExp key) => key.hasMatch(decodedVerbiage),
+                (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage),
             orElse: () => null);
 
         if (found == null) {
           stepStatus.defined = false;
-          state.fmt.step(stepStatus);
+          state.fmt.done(stepStatus);
           scenarioStatus.undefinedSteps.add(stepStatus);
           continue;
         }
 
-        var match = found.firstMatch(decodedVerbiage);
+        var match = found.firstMatch(stepStatus.decodedVerbiage);
 
         // (unrelated) Notes :
         // The FeatureContext class approach for stepdefs makes sense :
@@ -142,7 +153,7 @@ class Scenario {
           if (!stepStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);
           }
-          state.fmt.step(stepStatus);
+          state.fmt.done(stepStatus);
         }
       }
 

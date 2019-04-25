@@ -67,7 +67,8 @@ class DherkinState {
     }
 
     if (formatters.length == 0) {
-      formatters.add(new BasicFormatter(resultBuffer));
+//      formatters.add(new BasicFormatter(resultBuffer));
+      formatters.add(new IntellijFormatter(resultBuffer));
     }
     
     fmt = new DelegatingFormatter(formatters);

@@ -133,6 +133,7 @@ class ScenarioStatus extends StepsExecutionStatus {
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
   Background background;
+  GherkinTable exampleTable;
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
   /// Has the [scenario] [passed] ? (all steps passed)
@@ -197,6 +198,8 @@ class StepStatus extends BufferedStatus {
   bool get crashed => failure != null && !(failure is AssertionError);
   /// Was the [step] [defined] ?
   bool defined = true;
+  /// what is the name of the step with the exampleRow decoded into it?
+  String decodedVerbiage;
 
   /// A possible [failure].
   StepFailure failure;
