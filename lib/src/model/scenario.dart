@@ -43,7 +43,8 @@ class Scenario {
 
       try {
         await _executeSubScenario(scenarioStatus, example, state,
-            isFirstOfFeature: isFirstOfFeature, scenarioSession: scenarioSession);
+            isFirstOfFeature: isFirstOfFeature,
+            scenarioSession: scenarioSession);
       } finally {
         state.fmt.done(scenarioStatus);
       }
@@ -74,19 +75,17 @@ class Scenario {
       scenarioSession = new DherkinScenarioSession({}..addAll(state.existingInstances));
     }
 
-    await state.runBeforeTags(scenarioStatus.scenario.tags, scenarioSession);
+    await state.runBeforeTags(scenarioStatus, scenarioSession);
 
     try {
       if (background != null) {
         backgroundStatus = await background.execute(state, scenarioSession: scenarioSession);
       }
 
-
       if (backgroundStatus != null) {
         scenarioStatus.mergeBackground(backgroundStatus,
             isFirst: isFirstOfFeature);
       }
-
 
       var iter = steps.iterator;
       while (iter.moveNext()) {
@@ -140,15 +139,11 @@ class Scenario {
           await state.stepRunners[found](params, moreParams, scenarioSession);
         } catch (e, s) {
           _log.fine("Step failed: $step");
-          var failure = new StepFailure();
-          if (e is Exception) {
-            failure.error = e;
-          } else {
-            failure.error = new Exception(e.toString());
-          }
-          failure.trace = s.toString();
+          var failure = new StepFailure(e, s.toString());
+
           stepStatus.failure = failure;
           scenarioStatus.failedSteps.add(stepStatus);
+          break;
         } finally {
           if (!stepStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);
@@ -159,7 +154,7 @@ class Scenario {
 
 
     } finally {
-      await state.runAfterTags(scenarioStatus.scenario.tags, scenarioSession);
+      await state.runAfterTags(scenarioStatus, scenarioSession);
     }
 
     return scenarioStatus;

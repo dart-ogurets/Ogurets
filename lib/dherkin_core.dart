@@ -1,6 +1,7 @@
 library dherkin_core3;
 
 import "dart:async";
+import 'dart:io';
 import "dart:mirrors";
 import "dart:collection";
 
@@ -67,8 +68,11 @@ class DherkinState {
     }
 
     if (formatters.length == 0) {
-//      formatters.add(new BasicFormatter(resultBuffer));
-      formatters.add(new IntellijFormatter(resultBuffer));
+      if (Platform.environment['CUCUMBER'] != null) {
+        formatters.add(new IntellijFormatter(resultBuffer));
+      } else {
+        formatters.add(new BasicFormatter(resultBuffer));
+      }
     }
     
     fmt = new DelegatingFormatter(formatters);
@@ -96,6 +100,8 @@ class DherkinState {
   }
   
   Future<DherkinState> findHooks(Type hookType, Map<String, List<Function>> tagRunners, List<Function> globalRunners) async {
+    final hookTypeName = reflectClass(hookType).simpleName.toString();
+
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
       
@@ -104,9 +110,9 @@ class DherkinState {
             dm is MethodMirror && dm.isRegularMethod)) {
           var filteredMetadata =
               mm.metadata.where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
-          
+
           for (InstanceMirror im in filteredMetadata) {
-            var func = (DherkinScenarioSession scenarioSession) async {
+            var func = (DherkinScenarioSession scenarioSession, ScenarioStatus scenarioStatus) async {
               List<dynamic> params = [];
 
               // find the parameters, creating them if necessary
@@ -122,7 +128,24 @@ class DherkinState {
 
               InstanceMirror instance = scenarioSession.getInstance(type);
 
-              await instance.invoke(mm.simpleName, params);
+              var step = new Step(hookTypeName, hookTypeName,
+                  scenarioStatus.scenario.location, scenarioStatus.scenario);
+
+              var stepStatus = new StepStatus(scenarioStatus.fmt)..step = step;
+
+              scenarioStatus.fmt.step(stepStatus);
+
+              try {
+                await instance.invoke(mm.simpleName, params).reflectee;
+              } catch (e, s) {
+                var failure = new StepFailure(e, s.toString());
+
+                stepStatus.failure = failure;
+                scenarioStatus.failedSteps.add(stepStatus);
+              } finally {
+                scenarioStatus.fmt.done(stepStatus);
+              }
+
             };
             if (im.reflectee.tag != null) {
               _log.fine("Tag ${im.reflectee.tag} Hook -> ${mm.simpleName}");
@@ -157,7 +180,7 @@ class DherkinState {
 
             Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
 
-            await lib.invoke(mm.simpleName, params, convertedNamedParams);
+            await lib.invoke(mm.simpleName, params, convertedNamedParams).reflectee;
           };
         }
       }
@@ -186,7 +209,8 @@ class DherkinState {
             // these are the named parameters that were found in the scenario itself
             Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
 
-            await instance.invoke(mm.simpleName, params, convertedNamedParams);
+            await instance.invoke(
+                mm.simpleName, params, convertedNamedParams).reflectee;
           };
         }
       }
@@ -237,27 +261,27 @@ class DherkinState {
         tags.any((element) => expectedTags.contains(element));
   }
 
-  void runBeforeTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
-    await beforeRunners.forEach((f) async => await f(scenarioSession));
+  void runBeforeTags(ScenarioStatus scenarioStatus, DherkinScenarioSession scenarioSession) async {
+    await beforeRunners.forEach((f) async => await f(scenarioSession, scenarioStatus));
 
-    if (tags != null) {
-      await tags.forEach((t) async {
+    if (scenarioStatus.scenario.tags != null) {
+      await scenarioStatus.scenario.tags.forEach((t) async {
         var funcList = namedBeforeTagRunners[t.substring(1)];
         if (funcList != null) {
-          funcList.forEach((func) async => await func(scenarioSession));
+          funcList.forEach((func) async => await func(scenarioSession, scenarioStatus));
         }
       });
     }
   }
 
-  void runAfterTags(List<String> tags, DherkinScenarioSession scenarioSession) async {
-    await afterRunners.forEach((f) async => await f(scenarioSession));
+  void runAfterTags(ScenarioStatus scenarioStatus, DherkinScenarioSession scenarioSession) async {
+    await afterRunners.forEach((f) async => await f(scenarioSession, scenarioStatus));
 
-    if (tags != null) {
-      await tags.forEach((t) async {
+    if (scenarioStatus.scenario.tags != null) {
+      await scenarioStatus.scenario.tags.forEach((t) async {
         var funcList = namedBeforeTagRunners[t.substring(1)];
         if (funcList != null) {
-          funcList.forEach((func) async => await func(scenarioSession));
+          funcList.forEach((func) async => await func(scenarioSession, scenarioStatus));
         }
       });
     }

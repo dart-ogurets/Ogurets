@@ -135,7 +135,12 @@ class BasicFormatter implements Formatter {
       }
 
       buffer.flush();
-    } 
+    } else if (status is StepStatus) {
+      StepStatus ss = status as StepStatus;
+      if (ss.failed) {
+        buffer.writeln("Step: ${ss.decodedVerbiage} failed (${ss.step.location.toString()}:\n${ss.failure.error}: ${ss.failure.trace}", color: 'red');
+      }
+    }
   }
 
   @override
@@ -220,6 +225,8 @@ class BasicFormatter implements Formatter {
 
       buffer.writeln(failureMessage, color: color);
     }
+
+    buffer.flush();
   }
 
   @override
@@ -360,7 +367,7 @@ class IntellijFormatter implements Formatter {
     } else if (status is StepStatus) {
       StepStatus ss = status as StepStatus;
       if (ss.failed) {
-        out(TEMPLATE_TEST_FAILED, [getCurrentTime(), _location(ss.step.location), ss.decodedVerbiage]);
+        out(TEMPLATE_TEST_FAILED, [getCurrentTime(), _location(ss.step.location), ss.failure.error.toString(), ss.decodedVerbiage, '']);
       }
 
       // TODO: add timing to step
