@@ -255,7 +255,7 @@ example name is specifically:
 class IntellijFormatter implements Formatter {
   final ResultBuffer buffer;
   BasicFormatter _basicFormatter;
-
+  String _currentDirectory;
 
   static const String TEAMCITY_PREFIX = "##teamcity";
 
@@ -306,6 +306,8 @@ class IntellijFormatter implements Formatter {
     this._basicFormatter = new BasicFormatter(this.buffer);
     out(TEMPLATE_ENTER_THE_MATRIX, [getCurrentTime()]);
     out(TEMPLATE_SCENARIO_COUNTING_STARTED, ["0", getCurrentTime()]);
+
+    _currentDirectory = Directory.current.path;
   }
 
   bool _endedByNewLine;
@@ -444,7 +446,7 @@ class IntellijFormatter implements Formatter {
   }
 
   String _location(Location location) {
-    return "${location.srcFilePath}:${location.srcLineNumber}";
+    return "${_currentDirectory}/${location.srcFilePath}:${location.srcLineNumber}";
   }
 
   @override
