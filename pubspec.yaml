@@ -1,12 +1,12 @@
-name: dherkin3
+name: ogurets
 version: 3.1.1
 authors:
 - Danil Kornishev <danil.kornishev@gmail.com>
 - Florian Huonder <florian.huonder@prolutions.ch>
 - Sacha Dolski <sacha.dolski@prolutions.ch>
 - Richard Vowles <richard@bluetrainsoftware.com>
-description: Gherkin/Cucumber implementation in dart (migrated to Dart2's async/await semantics).
-homepage: https://github.com/prolutionsGmbH/dherkin
+description: Gherkin/Cucumber implementation in dart, supporting classes and simple libraries, hooks, dependency injection, and all the things you would want in an easy to use format.
+homepage: https://github.com/dart-ogurets/Ogurets
 dependencies:
   logging: ^0.11.3+2
   args: ^1.5.0
