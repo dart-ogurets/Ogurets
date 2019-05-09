@@ -1,4 +1,4 @@
-part of dherkin_core3;
+part of ogurets_core3;
 
 // https://github.com/JetBrains/intellij-community/blob/master/plugins/cucumber-jvm-formatter/src/org/jetbrains/plugins/cucumber/java/run/CucumberJvmSMFormatter.java
 

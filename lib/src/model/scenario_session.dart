@@ -1,12 +1,11 @@
 
+part of ogurets_core3;
 
-import 'dart:mirrors';
-
-class DherkinScenarioSession {
+class OguretsScenarioSession {
   Map<Type, InstanceMirror> _scenarioInstances = {};
   Map<String, Object> addendum = {};
 
-  DherkinScenarioSession(this._scenarioInstances);
+  OguretsScenarioSession(this._scenarioInstances);
 
   void addInstance(Type type, InstanceMirror instance) {
     _scenarioInstances.putIfAbsent(type, () => instance);

@@ -1,7 +1,7 @@
 
 
 
-import 'package:dherkin3/dherkin.dart';
+import 'package:ogurets/ogurets.dart';
 
 import '../lib/scenario_session.dart';
 

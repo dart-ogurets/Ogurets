@@ -1,4 +1,4 @@
-part of dherkin_core3;
+part of ogurets_core3;
 
 class Hook {
   final String tag;

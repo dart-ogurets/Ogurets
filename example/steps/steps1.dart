@@ -1,6 +1,6 @@
 library dherkin_stepdefs_steps1;
 
-import 'package:dherkin3/dherkin.dart';
+import 'package:ogurets/ogurets.dart';
 
 class SampleSteps {
   @Given("parser is working")
