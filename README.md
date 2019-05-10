@@ -24,7 +24,7 @@ support for (and preference for) _Cucumber Expressions_.
 
 ogurets carries on from dherkin2 in a number of ways:
 
-- ogurets is based on based on Dart 2.2+ and is entirely async/await aware. It expects your functions to be async
+- ogurets is based on Dart 2.2+ and is entirely async/await aware. It expects your functions to be async
 functions. 
 - offers support for Cucumber expressions of {string}, {int} and {float} instead of having to write regular
 expressions.
