@@ -1,6 +1,6 @@
 
 
-import 'package:dherkin3/dherkin_core.dart';
+import 'package:ogurets/ogurets_core.dart';
 
 import '../lib/shared_instance.dart';
 

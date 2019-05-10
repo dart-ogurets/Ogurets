@@ -1,4 +1,4 @@
-part of dherkin_core3;
+part of ogurets_core3;
 
 class Scenario {
   // todo: Fetch this from GherkinVocabulary or something
@@ -21,8 +21,8 @@ class Scenario {
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<ScenarioStatus> execute(
-      DherkinState state,
-      {isFirstOfFeature: true, DherkinScenarioSession scenarioSession}) async {
+      OguretsState state,
+      {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
     var scenarioStatus = new ScenarioStatus(state.fmt)
       ..scenario = this
       ..exampleTable = this.examples
@@ -67,12 +67,12 @@ class Scenario {
   }
 
   Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus,
-      exampleRow, DherkinState state,
-      {isFirstOfFeature: true, DherkinScenarioSession scenarioSession}) async {
+      exampleRow, OguretsState state,
+      {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
     ScenarioStatus backgroundStatus;
 
     if (scenarioSession == null) {
-      scenarioSession = new DherkinScenarioSession({}..addAll(state.existingInstances));
+      scenarioSession = new OguretsScenarioSession({}..addAll(state.existingInstances));
     }
 
     await state.runBeforeTags(scenarioStatus, scenarioSession);

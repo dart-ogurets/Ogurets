@@ -1,4 +1,4 @@
-part of dherkin_core3;
+part of ogurets_core3;
 
 class ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";

@@ -1,17 +1,18 @@
-library dherkin_core3;
+library ogurets_core3;
 
 import "dart:async";
 import 'dart:io';
 import "dart:mirrors";
 import "dart:collection";
 
-import 'package:dherkin3/src/model/scenario_session.dart';
 import "package:logging/logging.dart";
 import "package:ansicolor/ansicolor.dart";
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
 part 'src/task.dart';
+
+part 'src/model/scenario_session.dart';
 
 part "src/gherkin_parser.dart";
 
@@ -42,7 +43,7 @@ part 'src/output/formatter.dart';
 
 final Logger _log = new Logger('dherkin');
 
-class DherkinState {
+class OguretsState {
   Map<RegExp, Function> stepRunners = {};
   Map<String, List<Function>> namedBeforeTagRunners = {};
   Map<String, List<Function>> namedAfterTagRunners = {};
@@ -56,7 +57,7 @@ class DherkinState {
   Formatter fmt;
   final ResultBuffer resultBuffer;
 
-  DherkinState(this.resultBuffer);
+  OguretsState(this.resultBuffer);
 
   void build() async {
     await this._findMethodStyleStepRunners();
@@ -99,7 +100,7 @@ class DherkinState {
     return nameIs;
   }
   
-  Future<DherkinState> findHooks(Type hookType, Map<String, List<Function>> tagRunners, List<Function> globalRunners) async {
+  Future<OguretsState> findHooks(Type hookType, Map<String, List<Function>> tagRunners, List<Function> globalRunners) async {
     final hookTypeName = reflectClass(hookType).simpleName.toString();
 
     for (final Type type in steps) {
@@ -112,13 +113,13 @@ class DherkinState {
               mm.metadata.where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
 
           for (InstanceMirror im in filteredMetadata) {
-            var func = (DherkinScenarioSession scenarioSession, ScenarioStatus scenarioStatus) async {
+            var func = (OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus) async {
               List<dynamic> params = [];
 
               // find the parameters, creating them if necessary
               for (ParameterMirror pm in mm.parameters) {
                 if (!pm.isNamed ) {
-                  if (pm.type.reflectedType == DherkinScenarioSession) {
+                  if (pm.type.reflectedType == OguretsScenarioSession) {
                     params.add(scenarioSession);
                   } else {
                     params.add(scenarioSession.getInstance(pm.type.reflectedType).reflectee);
@@ -165,7 +166,7 @@ class DherkinState {
 
   ///  Scans the entirety of the vm for step definitions executables
   ///  This only picks up method level steps, not those in classes.
-  Future<DherkinState> _findMethodStyleStepRunners() async {
+  Future<OguretsState> _findMethodStyleStepRunners() async {
     for (LibraryMirror lib in currentMirrorSystem().libraries.values) {
       for (MethodMirror mm in lib.declarations.values
           .where((DeclarationMirror dm) => dm is MethodMirror)) {
@@ -174,7 +175,7 @@ class DherkinState {
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
           stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
-              (params, Map namedParams, DherkinScenarioSession scenarioSession) async {
+              (params, Map namedParams, OguretsScenarioSession scenarioSession) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
@@ -190,7 +191,7 @@ class DherkinState {
   }
 
 
-  Future<DherkinState> _findClassStyleStepRunners() async {
+  Future<OguretsState> _findClassStyleStepRunners() async {
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
       for (MethodMirror mm in lib.declarations.values
@@ -200,7 +201,7 @@ class DherkinState {
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
           stepRunners[new RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
-              (List params, Map namedParams, DherkinScenarioSession scenarioSession) async {
+              (List params, Map namedParams, OguretsScenarioSession scenarioSession) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
@@ -261,7 +262,7 @@ class DherkinState {
         tags.any((element) => expectedTags.contains(element));
   }
 
-  void runBeforeTags(ScenarioStatus scenarioStatus, DherkinScenarioSession scenarioSession) async {
+  void runBeforeTags(ScenarioStatus scenarioStatus, OguretsScenarioSession scenarioSession) async {
     await beforeRunners.forEach((f) async => await f(scenarioSession, scenarioStatus));
 
     if (scenarioStatus.scenario.tags != null) {
@@ -274,7 +275,7 @@ class DherkinState {
     }
   }
 
-  void runAfterTags(ScenarioStatus scenarioStatus, DherkinScenarioSession scenarioSession) async {
+  void runAfterTags(ScenarioStatus scenarioStatus, OguretsScenarioSession scenarioSession) async {
     await afterRunners.forEach((f) async => await f(scenarioSession, scenarioStatus));
 
     if (scenarioStatus.scenario.tags != null) {

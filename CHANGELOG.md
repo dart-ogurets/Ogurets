@@ -1,3 +1,7 @@
+3.1.1
+=======
+* Introducing ogurets for the first time
+
 1.0.1+1
 =======
 * Introduced this changelog.

@@ -1,4 +1,4 @@
-part of dherkin_core3;
+part of ogurets_core3;
 
 class Feature {
   String name;
@@ -11,7 +11,7 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(DherkinState state, {List<String> runTags, bool debug: false}) async {
+  Future<FeatureStatus> execute(OguretsState state, {List<String> runTags, bool debug: false}) async {
     if (runTags == null) runTags = [];
     FeatureStatus featureStatus = new FeatureStatus(state.fmt)..feature = this;
 

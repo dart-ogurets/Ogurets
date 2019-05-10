@@ -1,4 +1,4 @@
-library dherkin3;
+library ogurets;
 
 import "dart:io";
 
@@ -6,11 +6,10 @@ import 'package:args/args.dart';
 import "package:logging/logging.dart";
 import "dart:mirrors";
 
-import 'dherkin_core.dart';
-export 'dherkin_core.dart';
+import 'ogurets_core.dart';
+export 'ogurets_core.dart';
 
-
-final Logger _log = new Logger('dherkin');
+final Logger _log = new Logger('ogurets');
 
 /**
  * Runs specified gherkin files with provided flags. This is left for backwards compatibility.
@@ -39,7 +38,7 @@ run(args) async {
   }
 
   var featureFiles = options.rest;
-  DherkinState state = DherkinState(ConsoleBuffer());
+  OguretsState state = OguretsState(ConsoleBuffer());
   await state.build();
 
   RunStatus runStatus = RunStatus(state.fmt);
@@ -71,7 +70,7 @@ ArgResults _parseArguments(args) {
 }
 
 
-class DherkinOpts {
+class OguretsOpts {
   List<String> _features = [];
   List<Type> _stepdefs = [];
   String _scenario = null;
@@ -187,7 +186,7 @@ class DherkinOpts {
 
     var featureFiles = _determineFeatureFiles();
 
-    DherkinState state = new DherkinState(new ConsoleBuffer());
+    OguretsState state = new OguretsState(new ConsoleBuffer());
     state.steps = this._stepdefs;
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;

@@ -1,11 +1,12 @@
 library dherkin_example;
 
-import 'package:dherkin3/dherkin.dart';
+import 'package:ogurets/ogurets.dart';
+
 
 import 'steps/steps1.dart';
 
 void main(args) async {
-  var def = new DherkinOpts()
+  var def = new OguretsOpts()
     ..feature("example/gherkin/test_feature.feature")
     ..debug()
     ..step(SampleSteps);

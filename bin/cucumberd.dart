@@ -25,7 +25,7 @@ void main(args) {
       sink.writeln("import '${fileSystemEntity.absolute.path}';");
     }).onDone(() {
       sink.writeln("import 'dart:io';");
-      sink.writeln("import 'package:dherkin2/dherkin.dart';");
+      sink.writeln("import 'package:ogurets/ogurets.dart';");
       sink.writeln("\nvoid main(args) {run(args).whenComplete(() => exit(0));}");
       sink.close().whenComplete(() => Isolate.spawnUri(new Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
 
