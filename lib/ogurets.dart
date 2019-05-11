@@ -15,7 +15,6 @@ final Logger _log = new Logger('ogurets');
  * Runs specified gherkin files with provided flags. This is left for backwards compatibility.
  * [args] may be a list of filepaths.
  *
- * We should continue on the OO design pattern and make a DherkinRunner or something.
  */
 run(args) async {
   var options = _parseArguments(args);

@@ -2,15 +2,16 @@ part of ogurets_core3;
 
 class Hook {
   final String tag;
-  const Hook({this.tag});
+  final int order; // lowest -> highest
+  const Hook({this.tag, this.order});
 }
 
 class Before extends Hook {
-  const Before({String tag}) : super(tag: tag);
+  const Before({String tag, int order}) : super(tag: tag, order: order);
 }
 
 class After extends Hook {
-  const After({String tag}) : super(tag: tag);
+  const After({String tag, int order}) : super(tag: tag, order: order);
 }
 
 class StepDef {

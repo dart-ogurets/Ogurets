@@ -75,7 +75,7 @@ class Scenario {
       scenarioSession = new OguretsScenarioSession({}..addAll(state.existingInstances));
     }
 
-    await state.runBeforeTags(scenarioStatus, scenarioSession);
+    await state.runBeforeHooks(scenarioStatus, scenarioSession);
 
     try {
       if (background != null) {
@@ -154,7 +154,7 @@ class Scenario {
 
 
     } finally {
-      await state.runAfterTags(scenarioStatus, scenarioSession);
+      await state.runAfterHooks(scenarioStatus, scenarioSession);
     }
 
     return scenarioStatus;
