@@ -28,7 +28,7 @@ ogurets carries on from dherkin2 in a number of ways:
 functions. 
 - offers support for Cucumber expressions of {string}, {int} and {float} instead of having to write regular
 expressions.
-- supports an Object (DherkinOpts) that defines what features are run, what steps to use and shared instances
+- supports an Object (OguretsOpts) that defines what features are run, what steps to use and shared instances
 - supports steps in classes that have positional instances and shared instances passed to them. This allows you
 to have a global variable that stays for the entire run and ones that get recreated for each session (such as a
 scenario session). It is a basic form of Dependency Injection. 
@@ -71,7 +71,7 @@ void main(args) async {
 }
 ````
 
-Your classes can be constructed so as to take classes that are either defined in the `DherkinOpts` or they are
+Your classes can be constructed so as to take classes that are either defined in the `OguretsOpts` or they are
 dynamically constructed at runtime. If they themselves depend on a class it will cycle through creating the entire
 tree. "Cucumber Expressions" will be turned into regexs as the code is walked through.
 
@@ -102,7 +102,7 @@ Hooks work largely like you would expect them to. You can:
 NOTE: no optional parameters are allowed as there is no "context". 
 
 ````dart
-import 'package:ogurets/dherkin.dart';
+import 'package:ogurets/ogurets.dart';
 
 import 'scenario_session.dart';
 
@@ -137,7 +137,7 @@ Create symbolic link in a directory on your path, like /usr/local/bin:
 
 ````bash
 cd /usr/local/bin
-ln -s path/to/dherkin/bin/cucumberd.dart cucumberd
+ln -s path/to/ogurets/bin/cucumberd.dart cucumberd
 cd
 ````
 
@@ -156,7 +156,7 @@ Alternatively, you might opt for writing your own script:
 ````dart
    library my_bdd_runner;
 
-   import 'package:dherkin/dherkin.dart';
+   import 'package:ogurets/ogurets.dart';
    import 'my_step_defs.dart'; // import stepdefs, mandatory since no auto-scanning happens
 
    main(args) {
