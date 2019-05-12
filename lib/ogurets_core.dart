@@ -101,9 +101,14 @@ class OguretsState {
 
     return nameIs;
   }
-  
+
+  String _decodeSymbol(Symbol s) {
+    String name = s.toString().substring('Symbol("'.length);
+    return name.substring(0, name.length - 2);
+  }
+
   Future<OguretsState> findHooks(Type hookType, Map<String, List<HookFunc>> tagRunners, List<HookFunc> globalRunners) async {
-    final hookTypeName = reflectClass(hookType).simpleName.toString();
+    String hookTypeName = _decodeSymbol(reflectClass(hookType).simpleName);
     final hooksInOrder = Map<int, List<HookFunc>>();
     final tagHooksInOrder = Map<String, Map<int, List<HookFunc>>>();
 
@@ -138,6 +143,7 @@ class OguretsState {
                   scenarioStatus.scenario.location, scenarioStatus.scenario);
 
               var stepStatus = new StepStatus(scenarioStatus.fmt)..step = step;
+              stepStatus.decodedVerbiage = "${hookTypeName} - ${_decodeSymbol(methodName)}";
 
               scenarioStatus.fmt.step(stepStatus);
 
@@ -213,10 +219,13 @@ class OguretsState {
 
             Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
 
-            var invoke = await lib.invoke(mm.simpleName, params, convertedNamedParams);
-            if (invoke != null && invoke.reflectee is Future) {
-              await invoke.reflectee as Future;
-            }
+              await Future.sync(() {
+                var invoke = lib.invoke(
+                    mm.simpleName, params, convertedNamedParams);
+                if (invoke != null && invoke.reflectee is Future) {
+                  return invoke.reflectee as Future;
+                }
+              });
           };
         }
       }
@@ -245,17 +254,22 @@ class OguretsState {
             // these are the named parameters that were found in the scenario itself
             Map<Symbol, dynamic> convertedNamedParams = _createParameters(namedParams, mm, params, _stringMirror);
 
-            var invoke = await instance.invoke(
-                mm.simpleName, params, convertedNamedParams);
-
-            if (invoke != null && invoke.reflectee is Future) {
-              await invoke.reflectee as Future;
-            }
+            await invokeStep(instance, mm, params, convertedNamedParams);
           };
         }
       }
     }
     return this;
+  }
+
+  Future invokeStep(InstanceMirror instance, MethodMirror mm, List params, Map<Symbol, dynamic> convertedNamedParams) async {
+      await Future.sync(() {
+        var invoke = instance.invoke(mm.simpleName, params, convertedNamedParams);
+
+        if (invoke != null && invoke.reflectee is Future) {
+          return invoke.reflectee as Future;
+        }
+      });
   }
 
   Map<Symbol, dynamic> _createParameters(Map namedParams, MethodMirror mm, List params, TypeMirror stringMirror) {
