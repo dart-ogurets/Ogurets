@@ -17,6 +17,11 @@ support for (and preference for) _Cucumber Expressions_.
 
 #### authors
 
+This is based on the original work of Dherkin2, along with some modifications made to make it 
+Dart 2 compatible by others.
+
+The current authors are: 
+
 - _Irina Southwell nee Kaprelyants_, Principal Engineer (https://www.linkedin.com/in/irina-southwell-9727a422/)
 - _Richard Vowles_, Software Developer (https://www.linkedin.com/in/richard-vowles-72035193/)
 
