@@ -203,6 +203,7 @@ class StepStatus extends BufferedStatus {
 
   /// A possible [failure].
   StepFailure failure;
+  bool skipped = false;
 
   StringBuffer out = new StringBuffer();
 

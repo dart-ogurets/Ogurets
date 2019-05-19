@@ -244,6 +244,9 @@ class BasicFormatter implements Formatter {
 
 
 /*
+
+see: https://github.com/JetBrains/intellij-community/blob/master/plugins/cucumber-jvm-formatter/src/org/jetbrains/plugins/cucumber/java/run/CucumberJvmSMFormatter.java
+
  IDEA needs the format in:
 [testSuiteStarted feature-name|scenario-name|"example:"|example-line]
   then each step or hook is a test
@@ -367,9 +370,11 @@ class IntellijFormatter implements Formatter {
     if (status == currentFeature) {
       out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getFeatureName(currentFeature)]);
     } else if (status is StepStatus) {
-      StepStatus ss = status as StepStatus;
+      StepStatus ss = status;
       if (ss.failed) {
         out(TEMPLATE_TEST_FAILED, [getCurrentTime(), _location(ss.step.location), ss.failure.error.toString(), ss.decodedVerbiage, '']);
+      } else if (ss.skipped) {
+        out(TEMPLATE_TEST_PENDING, [ss.decodedVerbiage, getCurrentTime()]);
       }
 
       // TODO: add timing to step
@@ -378,7 +383,7 @@ class IntellijFormatter implements Formatter {
       out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), "Examples:"]);
       out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
     } else if (status is ScenarioStatus) {
-      var scenario = (status as ScenarioStatus);
+      ScenarioStatus scenario = status;
       out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getScenarioName(scenario)]);
       if (scenario.failed) {
         out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
@@ -408,23 +413,11 @@ class IntellijFormatter implements Formatter {
 
   @override
   void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
-    if (startScenario.exampleTable.isValid) {
-      out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-      out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(startScenario.scenario.location), _getScenarioName(startScenario)]);
-    }
     _basicFormatter.startOfScenarioLifeCycle(startScenario);
   }
 
   @override
   void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
-    if (endScenario.exampleTable.isValid) {
-      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getScenarioName(endScenario)]);
-      if (endScenario.failed) {
-        out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
-      }
-
-      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
-    }
     _basicFormatter.endOfScenarioLifeCycle(endScenario);
   }
 

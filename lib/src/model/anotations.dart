@@ -14,6 +14,18 @@ class After extends Hook {
   const After({String tag, int order}) : super(tag: tag, order: order);
 }
 
+// only available on given instances
+class BeforeRun {
+  final int order;
+  const BeforeRun({this.order});
+}
+
+// only available on given instances
+class AfterRun {
+  final int order;
+  const AfterRun({this.order});
+}
+
 class StepDef {
   final String verbiage;
   const StepDef(this.verbiage);

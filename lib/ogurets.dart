@@ -74,6 +74,7 @@ class OguretsOpts {
   List<Type> _stepdefs = [];
   String _scenario = null;
   Map<Type, InstanceMirror> _instances = {};
+  List<Object> _instanceObjects = [];
   bool _debug = false;
   String _tags = null;
   bool _failedOnMissingSteps = true;
@@ -100,6 +101,7 @@ class OguretsOpts {
 
   void instance(Object o) {
     _instances[o.runtimeType] = reflect(o);
+    _instanceObjects.add(o);
   }
 
   void debug() {
@@ -192,25 +194,30 @@ class OguretsOpts {
     state.existingInstances = _instances;
 
     await state.build();
+    await state.executeRunHooks(BeforeRun);
+    
+    try {
+      RunStatus runStatus = new RunStatus(state.fmt);
 
-    RunStatus runStatus = new RunStatus(state.fmt);
-
-    for (String filePath in featureFiles) {
-      List<String> contents = await new File(filePath).readAsLines();
-      Feature feature = await new GherkinParserTask(contents, filePath).execute();
-      FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: _debug);
-      if (featureStatus.failed) {
-        runStatus.failedFeatures.add(featureStatus);
-      } else {
-        runStatus.passedFeatures.add(featureStatus);
+      for (String filePath in featureFiles) {
+        List<String> contents = await new File(filePath).readAsLines();
+        Feature feature = await new GherkinParserTask(contents, filePath).execute();
+        FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: _debug);
+        if (featureStatus.failed) {
+          runStatus.failedFeatures.add(featureStatus);
+        } else {
+          runStatus.passedFeatures.add(featureStatus);
+        }
       }
+
+      state.fmt.eof(runStatus);
+
+      state.resultBuffer.flush();
+
+      return runStatus;
+    } finally {
+      await state.executeRunHooks(AfterRun);
     }
-
-    state.fmt.eof(runStatus);
-
-    state.resultBuffer.flush();
-
-    return runStatus;
   }
 }
 

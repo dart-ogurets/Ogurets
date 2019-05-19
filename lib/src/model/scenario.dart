@@ -50,11 +50,12 @@ class Scenario {
       }
     }
 
-    state.fmt.endOfScenarioLifeCycle(scenarioStatus);
-    
     if (!examples.names.isEmpty) {
       state.fmt.done(examples);
     }
+
+    state.fmt.endOfScenarioLifeCycle(scenarioStatus);
+    
     return scenarioStatus;
   }
 
@@ -135,8 +136,12 @@ class Scenario {
         }
 
         try {
-          // to actually run the step
-          await state.stepRunners[found](params, moreParams, scenarioSession);
+          if (scenarioStatus.failed) {
+            stepStatus.skipped = true;
+          } else {
+            // to actually run the step
+            await state.stepRunners[found](params, moreParams, scenarioSession);
+          }
         } catch (e, s) {
           _log.fine("Step failed: $step");
           var failure = new StepFailure(e, s.toString());
@@ -145,7 +150,7 @@ class Scenario {
           scenarioStatus.failedSteps.add(stepStatus);
           break;
         } finally {
-          if (!stepStatus.failed) {
+          if (!stepStatus.failed && !scenarioStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);
           }
           state.fmt.done(stepStatus);
