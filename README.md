@@ -22,7 +22,7 @@ Dart 2 compatible by others.
 
 The current authors are: 
 
-- _Irina Southwell nee Kaprelyants_, Principal Engineer (https://www.linkedin.com/in/irina-southwell-9727a422/)
+- _Irina Southwell (Капрельянц Ирина)_, Principal Engineer (https://www.linkedin.com/in/irina-southwell-9727a422/)
 - _Richard Vowles_, Software Developer (https://www.linkedin.com/in/richard-vowles-72035193/)
 
 # an overview of ogurets
