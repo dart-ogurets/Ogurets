@@ -1,11 +1,11 @@
 name: ogurets
 version: 3.1.1
 authors:
+- Irina Southwell <pishisuda11@gmail.com>
+- Richard Vowles <richard@bluetrainsoftware.com>
 - Danil Kornishev <danil.kornishev@gmail.com>
 - Florian Huonder <florian.huonder@prolutions.ch>
 - Sacha Dolski <sacha.dolski@prolutions.ch>
-- Richard Vowles <richard@bluetrainsoftware.com>
-- Irina Southwell <pishisuda11@gmail.com>
 description: Gherkin/Cucumber implementation in dart, supporting classes and simple libraries, hooks, dependency injection, and all the things you would want in an easy to use format.
 homepage: https://github.com/dart-ogurets/Ogurets
 dependencies:
