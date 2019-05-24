@@ -1,3 +1,8 @@
+3.1.2
+=======
+* updated documentation
+* updated the IDEA formatter so it outputs examples correctly
+
 3.1.1
 =======
 * Introducing ogurets for the first time

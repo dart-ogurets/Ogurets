@@ -423,10 +423,8 @@ class IntellijFormatter implements Formatter {
 
   @override
   void scenario(ScenarioStatus scenario) {
-    if (!scenario.exampleTable.isValid) {
-      out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-      out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(scenario.scenario.location), _getScenarioName(scenario)]);
-    }
+    out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
+    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(scenario.scenario.location), _getScenarioName(scenario)]);
 
     _basicFormatter.scenario(scenario);
   }

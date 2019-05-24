@@ -57,7 +57,7 @@ You can still use your existing Dherkin2 style tests and continue by extending w
 Ogurets based Cucumber tests are closely modeled on Java style Step-def classes with annotations. There is `@Given`,
 `@When`, `@Then`, `@And` and `@But`, all of which aid you in writing your standard Cucumber based set of tests.
 
-An example of a test in Ogurets:
+An example of a Cucumber feature in _Ogurets_:
 
 ```dart
 Feature: simple addition feature
@@ -87,6 +87,8 @@ class MyStepdefs {
   }
 }
 ```
+
+NOTE: if you are using the IDEA plugin, you can just use Alt-Enter and it will create them for you.
 
 To allow us to use some state which exists only for the scenario, lets go and create ourselves a scenario state class.
 

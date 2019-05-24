@@ -50,7 +50,7 @@ class Scenario {
       }
     }
 
-    if (!examples.names.isEmpty) {
+    if (examples.isValid) {
       state.fmt.done(examples);
     }
 
