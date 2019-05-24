@@ -54,12 +54,115 @@ You can still use your existing Dherkin2 style tests and continue by extending w
 
 ### Usage
 
+Ogurets based Cucumber tests are closely modeled on Java style Step-def classes with annotations. There is `@Given`,
+`@When`, `@Then`, `@And` and `@But`, all of which aid you in writing your standard Cucumber based set of tests.
+
+An example of a test in Ogurets:
+
+```dart
+Feature: simple addition feature
+
+  Scenario: A simple addition example
+    Given I add 4
+    And I add 3
+    Then the total should be 7
+```
+
+To ensure this test runs, you will need to create a Stepdef class that implements these steps:
+
+```dart
+import 'package:ogurets/ogurets.dart';
+
+class MyStepdefs {
+  @Given(r'I add {int}')
+  void iAdd(int toadd) async {
+    // Write code here that turns the phrase above into concrete actions
+
+  }
+
+  @Then(r'the total should be {int}')
+  void theTotalShouldBe(int total) async {
+    // Write code here that turns the phrase above into concrete actions
+
+  }
+}
+```
+
+To allow us to use some state which exists only for the scenario, lets go and create ourselves a scenario state class.
+
+```dart
+class ScenarioState {
+  int total = 0;
+}
+```
+And get _Ogurets_ to create it for each scenario run and pass it to us, the whole stepdef becoming:
+
+```dart
+import 'package:ogurets/ogurets.dart';
+
+import '../lib/scenario_state.dart';
+
+class MyStepdefs {
+  final ScenarioState state;
+
+  MyStepdefs(this.state);
+
+  @Given(r'I add {int}')
+  void iAdd(int toadd) async {
+    state.total += toadd;
+  }
+
+  @Then(r'the total should be {int}')
+  void theTotalShouldBe(int total) async {
+    assert(total == state.total);
+  }
+}
+``` 
+
+
+When run using _Ogurets_, this gives something like this:
+
+```bash
+Feature: simple addition feature # test/features/add.feature:1
+
+
+	Scenario: A simple addition example # test/features/add.feature:3
+
+		I add 4	 # test/features/add.feature:4
+
+		I add 3	 # test/features/add.feature:5
+
+		the total should be 7	 # test/features/add.feature:6
+
+-------------------
+Scenarios passed: 1
+
+==================
+Features passed: 1
+```
+
+You can also use *Scenario Outline* style Gherkin tests to achieve the same effect, but in a table.  
+
+````dart
+  Scenario Outline: A simple addition example
+    Given I add <amt1>
+    And I add <amt2>
+    Then the total should be <total>
+    Examples:
+      | amt1 | amt2 | total |
+      | 4    | 3    | 7     |
+````
+
+### Run
+
 ogurets can be executed in a number of ways.
 
-ogurets Custom Runner
+#### ogurets Custom Runner
 
 You create a new `OguretsOpts` and give it your features (individual files or recursed folders) and tell it to run.
 You can tell it to not fail on missing steps, turn debug on, provide instances that will live across all tests.
+
+NOTE: if you are using the Ogurets IntelliJ IDEA plugin, this will be automatically generated for you.
 
 ````dart
 void main(args) async {
@@ -134,6 +237,20 @@ class Hooks {
 }
 ````
  
+#### failure
+
+Ogurets relies on simple assertions when doing BDD style testing. Dart provides a rich api for doing comparison, so an
+assertion library like Fest Assert is largely unnecessary. 
+
+````dart
+  @Given("the total should be {int}")
+  void totalShouldBe(int amt) async {
+    var calcedVal = (_scenarioSession.sharedStepData["add"] as int);
+    assert(amt == calcedVal);
+  }
+```` 
+
+The more detailed `expect` library provide by the Dart Test library is heavily tied to that library and not usable elsewhere.
 
 #### cucumberd
 

@@ -18,8 +18,6 @@ class Sum {
   @Given("the total should be {int}")
   void totalShouldBe(int amt) async {
     var calcedVal = (_scenarioSession.sharedStepData["add"] as int);
-    if (amt != calcedVal) {
-      throw new Exception("amt not equal ${amt} != ${calcedVal}");
-    }
+    assert(amt == calcedVal);
   }
 }
