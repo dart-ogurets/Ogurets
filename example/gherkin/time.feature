@@ -8,3 +8,4 @@ Feature: timer feature
     Examples:
       | amt1 | amt2 | total |
       | 4    | 3    | 7    |
+      | 4    | 9    | 13   |

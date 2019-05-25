@@ -133,7 +133,8 @@ class ScenarioStatus extends StepsExecutionStatus {
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
   Background background;
-  GherkinTable exampleTable;
+  GherkinTable exampleTable; // the examples for this scenario
+  Map example; // the example for this specific line
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
   /// Has the [scenario] [passed] ? (all steps passed)

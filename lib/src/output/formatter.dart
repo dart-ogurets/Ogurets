@@ -19,7 +19,8 @@ abstract class Formatter {
   void examples(GherkinTable examples);
 
   // always followed by "examples" if there are examples, but we have to have them as separate steps so we can insert info between them
-  void startOfScenarioLifeCycle(ScenarioStatus startScenario);
+  // start of scenario including any and all examples
+  void startOfScenarioLifeCycle(Scenario startScenario);
 
   void background(Background background);
 
@@ -27,7 +28,8 @@ abstract class Formatter {
 
   void step(StepStatus step);
 
-  void endOfScenarioLifeCycle(ScenarioStatus endScenario);
+  // end of scenario including any and all examples
+  void endOfScenarioLifeCycle(Scenario endScenario);
 
   void done(Object status);
 
@@ -70,7 +72,7 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
+  void endOfScenarioLifeCycle(Scenario endScenario) {
     formatters.forEach((f) => f.endOfScenarioLifeCycle(endScenario));
   }
 
@@ -95,7 +97,7 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
+  void startOfScenarioLifeCycle(Scenario startScenario) {
     formatters.forEach((f) => f.startOfScenarioLifeCycle(startScenario));
   }
 
@@ -144,7 +146,7 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
+  void endOfScenarioLifeCycle(Scenario endScenario) {
   }
 
   @override
@@ -189,11 +191,9 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
-    if (startScenario.exampleTable.isValid) {
-      buffer.write("\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
-      buffer.writeln("${startScenario.scenario.location}", color: 'gray');
-    }
+  void startOfScenarioLifeCycle(Scenario scenario) {
+    buffer.write("\n\t${scenario.gherkinKeyword}: ${scenario.name}");
+    buffer.writeln("${scenario.location}", color: 'gray');
   }
 
   @override
@@ -412,12 +412,12 @@ class IntellijFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(ScenarioStatus startScenario) {
+  void startOfScenarioLifeCycle(Scenario startScenario) {
     _basicFormatter.startOfScenarioLifeCycle(startScenario);
   }
 
   @override
-  void endOfScenarioLifeCycle(ScenarioStatus endScenario) {
+  void endOfScenarioLifeCycle(Scenario endScenario) {
     _basicFormatter.endOfScenarioLifeCycle(endScenario);
   }
 

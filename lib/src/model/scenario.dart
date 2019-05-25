@@ -20,25 +20,29 @@ class Scenario {
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<ScenarioStatus> execute(
+  Future<List<ScenarioStatus>> execute(
       OguretsState state,
       {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
-    var scenarioStatus = new ScenarioStatus(state.fmt)
-      ..scenario = this
-      ..exampleTable = this.examples
-      ..background = this.background;
+    var statuses = <ScenarioStatus>[];
 
     if (examples._table.isEmpty) {
       examples._table.add({});
     }
 
-    state.fmt.startOfScenarioLifeCycle(scenarioStatus);
+    state.fmt.startOfScenarioLifeCycle(this);
 
     if (examples.isValid) {
       state.fmt.examples(examples);
     }
 
     for (Map example in examples) {
+      var scenarioStatus = new ScenarioStatus(state.fmt)
+        ..scenario = this
+        ..exampleTable = this.examples
+        ..example = example
+        ..background = this.background;
+
+      statuses.add(scenarioStatus);
       state.fmt.scenario(scenarioStatus);
 
       try {
@@ -54,9 +58,9 @@ class Scenario {
       state.fmt.done(examples);
     }
 
-    state.fmt.endOfScenarioLifeCycle(scenarioStatus);
+    state.fmt.endOfScenarioLifeCycle(this);
     
-    return scenarioStatus;
+    return statuses;
   }
 
   void addStep(Step step) {
@@ -70,7 +74,7 @@ class Scenario {
   Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus,
       exampleRow, OguretsState state,
       {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
-    ScenarioStatus backgroundStatus;
+    List<ScenarioStatus> backgroundStatus;
 
     if (scenarioSession == null) {
       scenarioSession = new OguretsScenarioSession({}..addAll(state.existingInstances));
@@ -83,8 +87,8 @@ class Scenario {
         backgroundStatus = await background.execute(state, scenarioSession: scenarioSession);
       }
 
-      if (backgroundStatus != null) {
-        scenarioStatus.mergeBackground(backgroundStatus,
+      if (backgroundStatus != null && backgroundStatus.length > 0) {
+        scenarioStatus.mergeBackground(backgroundStatus[0],
             isFirst: isFirstOfFeature);
       }
 

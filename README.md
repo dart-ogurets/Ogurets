@@ -157,7 +157,12 @@ You can also use *Scenario Outline* style Gherkin tests to achieve the same effe
 
 ### Run
 
-ogurets can be executed in a number of ways.
+ogurets can be executed in a number of ways. In all case, you need to ensure the vm-flag `--enable-asserts` is
+passed to dart to ensure your assertions throw exceptions. For example:
+
+`dart --enable-asserts test/ogurets_run.dart`
+
+If you do this from IDEA, it automatically adds it for you.
 
 #### ogurets Custom Runner
 
@@ -184,6 +189,7 @@ void main(args) async {
 Your classes can be constructed so as to take classes that are either defined in the `OguretsOpts` or they are
 dynamically constructed at runtime. If they themselves depend on a class it will cycle through creating the entire
 tree. "Cucumber Expressions" will be turned into regexs as the code is walked through.
+
 
 e.g.
 

@@ -25,13 +25,15 @@ class Feature {
           _log.fine("Executing Scenario: $scenario");
 
           scenario.background = background;
-          ScenarioStatus scenarioStatus = await scenario.execute(state, isFirstOfFeature: isFirstScenario);
+          List<ScenarioStatus> scenarioStatuses = await scenario.execute(state, isFirstOfFeature: isFirstScenario);
 
-          if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
-            featureStatus.failedScenarios.add(scenarioStatus);
-          } else {
-            featureStatus.passedScenarios.add(scenarioStatus);
-          }
+          scenarioStatuses.forEach((scenarioStatus) {
+            if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
+              featureStatus.failedScenarios.add(scenarioStatus);
+            } else {
+              featureStatus.passedScenarios.add(scenarioStatus);
+            }
+          });
         } else {
           _log.fine("Skipping Scenario: $scenario");
         }

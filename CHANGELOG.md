@@ -2,6 +2,8 @@
 =======
 * updated documentation
 * updated the IDEA formatter so it outputs examples correctly
+* ensure each example line in a scenario outline has a separate scenario status so it doesn't
+prevent other examples from running. 
 
 3.1.1
 =======

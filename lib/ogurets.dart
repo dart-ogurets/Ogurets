@@ -176,6 +176,7 @@ class OguretsOpts {
     });
     
     _checkForEnvOverride();
+    _ensureAssertsActive();
 
     if(_debug){
       Logger.root.level = Level.FINE;
@@ -218,6 +219,17 @@ class OguretsOpts {
     } finally {
       await state.executeRunHooks(AfterRun);
     }
+  }
+
+  void _ensureAssertsActive() {
+    try {
+      assert(true == false);
+    } catch (e) {
+      // all good
+      return;
+    }
+
+    throw Exception("Please enable asserts with --enable-asserts - VM options are: ${Platform.environment['DART_VM_OPTIONS']}");
   }
 }
 
