@@ -126,16 +126,12 @@ class GherkinParser {
       }
 
       //  Tables
-      List<String> row = [];
-      iter = tablePattern.allMatches(line).iterator;
-      while (iter.moveNext()) {
-        var match = iter.current;
-        row.add(match[1]);
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        List<String> row = line.split("|").map((e) => e.trim()).toList();
+        if (!row.isEmpty) {
+          currentTable.addRow(row);
+        }
       }
-      if (!row.isEmpty) {
-        currentTable.addRow(row);
-      }
-
     }
 
     return feature;

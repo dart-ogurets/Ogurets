@@ -12,7 +12,7 @@ import 'steps/sum.dart';
 
 void main(args) async {
   var def = new OguretsOpts()
-   ..feature("example/gherkin/everything.feature")
+   ..feature("example/gherkin/table.feature")
    ..debug()
    ..instance(new SharedInstance())
    ..failOnMissingSteps(false)
