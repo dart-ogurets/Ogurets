@@ -1,3 +1,8 @@
+3.1.3
+=======
+* karthi.kk - reported issue with existing dherkin2 table parser
+which only allowed single word entries in table.
+ 
 3.1.2
 =======
 * updated documentation
