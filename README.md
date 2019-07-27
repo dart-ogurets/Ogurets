@@ -178,6 +178,7 @@ void main(args) async {
    ..debug()
    ..instance(new SharedInstance())
    ..failOnMissingSteps(false)
+   ..tags("~@dataload")
    ..step(Backgrounds)
    ..step(SharedInstanceStepdef)
    ..step(SampleSteps);
@@ -244,6 +245,42 @@ class Hooks {
   }
 }
 ````
+
+### ogurets tags
+
+Tags also work as per the Cucumber style, where they can be on a feature or on a scenario. If tags are passed they
+are specifically honoured, if they aren't then all scenarios will be run.
+ 
+Using the ~@tag syntax prevents the tagged scenario or feature from being run, leaving all others open. Combining
+~@tag and @tags leads to non-deterministic behaviour. 
+
+```gherkin
+@dataload
+Feature: load the sample data via the api
+
+  @superuserload
+  Scenario Outline: There should be superusers loaded
+    Given the system has been initialized
+    And I am logged in as the initialized user
+    When I register a new user with email "<email>" and groups "<groups>"
+    And complete their registration with name "<name>" and password "<password>" and email "<email>"
+    Then the user exists and has superuser groups
+    And I can login as user "<email>" with password "<password>"
+    Examples:
+      | name             | email                  | password    | groups    |
+      | Капрельянц Ирина | Ирина@mailinator.com   | password123 | superuser |
+      | Irina Southwell  | irina@mailinator.com   | password123 | superuser |
+      | Richard Vowles   | richard@mailinator.com | password123 | superuser |
+``` 
+
+#### Samples:
+
+* running with the command line: `--tags @dataload` would run all features here, 
+* running with `--tags @superuserload` would run the scenario, ignoring the tag on the feature.
+* running with `--tags ~@superuserload` would run the scenarios in the feature but it would not run the `@superuserload`
+tagged feature.
+* running with `--tags ~@dataload` would ignore the whole feature and it wouldn't be otherwise examined for positive
+tags.  
  
 #### failure
 

@@ -24,6 +24,7 @@ run(args) async {
     var hardcodedArg = ['example/gherkin/test_feature.feature'];
     options = _parseArguments(hardcodedArg);
   }
+
   var debug = options["debug"];
   if(debug){
     Logger.root.level = Level.FINE;
@@ -38,6 +39,7 @@ run(args) async {
 
   var featureFiles = options.rest;
   OguretsState state = OguretsState(ConsoleBuffer());
+  state.runTags = runTags;
   await state.build();
 
   RunStatus runStatus = RunStatus(state.fmt);
@@ -45,7 +47,7 @@ run(args) async {
   for (String filePath in featureFiles) {
     List<String> contents = await new File(filePath).readAsLines();
     Feature feature = await new GherkinParserTask(contents, filePath).execute();
-    FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: debug);
+    FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
     } else {
@@ -170,7 +172,7 @@ class OguretsOpts {
     return files;
   }
 
-  Future<RunStatus> run() async {
+  Future<RunStatus> run({List<String> args}) async {
     Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
@@ -186,6 +188,20 @@ class OguretsOpts {
 
     List<String> runTags = _tags == null ? [] : _tags.split(",");
 
+    // command line overrides
+    if (args != null) {
+      var options = _parseArguments(args);
+      if (options["tags"] != null) {
+        runTags = options["tags"].split(",");
+      }
+      
+      if (options["debug"]) {
+        Logger.root.level = Level.FINE;
+      }
+    }
+
+    _log.info("Tags used are $runTags");
+
     var featureFiles = _determineFeatureFiles();
 
     OguretsState state = new OguretsState(new ConsoleBuffer());
@@ -193,6 +209,7 @@ class OguretsOpts {
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;
     state.existingInstances = _instances;
+    state.runTags = runTags;
 
     await state.build();
     await state.executeRunHooks(BeforeRun);
@@ -203,7 +220,7 @@ class OguretsOpts {
       for (String filePath in featureFiles) {
         List<String> contents = await new File(filePath).readAsLines();
         Feature feature = await new GherkinParserTask(contents, filePath).execute();
-        FeatureStatus featureStatus = await feature.execute(state, runTags: runTags, debug: _debug);
+        FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
         if (featureStatus.failed) {
           runStatus.failedFeatures.add(featureStatus);
         } else {

@@ -138,7 +138,7 @@ class BasicFormatter implements Formatter {
 
       buffer.flush();
     } else if (status is StepStatus) {
-      StepStatus ss = status as StepStatus;
+      StepStatus ss = status;
       if (ss.failed) {
         buffer.writeln("Step: ${ss.decodedVerbiage} failed (${ss.step.location.toString()}:\n${ss.failure.error}: ${ss.failure.trace}", color: 'red');
       }
@@ -234,7 +234,6 @@ class BasicFormatter implements Formatter {
     // TODO: implement syntaxError
   }
 
-  @override
   void uri(String url) {
     // TODO: implement uri
   }
@@ -313,8 +312,6 @@ class IntellijFormatter implements Formatter {
     _currentDirectory = Directory.current.path;
   }
 
-  bool _endedByNewLine;
-  final Queue<String> _queue = new Queue();
   FeatureStatus currentFeature = null;
 
   static String _escape(String source) {

@@ -11,17 +11,21 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(OguretsState state, {List<String> runTags, bool debug: false}) async {
-    if (runTags == null) runTags = [];
+  Future<FeatureStatus> execute(OguretsState state, {bool debug: false}) async {
     FeatureStatus featureStatus = new FeatureStatus(state.fmt)..feature = this;
+    bool matchedFeatureTags = state.tagsMatch(tags);
+    bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
-    if (state.tagsMatch(tags, runTags)) {
+    print("matched $matchedFeatureTags neg $negativeTagsMatch");
+    if (!negativeTagsMatch && (matchedFeatureTags || tags.isEmpty)) { // a feature can have no tags
       state.fmt.feature(featureStatus);
 
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
-        _log.fine("Requested tags: $runTags.  Scenario is tagged with: ${scenario.tags}");
-        if (state.tagsMatch(scenario.tags, runTags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))) {
+        _log.fine("Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
+        print("Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
+        if (!state.negativeTagsMatch(scenario.tags) &&
+            ((matchedFeatureTags) || (state.tagsMatch(scenario.tags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))))) {
           _log.fine("Executing Scenario: $scenario");
 
           scenario.background = background;

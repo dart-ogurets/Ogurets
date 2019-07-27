@@ -1,3 +1,9 @@
+3.1.4
+=======
+* karthi.kk - reported an issue with tags not working as expected. Tags were not triggering
+properly on feature level and scenario level as per other cucumber variants. 
+* support for ~tags so you can turn off specific tags
+
 3.1.3
 =======
 * karthi.kk - reported issue with existing dherkin2 table parser

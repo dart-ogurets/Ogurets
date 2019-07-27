@@ -60,6 +60,9 @@ class OguretsState {
   Formatter fmt;
   final ResultBuffer resultBuffer;
 
+  List<String> runTags;
+  List<String> negativeTags;
+
   OguretsState(this.resultBuffer);
 
   void build() async {
@@ -81,6 +84,14 @@ class OguretsState {
     }
 
     fmt = new DelegatingFormatter(formatters);
+
+    if (runTags == null) {
+      runTags = [];
+    }
+
+    // grab the negs
+    negativeTags = runTags.where((prefix) => prefix.startsWith("~")).map((tag) => tag.substring(1)).toList();
+    runTags.removeWhere((tag) => negativeTags.contains(tag)); // take the negs out
   }
 
   List<Symbol> _possibleParams = [
@@ -242,12 +253,13 @@ class OguretsState {
             Map<Symbol, dynamic> convertedNamedParams =
                 _createParameters(namedParams, mm, params, _stringMirror);
 
-            await Future.sync(() {
+            return await Future.sync(() {
               var invoke =
                   lib.invoke(mm.simpleName, params, convertedNamedParams);
               if (invoke != null && invoke.reflectee is Future) {
                 return invoke.reflectee as Future;
               }
+              return invoke;
             });
           };
         }
@@ -272,6 +284,7 @@ class OguretsState {
                   OguretsScenarioSession scenarioSession) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+            print("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
@@ -289,12 +302,14 @@ class OguretsState {
 
   Future invokeStep(InstanceMirror instance, MethodMirror mm, List params,
       Map<Symbol, dynamic> convertedNamedParams) async {
-    await Future.sync(() {
+    return await Future.sync(() {
       var invoke = instance.invoke(mm.simpleName, params, convertedNamedParams);
 
       if (invoke != null && invoke.reflectee is Future) {
         return invoke.reflectee as Future;
       }
+
+      return invoke;
     });
   }
 
@@ -336,9 +351,17 @@ class OguretsState {
 
   /// Do any of the [tags] match one of [expectedTags] ?
   /// If [expectedTags] is empty, anything matches.
-  bool tagsMatch(List<String> tags, List<String> expectedTags) {
+  bool tagsMatch(List<String> expectedTags) {
     return expectedTags.isEmpty ||
-        tags.any((element) => expectedTags.contains(element));
+        runTags.any((element) => expectedTags.contains(element));
+  }
+
+  bool negativeTagsMatch(List<String> expectedTags) {
+    if (expectedTags.isEmpty) {
+      return false;
+    }
+
+    return negativeTags.isNotEmpty && expectedTags.any((element) => negativeTags.contains(element) );
   }
 
   void runBeforeHooks(ScenarioStatus scenarioStatus,
