@@ -4,7 +4,15 @@ class ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";
 
   static final colors = {
-    "black": new AnsiPen()..black(), "red":new AnsiPen()..red(), "green":new AnsiPen()..green(), "white":new AnsiPen()..white(), "yellow" : new AnsiPen()..yellow(), "gray": new AnsiPen()..gray(level: 0.5), "cyan": new AnsiPen()..cyan(), "magenta": new AnsiPen()..magenta()};
+    "black": new AnsiPen()..black(),
+    "red": new AnsiPen()..red(),
+    "green": new AnsiPen()..green(),
+    "white": new AnsiPen()..white(),
+    "yellow": new AnsiPen()..yellow(),
+    "gray": new AnsiPen()..gray(level: 0.5),
+    "cyan": new AnsiPen()..cyan(),
+    "magenta": new AnsiPen()..magenta()
+  };
 
   Map _columns = {};
   StringBuffer _buffer = new StringBuffer();
@@ -13,7 +21,7 @@ class ConsoleBuffer implements ResultBuffer {
     return _buffer;
   }
 
-  void write(message, { color }) {
+  void write(message, {color}) {
     if (color != null) {
       _buffer.write(colors[color](message));
     } else {
@@ -21,7 +29,7 @@ class ConsoleBuffer implements ResultBuffer {
     }
   }
 
-  void writeln(message, { color }) {
+  void writeln(message, {color}) {
     if (color != null) {
       _buffer.writeln(colors[color](message));
     } else {

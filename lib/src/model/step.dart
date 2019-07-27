@@ -15,11 +15,11 @@ class Step {
   // replace all instances of <column1> with 3 where example data has it as such
   String decodeVerbiage(Map exampleRow) {
     var text = verbiage;
-    
-    exampleRow.forEach((k,v) {
+
+    exampleRow.forEach((k, v) {
       text = text.replaceAll('<${k}>', v.toString());
     });
-    
+
     return text;
   }
 
@@ -39,23 +39,20 @@ class Step {
     try {
       var i = int.parse(parameter);
       return i;
-    }
-    on FormatException catch (_) {
-    }
+    } on FormatException catch (_) {}
 
     // Num ?
     try {
       var n = num.parse(parameter);
       return n;
-    }
-    on FormatException catch (_) {
-    }
+    } on FormatException catch (_) {}
 
     return parameter;
   }
 
   String _generateBoilerplate() {
-    var matchString = verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
+    var matchString =
+        verbiage.replaceAll(new RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
 
     var params = "";
     var counter = 1;
@@ -66,14 +63,21 @@ class Step {
 
     params = params.replaceAll(new RegExp(",\$"), "");
 
-    var columnsVerbiage = scenario.examples.length > 1 ? "{exampleRow ${!table.empty ? ", table" : ""}}" : "";
-    var tableVerbiage = columnsVerbiage.isEmpty && !table.empty ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}" : "";
+    var columnsVerbiage = scenario.examples.length > 1
+        ? "{exampleRow ${!table.empty ? ", table" : ""}}"
+        : "";
+    var tableVerbiage = columnsVerbiage.isEmpty && !table.empty
+        ? "${!params.isEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}"
+        : "";
     var separator = !params.isEmpty && !columnsVerbiage.isEmpty ? ", " : "";
     return ("\n@${verb}(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");
   }
 
   String _generateFunctionName() {
-    var chunks = verbiage.replaceAll(new RegExp("\""), "").replaceAll(new RegExp("[<>]"), r"$").split(new RegExp(" "));
+    var chunks = verbiage
+        .replaceAll(new RegExp("\""), "")
+        .replaceAll(new RegExp("[<>]"), r"$")
+        .split(new RegExp(" "));
     var end = chunks.length > 4 ? 5 : chunks.length;
     return chunks.sublist(0, end).join("_").toLowerCase();
   }

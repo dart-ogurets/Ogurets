@@ -17,22 +17,31 @@ class Feature {
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
     print("matched $matchedFeatureTags neg $negativeTagsMatch");
-    if (!negativeTagsMatch && (matchedFeatureTags || tags.isEmpty)) { // a feature can have no tags
+    if (!negativeTagsMatch && (matchedFeatureTags || tags.isEmpty)) {
+      // a feature can have no tags
       state.fmt.feature(featureStatus);
 
       bool isFirstScenario = true;
       for (Scenario scenario in scenarios) {
-        _log.fine("Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
-        print("Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
+        _log.fine(
+            "Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
+        print(
+            "Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
         if (!state.negativeTagsMatch(scenario.tags) &&
-            ((matchedFeatureTags) || (state.tagsMatch(scenario.tags) && (state.scenarioToRun == null || (state.scenarioToRun == scenario.name))))) {
+            ((matchedFeatureTags) ||
+                (state.tagsMatch(scenario.tags) &&
+                    (state.scenarioToRun == null ||
+                        (state.scenarioToRun == scenario.name))))) {
           _log.fine("Executing Scenario: $scenario");
 
           scenario.background = background;
-          List<ScenarioStatus> scenarioStatuses = await scenario.execute(state, isFirstOfFeature: isFirstScenario);
+          List<ScenarioStatus> scenarioStatuses =
+              await scenario.execute(state, isFirstOfFeature: isFirstScenario);
 
           scenarioStatuses.forEach((scenarioStatus) {
-            if (scenarioStatus.failed || (state.failOnMissingSteps && scenarioStatus.undefinedSteps.length > 0)) {
+            if (scenarioStatus.failed ||
+                (state.failOnMissingSteps &&
+                    scenarioStatus.undefinedSteps.length > 0)) {
               featureStatus.failedScenarios.add(scenarioStatus);
             } else {
               featureStatus.passedScenarios.add(scenarioStatus);

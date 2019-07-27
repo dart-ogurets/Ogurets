@@ -20,8 +20,7 @@ class Scenario {
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<List<ScenarioStatus>> execute(
-      OguretsState state,
+  Future<List<ScenarioStatus>> execute(OguretsState state,
       {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
     var statuses = <ScenarioStatus>[];
 
@@ -59,7 +58,7 @@ class Scenario {
     }
 
     state.fmt.endOfScenarioLifeCycle(this);
-    
+
     return statuses;
   }
 
@@ -71,20 +70,22 @@ class Scenario {
     return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
   }
 
-  Future<ScenarioStatus> _executeSubScenario(ScenarioStatus scenarioStatus,
-      exampleRow, OguretsState state,
+  Future<ScenarioStatus> _executeSubScenario(
+      ScenarioStatus scenarioStatus, exampleRow, OguretsState state,
       {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
     List<ScenarioStatus> backgroundStatus;
 
     if (scenarioSession == null) {
-      scenarioSession = new OguretsScenarioSession({}..addAll(state.existingInstances));
+      scenarioSession =
+          new OguretsScenarioSession({}..addAll(state.existingInstances));
     }
 
     await state.runBeforeHooks(scenarioStatus, scenarioSession);
 
     try {
       if (background != null) {
-        backgroundStatus = await background.execute(state, scenarioSession: scenarioSession);
+        backgroundStatus =
+            await background.execute(state, scenarioSession: scenarioSession);
       }
 
       if (backgroundStatus != null && backgroundStatus.length > 0) {
@@ -102,7 +103,7 @@ class Scenario {
         state.fmt.step(stepStatus);
 
         var found = state.stepRunners.keys.firstWhere(
-                (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage),
+            (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage),
             orElse: () => null);
 
         if (found == null) {
@@ -160,8 +161,6 @@ class Scenario {
           state.fmt.done(stepStatus);
         }
       }
-
-
     } finally {
       await state.runAfterHooks(scenarioStatus, scenarioSession);
     }

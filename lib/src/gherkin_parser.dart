@@ -7,9 +7,9 @@ RegExp backgroundPattern = new RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
 RegExp commentPattern = new RegExp(r"^\s*#");
 RegExp examplesPattern = new RegExp(r"^\s*Examples\s*:\s*");
 RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
-RegExp stepPattern = new RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive:false);
+RegExp stepPattern =
+    new RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive: false);
 RegExp pyStringPattern = new RegExp(r'^\s*("""|```)\s*$');
-
 
 /// Could this hold the above regexes and misc vocabulary, so
 /// that we can let user provide his, for I18N and other uses ?
@@ -17,21 +17,18 @@ RegExp pyStringPattern = new RegExp(r'^\s*("""|```)\s*$');
 ///       to be able to extend this and override only what we want.
 class GherkinVocabulary {}
 
-
 class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg);
 }
 
-
 class GherkinParser {
-
   /**
    * Returns a fully populated Feature,
    * from the Gherkin feature statements in [contents].
    * If [contents] come from a File, you may provide a [filePath]
    * that will be used as helper in the output.
    */
-  Feature parse(List<String> contents, { filePath }) {
+  Feature parse(List<String> contents, {filePath}) {
     Logger.root.level = Level.INFO;
 
     Feature feature;
@@ -66,7 +63,8 @@ class GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.fine(match.group(1));
-        feature = new Feature(match.group(1), new Location(filePath, lineCounter));
+        feature =
+            new Feature(match.group(1), new Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
       }
@@ -76,7 +74,8 @@ class GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.fine(match.group(1));
-        currentScenario = new Scenario(match.group(1), new Location(filePath, lineCounter));
+        currentScenario =
+            new Scenario(match.group(1), new Location(filePath, lineCounter));
         currentScenario.tags = tags;
         feature.scenarios.add(currentScenario);
         tags = [];
@@ -87,7 +86,8 @@ class GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.fine("Background: ${match.group(1)}");
-        currentScenario = new Background(match.group(1), new Location(filePath, lineCounter));
+        currentScenario =
+            new Background(match.group(1), new Location(filePath, lineCounter));
         feature.background = currentScenario;
       }
 
@@ -95,7 +95,8 @@ class GherkinParser {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = new Step(match.group(1), match.group(2), new Location(filePath, lineCounter), currentScenario);
+        currentStep = new Step(match.group(1), match.group(2),
+            new Location(filePath, lineCounter), currentScenario);
         currentTable = currentStep.table;
         currentScenario.addStep(currentStep);
       }

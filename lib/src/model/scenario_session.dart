@@ -1,4 +1,3 @@
-
 part of ogurets_core3;
 
 class OguretsScenarioSession {
@@ -16,10 +15,9 @@ class OguretsScenarioSession {
   }
 
   List<DeclarationMirror> _constructors(ClassMirror mirror) {
-    return List.from(
-        mirror.declarations.values.where((declare) {
-          return declare is MethodMirror && declare.isConstructor;
-        }));
+    return List.from(mirror.declarations.values.where((declare) {
+      return declare is MethodMirror && declare.isConstructor;
+    }));
   }
 
   List<ParameterMirror> _params(var methodMirror) {
@@ -32,7 +30,8 @@ class OguretsScenarioSession {
 
 // recursively construct the object if necessary and stick each one into
 // the instances map
-  InstanceMirror _newInstance(ClassMirror cm, Map<Type, InstanceMirror> instances) {
+  InstanceMirror _newInstance(
+      ClassMirror cm, Map<Type, InstanceMirror> instances) {
     InstanceMirror newInst;
 
     List<DeclarationMirror> c = _constructors(cm);
@@ -51,10 +50,11 @@ class OguretsScenarioSession {
         positionalArgs.add(inst.reflectee);
       });
 
-      Symbol constName = constructor.simpleName == cm.simpleName ? const Symbol("") : constructor.simpleName;
+      Symbol constName = constructor.simpleName == cm.simpleName
+          ? const Symbol("")
+          : constructor.simpleName;
       newInst = cm.newInstance(constName, positionalArgs);
       instances[cm.reflectedType] = newInst;
-
     } else {
       newInst = cm.newInstance(const Symbol(""), []);
       instances[cm.reflectedType] = newInst;

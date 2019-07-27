@@ -1,7 +1,6 @@
 part of ogurets_core3;
 
 class GherkinTable extends IterableBase {
-
   final String _SPACER = "\t\t  ";
 
   List<String> _columnNames = [];
@@ -31,10 +30,10 @@ class GherkinTable extends IterableBase {
   List<String> gherkinRows() {
     List<String> rows = [];
 
-    if(!_table.isEmpty) {
+    if (!_table.isEmpty) {
       rows.add("$_SPACER|${_columnNames.join(" | ")}|");
 
-      for(var row in _table) {
+      for (var row in _table) {
         rows.add("$_SPACER|${row.values.join(" | ")}|");
       }
     }

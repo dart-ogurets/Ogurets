@@ -17,17 +17,20 @@ class After extends Hook {
 // only available on given instances
 class BeforeRun {
   final int order;
+
   const BeforeRun({this.order});
 }
 
 // only available on given instances
 class AfterRun {
   final int order;
+
   const AfterRun({this.order});
 }
 
 class StepDef {
   final String verbiage;
+
   const StepDef(this.verbiage);
 }
 

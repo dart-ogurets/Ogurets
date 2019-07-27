@@ -2,14 +2,13 @@ part of ogurets_core3;
 
 // https://github.com/JetBrains/intellij-community/blob/master/plugins/cucumber-jvm-formatter/src/org/jetbrains/plugins/cucumber/java/run/CucumberJvmSMFormatter.java
 
-
 /**
  * This is the interface you should implement if you want your own custom
  * formatter.
  */
 abstract class Formatter {
-  void syntaxError(String var1, String var2, List<String> var3, String var4,
-      int var5);
+  void syntaxError(
+      String var1, String var2, List<String> var3, String var4, int var5);
 
   void feature(FeatureStatus featureStatus);
 
@@ -107,7 +106,8 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void syntaxError(String var1, String var2, List<String> var3, String var4, int var5) {
+  void syntaxError(
+      String var1, String var2, List<String> var3, String var4, int var5) {
     formatters.forEach((f) => f.syntaxError(var1, var2, var3, var4, var5));
   }
 }
@@ -118,46 +118,50 @@ class BasicFormatter implements Formatter {
   BasicFormatter(this.buffer);
 
   @override
-  void background(Background background) {
-  }
+  void background(Background background) {}
 
   @override
-  void close() {
-  }
+  void close() {}
 
   @override
   void done(Object status) {
     if (status is FeatureStatus) {
       FeatureStatus featureStatus = status;
       buffer.writeln("-------------------");
-      buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}", color: 'green');
+      buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}",
+          color: 'green');
 
       if (featureStatus.failedScenariosCount > 0) {
-        buffer.writeln("Scenarios failed: ${featureStatus.failedScenariosCount}", color: 'red');
+        buffer.writeln(
+            "Scenarios failed: ${featureStatus.failedScenariosCount}",
+            color: 'red');
       }
 
       buffer.flush();
     } else if (status is StepStatus) {
       StepStatus ss = status;
       if (ss.failed) {
-        buffer.writeln("Step: ${ss.decodedVerbiage} failed (${ss.step.location.toString()}:\n${ss.failure.error}: ${ss.failure.trace}", color: 'red');
+        buffer.writeln(
+            "Step: ${ss.decodedVerbiage} failed (${ss.step.location.toString()}:\n${ss.failure.error}: ${ss.failure.trace}",
+            color: 'red');
       }
     }
   }
 
   @override
-  void endOfScenarioLifeCycle(Scenario endScenario) {
-  }
+  void endOfScenarioLifeCycle(Scenario endScenario) {}
 
   @override
   void eof(RunStatus runStatus) {
     // Tally the failed / passed features
     buffer.writeln("==================");
     if (runStatus.passedFeaturesCount > 0) {
-      buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}", color: "green");
+      buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}",
+          color: "green");
     }
     if (runStatus.failedFeaturesCount > 0) {
-      buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}", color: "red");
+      buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}",
+          color: "red");
     }
     buffer.flush();
     // Tally the missing stepdefs boilerplate
@@ -185,7 +189,8 @@ class BasicFormatter implements Formatter {
   @override
   void scenario(ScenarioStatus startScenario) {
     if (!startScenario.exampleTable.isValid) {
-      buffer.write("\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
+      buffer.write(
+          "\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
       buffer.writeln("${startScenario.scenario.location}", color: 'gray');
     }
   }
@@ -209,16 +214,19 @@ class BasicFormatter implements Formatter {
       failureMessage = "\n${status.failure.error}\n${status.failure.trace}";
     }
     if (status.step.pyString != null) {
-      buffer.writeln("\t\t${status.decodedVerbiage}\n\"\"\"\n${status.step.pyString}\"\"\"$failureMessage", color: color);
+      buffer.writeln(
+          "\t\t${status.decodedVerbiage}\n\"\"\"\n${status.step.pyString}\"\"\"$failureMessage",
+          color: color);
     } else {
       buffer.write("\t\t${status.decodedVerbiage}", color: color);
       buffer.write("\t${status.step.location}", color: 'gray');
 
       if (!status.step.table.isEmpty) {
-        buffer.write("\n${status.step.table.gherkinRows().join("\n")}", color: 'cyan');
+        buffer.write("\n${status.step.table.gherkinRows().join("\n")}",
+            color: 'cyan');
       }
 
-      if(status.out.isNotEmpty) {
+      if (status.out.isNotEmpty) {
         buffer.write("\n");
         buffer.write(status.out.toString());
       }
@@ -230,17 +238,15 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void syntaxError(String var1, String var2, List<String> var3, String var4, int var5) {
+  void syntaxError(
+      String var1, String var2, List<String> var3, String var4, int var5) {
     // TODO: implement syntaxError
   }
 
   void uri(String url) {
     // TODO: implement uri
   }
-
-
 }
-
 
 /*
 
@@ -265,40 +271,32 @@ class IntellijFormatter implements Formatter {
 
   static const String FILE_RESOURCE_PREFIX = "file://";
 
-  static const String TEMPLATE_TEST_STARTED =
-      TEAMCITY_PREFIX +
-          "[testStarted timestamp = '%s' locationHint = 'file://%s' captureStandardOutput = 'true' name = '%s']";
-  static const String TEMPLATE_TEST_FAILED =
-      TEAMCITY_PREFIX +
-          "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
-  static const String TEMPLATE_COMPARISON_TEST_FAILED =
-      TEAMCITY_PREFIX +
-          "[testFailed timestamp = '%s' details = '%s' message = '%s' expected='%s' actual='%s' name = '%s' %s]";
+  static const String TEMPLATE_TEST_STARTED = TEAMCITY_PREFIX +
+      "[testStarted timestamp = '%s' locationHint = 'file://%s' captureStandardOutput = 'true' name = '%s']";
+  static const String TEMPLATE_TEST_FAILED = TEAMCITY_PREFIX +
+      "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
+  static const String TEMPLATE_COMPARISON_TEST_FAILED = TEAMCITY_PREFIX +
+      "[testFailed timestamp = '%s' details = '%s' message = '%s' expected='%s' actual='%s' name = '%s' %s]";
   static const String TEMPLATE_SCENARIO_FAILED = TEAMCITY_PREFIX +
       "[customProgressStatus timestamp='%s' type='testFailed']";
-  static const String TEMPLATE_TEST_PENDING =
-      TEAMCITY_PREFIX +
-          "[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";
+  static const String TEMPLATE_TEST_PENDING = TEAMCITY_PREFIX +
+      "[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";
 
-  static const String TEMPLATE_TEST_FINISHED =
-      TEAMCITY_PREFIX +
-          "[testFinished timestamp = '%s' duration = '%s' name = '%s']";
+  static const String TEMPLATE_TEST_FINISHED = TEAMCITY_PREFIX +
+      "[testFinished timestamp = '%s' duration = '%s' name = '%s']";
 
-  static const String TEMPLATE_ENTER_THE_MATRIX = TEAMCITY_PREFIX +
-      "[enteredTheMatrix timestamp = '%s']";
+  static const String TEMPLATE_ENTER_THE_MATRIX =
+      TEAMCITY_PREFIX + "[enteredTheMatrix timestamp = '%s']";
 
-  static const String TEMPLATE_TEST_SUITE_STARTED =
-      TEAMCITY_PREFIX +
-          "[testSuiteStarted timestamp = '%s' locationHint = 'file://%s' name = '%s']";
-  static const String TEMPLATE_TEST_SUITE_FINISHED = TEAMCITY_PREFIX +
-      "[testSuiteFinished timestamp = '%s' name = '%s']";
+  static const String TEMPLATE_TEST_SUITE_STARTED = TEAMCITY_PREFIX +
+      "[testSuiteStarted timestamp = '%s' locationHint = 'file://%s' name = '%s']";
+  static const String TEMPLATE_TEST_SUITE_FINISHED =
+      TEAMCITY_PREFIX + "[testSuiteFinished timestamp = '%s' name = '%s']";
 
-  static const String TEMPLATE_SCENARIO_COUNTING_STARTED =
-      TEAMCITY_PREFIX +
-          "[customProgressStatus testsCategory = 'Scenarios' count = '%s' timestamp = '%s']";
-  static const String TEMPLATE_SCENARIO_COUNTING_FINISHED =
-      TEAMCITY_PREFIX +
-          "[customProgressStatus testsCategory = '' count = '0' timestamp = '%s']";
+  static const String TEMPLATE_SCENARIO_COUNTING_STARTED = TEAMCITY_PREFIX +
+      "[customProgressStatus testsCategory = 'Scenarios' count = '%s' timestamp = '%s']";
+  static const String TEMPLATE_SCENARIO_COUNTING_FINISHED = TEAMCITY_PREFIX +
+      "[customProgressStatus testsCategory = '' count = '0' timestamp = '%s']";
   static const String TEMPLATE_SCENARIO_STARTED = TEAMCITY_PREFIX +
       "[customProgressStatus type = 'testStarted' timestamp = '%s']";
   static const String TEMPLATE_SCENARIO_FINISHED = TEAMCITY_PREFIX +
@@ -318,7 +316,9 @@ class IntellijFormatter implements Formatter {
     if (source == null) {
       return "";
     }
-    return source.replaceAll("|", "||").replaceAll("\n", "|n")
+    return source
+        .replaceAll("|", "||")
+        .replaceAll("\n", "|n")
         .replaceAll("\r", "|r")
         .replaceAll("'", "|'");
   }
@@ -333,7 +333,7 @@ class IntellijFormatter implements Formatter {
     String featureHeader = feature.feature.name;
     var lines = featureHeader.split("\n");
     lines.removeWhere((l) =>
-    l.length == 0 || l[0] == '#' || l[0] == '@' || l.indexOf(':') < 0);
+        l.length == 0 || l[0] == '#' || l[0] == '@' || l.indexOf(':') < 0);
     if (lines.length > 0) {
       return 'Feature: ${lines[0]}';
     } else {
@@ -345,7 +345,7 @@ class IntellijFormatter implements Formatter {
     buffer.writeln(_escapeCommand(template, params));
     buffer.flush();
   }
-  
+
   String getCurrentTime() {
     return DATE_FORMAT.format(DateTime.now());
   }
@@ -365,11 +365,18 @@ class IntellijFormatter implements Formatter {
     _basicFormatter.done(status);
 
     if (status == currentFeature) {
-      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getFeatureName(currentFeature)]);
+      out(TEMPLATE_TEST_SUITE_FINISHED,
+          [getCurrentTime(), _getFeatureName(currentFeature)]);
     } else if (status is StepStatus) {
       StepStatus ss = status;
       if (ss.failed) {
-        out(TEMPLATE_TEST_FAILED, [getCurrentTime(), _location(ss.step.location), ss.failure.error.toString(), ss.decodedVerbiage, '']);
+        out(TEMPLATE_TEST_FAILED, [
+          getCurrentTime(),
+          _location(ss.step.location),
+          ss.failure.error.toString(),
+          ss.decodedVerbiage,
+          ''
+        ]);
       } else if (ss.skipped) {
         out(TEMPLATE_TEST_PENDING, [ss.decodedVerbiage, getCurrentTime()]);
       }
@@ -381,7 +388,8 @@ class IntellijFormatter implements Formatter {
       out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
     } else if (status is ScenarioStatus) {
       ScenarioStatus scenario = status;
-      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), _getScenarioName(scenario)]);
+      out(TEMPLATE_TEST_SUITE_FINISHED,
+          [getCurrentTime(), _getScenarioName(scenario)]);
       if (scenario.failed) {
         out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
       }
@@ -396,7 +404,11 @@ class IntellijFormatter implements Formatter {
       done(currentFeature);
     }
     currentFeature = featureStatus;
-    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(featureStatus.feature.location), _getFeatureName(featureStatus)]);
+    out(TEMPLATE_TEST_SUITE_STARTED, [
+      getCurrentTime(),
+      _location(featureStatus.feature.location),
+      _getFeatureName(featureStatus)
+    ]);
 
     _basicFormatter.feature(featureStatus);
   }
@@ -421,15 +433,22 @@ class IntellijFormatter implements Formatter {
   @override
   void scenario(ScenarioStatus scenario) {
     out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), _location(scenario.scenario.location), _getScenarioName(scenario)]);
+    out(TEMPLATE_TEST_SUITE_STARTED, [
+      getCurrentTime(),
+      _location(scenario.scenario.location),
+      _getScenarioName(scenario)
+    ]);
 
     _basicFormatter.scenario(scenario);
   }
 
-
   @override
   void step(StepStatus step) {
-    out(TEMPLATE_TEST_STARTED, [getCurrentTime(), _location(step.step.location), step.decodedVerbiage]);
+    out(TEMPLATE_TEST_STARTED, [
+      getCurrentTime(),
+      _location(step.step.location),
+      step.decodedVerbiage
+    ]);
     _basicFormatter.step(step);
   }
 
@@ -438,8 +457,8 @@ class IntellijFormatter implements Formatter {
   }
 
   @override
-  void syntaxError(String var1, String var2, List<String> var3, String var4,
-      int var5) {
+  void syntaxError(
+      String var1, String var2, List<String> var3, String var4, int var5) {
     _basicFormatter.syntaxError(var1, var2, var3, var4, var5);
   }
 

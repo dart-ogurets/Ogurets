@@ -26,7 +26,7 @@ run(args) async {
   }
 
   var debug = options["debug"];
-  if(debug){
+  if (debug) {
     Logger.root.level = Level.FINE;
   } else {
     Logger.root.level = Level.INFO;
@@ -69,7 +69,6 @@ ArgResults _parseArguments(args) {
   argParser.addOption("tags");
   return argParser.parse(args);
 }
-
 
 class OguretsOpts {
   List<String> _features = [];
@@ -124,19 +123,18 @@ class OguretsOpts {
 
   void _checkForEnvOverride() {
     String envOverride = Platform.environment['CUCUMBER'];
-    
+
     if (envOverride != null) {
       if ("SCENARIO" == envOverride) {
         _features = [Platform.environment['CUCUMBER_FEATURE']];
         _scenario = Platform.environment['CUCUMBER_SCENARIO'];
-      } else if ('FEATURE'  == envOverride) {
+      } else if ('FEATURE' == envOverride) {
         _features = [Platform.environment['CUCUMBER_FEATURE']];
       } else {
         _features = [Platform.environment['CUCUMBER_FOLDER']];
       }
     }
   }
-
 
   /**
    * For each of the feature files or folders, determine which type it is, deref folders
@@ -148,9 +146,12 @@ class OguretsOpts {
     _features.forEach((ff) {
       FileSystemEntityType type = FileSystemEntity.typeSync(ff);
       if (type == FileSystemEntityType.directory) {
-        new Directory(ff).listSync(recursive: true, followLinks: true).forEach((f) {
+        new Directory(ff)
+            .listSync(recursive: true, followLinks: true)
+            .forEach((f) {
           type = FileSystemEntity.typeSync(f.path);
-          if (type == FileSystemEntityType.file && f.path.endsWith(".feature")) {
+          if (type == FileSystemEntityType.file &&
+              f.path.endsWith(".feature")) {
             _log.info("loaded feature ${f.path}");
             files.add(f.path);
           }
@@ -166,7 +167,8 @@ class OguretsOpts {
     });
 
     if (files.length == 0) {
-      _log.severe("No feature files found, offset is ${Directory.current.path}");
+      _log.severe(
+          "No feature files found, offset is ${Directory.current.path}");
     }
 
     return files;
@@ -176,11 +178,11 @@ class OguretsOpts {
     Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
-    
+
     _checkForEnvOverride();
     _ensureAssertsActive();
 
-    if(_debug){
+    if (_debug) {
       Logger.root.level = Level.FINE;
     } else {
       Logger.root.level = Level.INFO;
@@ -194,7 +196,7 @@ class OguretsOpts {
       if (options["tags"] != null) {
         runTags = options["tags"].split(",");
       }
-      
+
       if (options["debug"]) {
         Logger.root.level = Level.FINE;
       }
@@ -213,14 +215,16 @@ class OguretsOpts {
 
     await state.build();
     await state.executeRunHooks(BeforeRun);
-    
+
     try {
       RunStatus runStatus = new RunStatus(state.fmt);
 
       for (String filePath in featureFiles) {
         List<String> contents = await new File(filePath).readAsLines();
-        Feature feature = await new GherkinParserTask(contents, filePath).execute();
-        FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
+        Feature feature =
+            await new GherkinParserTask(contents, filePath).execute();
+        FeatureStatus featureStatus =
+            await feature.execute(state, debug: _debug);
         if (featureStatus.failed) {
           runStatus.failedFeatures.add(featureStatus);
         } else {
@@ -246,8 +250,7 @@ class OguretsOpts {
       return;
     }
 
-    throw Exception("Please enable asserts with --enable-asserts - VM options are: ${Platform.environment['DART_VM_OPTIONS']}");
+    throw Exception(
+        "Please enable asserts with --enable-asserts - VM options are: ${Platform.environment['DART_VM_OPTIONS']}");
   }
 }
-
-

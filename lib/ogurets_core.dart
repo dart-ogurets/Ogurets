@@ -90,8 +90,12 @@ class OguretsState {
     }
 
     // grab the negs
-    negativeTags = runTags.where((prefix) => prefix.startsWith("~")).map((tag) => tag.substring(1)).toList();
-    runTags.removeWhere((tag) => negativeTags.contains(tag)); // take the negs out
+    negativeTags = runTags
+        .where((prefix) => prefix.startsWith("~"))
+        .map((tag) => tag.substring(1))
+        .toList();
+    runTags
+        .removeWhere((tag) => negativeTags.contains(tag)); // take the negs out
   }
 
   List<Symbol> _possibleParams = [
@@ -284,7 +288,8 @@ class OguretsState {
                   OguretsScenarioSession scenarioSession) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
-            print("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+            print(
+                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
@@ -361,7 +366,8 @@ class OguretsState {
       return false;
     }
 
-    return negativeTags.isNotEmpty && expectedTags.any((element) => negativeTags.contains(element) );
+    return negativeTags.isNotEmpty &&
+        expectedTags.any((element) => negativeTags.contains(element));
   }
 
   void runBeforeHooks(ScenarioStatus scenarioStatus,
@@ -406,12 +412,11 @@ class OguretsState {
     for (final Type type in existingInstances.keys) {
       final ClassMirror lib = reflectClass(type);
       for (MethodMirror mm in lib.declarations.values.where(
-              (DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+          (DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+        var filteredMetadata = mm.metadata
+            .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
 
-        var filteredMetadata =
-          mm.metadata.where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
-
-        // essentially an IF on the meta-data,  this filters if this method 
+        // essentially an IF on the meta-data,  this filters if this method
         for (InstanceMirror im in filteredMetadata) {
           var hook = () async {
             var result = existingInstances[type].invoke(mm.simpleName, []);
@@ -430,10 +435,12 @@ class OguretsState {
       }
     }
 
-    var ordered = new List<int>()..addAll(runHooks.keys)..sort();
+    var ordered = new List<int>()
+      ..addAll(runHooks.keys)
+      ..sort();
 
-    for(int order in ordered) {
-      for(Function f in runHooks[order]) {
+    for (int order in ordered) {
+      for (Function f in runHooks[order]) {
         await f();
       }
     }

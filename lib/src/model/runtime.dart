@@ -1,7 +1,6 @@
 part of ogurets_core3;
 
-class StepDefUndefined implements Exception {
-}
+class StepDefUndefined implements Exception {}
 
 class StepFailure {
   Exception error;
