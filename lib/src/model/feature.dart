@@ -16,7 +16,6 @@ class Feature {
     bool matchedFeatureTags = state.tagsMatch(tags);
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
-    print("matched $matchedFeatureTags neg $negativeTagsMatch");
     if (!negativeTagsMatch && (matchedFeatureTags || tags.isEmpty)) {
       // a feature can have no tags
       state.fmt.feature(featureStatus);
@@ -25,13 +24,10 @@ class Feature {
       for (Scenario scenario in scenarios) {
         _log.fine(
             "Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
-        print(
-            "Requested tags: $state.runTags.  Scenario is tagged with: ${scenario.tags}. Matched feature? $matchedFeatureTags");
-        if (!state.negativeTagsMatch(scenario.tags) &&
-            ((matchedFeatureTags) ||
-                (state.tagsMatch(scenario.tags) &&
-                    (state.scenarioToRun == null ||
-                        (state.scenarioToRun == scenario.name))))) {
+        // we matched the scenario name OR there is no scenario name, we don't match the negatives and we either match the feature or the scenario tags
+        if ((state.scenarioToRun == scenario.name) ||
+            (state.scenarioToRun == null && !state.negativeTagsMatch(scenario.tags) && ((matchedFeatureTags) || state.tagsMatch(scenario.tags))))
+        {
           _log.fine("Executing Scenario: $scenario");
 
           scenario.background = background;

@@ -1,3 +1,8 @@
+3.1.5
+=======
+* logic around tags was causing everything to run even if you specified a scenario name
+* too much print logging
+
 3.1.4
 =======
 * karthi.kk - reported an issue with tags not working as expected. Tags were not triggering
