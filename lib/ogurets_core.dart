@@ -288,8 +288,6 @@ class OguretsState {
                   OguretsScenarioSession scenarioSession) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
-            print(
-                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
