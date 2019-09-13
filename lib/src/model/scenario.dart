@@ -145,15 +145,10 @@ class Scenario {
             stepStatus.skipped = true;
           } else {
             // to actually run the step
-            await state.stepRunners[found](params, moreParams, scenarioSession);
+            await state.stepRunners[found](params, moreParams, scenarioSession, scenarioStatus, stepStatus);
           }
         } catch (e, s) {
           _log.fine("Step failed: $step");
-          var failure = new StepFailure(e, s.toString());
-
-          stepStatus.failure = failure;
-          scenarioStatus.failedSteps.add(stepStatus);
-          break;
         } finally {
           if (!stepStatus.failed && !scenarioStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);

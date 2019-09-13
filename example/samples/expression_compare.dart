@@ -2,8 +2,8 @@
 
 import 'package:ogurets/ogurets.dart';
 
-import 'lib/hooks.dart';
-import 'steps/expressions.dart';
+import '../lib/hooks.dart';
+import '../steps/expressions.dart';
 
 void main() async {
   var def = new OguretsOpts()

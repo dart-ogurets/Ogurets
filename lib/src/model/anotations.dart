@@ -14,6 +14,14 @@ class After extends Hook {
   const After({String tag, int order}) : super(tag: tag, order: order);
 }
 
+class BeforeStep extends Hook {
+  const BeforeStep({String tag, int order}) : super(tag: tag,  order: order);
+}
+
+class AfterStep extends Hook {
+  const AfterStep({String tag, int order}) : super(tag: tag,  order: order);
+}
+
 // only available on given instances
 class BeforeRun {
   final int order;

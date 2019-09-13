@@ -2,7 +2,6 @@ part of ogurets_core3;
 
 class OguretsScenarioSession {
   Map<Type, InstanceMirror> _scenarioInstances = {};
-  Map<String, Object> addendum = {};
 
   OguretsScenarioSession(this._scenarioInstances);
 

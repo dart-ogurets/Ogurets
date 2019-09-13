@@ -1,0 +1,18 @@
+name: ogurets_examples
+version: 1.0.0
+authors:
+  - Irina Southwell <pishisuda11@gmail.com>
+  - Richard Vowles <richard@bluetrainsoftware.com>
+  - Danil Kornishev <danil.kornishev@gmail.com>
+  - Florian Huonder <florian.huonder@prolutions.ch>
+  - Sacha Dolski <sacha.dolski@prolutions.ch>
+description: Sample tests for ogurets
+homepage: https://github.com/dart-ogurets/Ogurets
+dependencies:
+  ogurets:
+    path: ..
+dev_dependencies:
+  test: ^1.6.8
+environment:
+  sdk: ">=2.2.0 <3.0.0"
+

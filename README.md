@@ -212,8 +212,19 @@ NOTE: You cannot include anything in the constructor that it does not know about
 
 Hooks work largely like you would expect them to. You can:
 
-- specify a tag or not. If not, then the before or after will run on every scenario triggered.
-- specify instances to be injected, including the `OguretsScenarioSession` that holds details about the current scenario.
+- specify a tag or not (in the annotation). If not, then the before or after will run on every scenario triggered.
+- specify instances to be injected, including the `ScenarioStatus` that holds details about the current scenario. The
+`ScenarioStatus` object holds a map called 'augments' which allows you to put in Scenario related things (such as references
+to screen shots, or json objects or whatever you like) so you will be able to build custom reports that output those
+things.
+
+There are several hooks that you can use to make your tests run better:
+
+- `@BeforeRun`/`@AfterRun` - these run before and after the run. They are not tagged but they can have an order. The Ogurets 
+Flutter plugin uses them to start and stop the Flutter application.
+- `@Before`/`@After` - these run before and after a scenario (regardless of success or failure).
+- `@BeforeStep`/`@AfterStep` - these run before and after a step (even on failure). When the AfterStep runs, you are able to
+determine if the scenario has failed and if so, you can take action. 
 
 
 NOTE: no optional parameters are allowed as there is no "context". 

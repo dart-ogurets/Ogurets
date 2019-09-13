@@ -57,6 +57,8 @@ class RunStatus extends StepsExecutionStatus {
     return all;
   }
 
+  int get passedScenarios => features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
+
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
@@ -85,6 +87,8 @@ class RunStatus extends StepsExecutionStatus {
   String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
   RunStatus(Formatter fmt) : super(fmt);
+
+  get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 }
 
 /// Feedback from one feature's execution.
@@ -153,6 +157,10 @@ class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   /// If this ScenarioStatus is one of a Background, it is here.
   Scenario scenario;
+
+  /// this is information that a hook or step might wish to add to
+  /// keep track of in reporting. We expect to be able to encode it in reports.
+  Map<String, Object> addendum = {};
 
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
