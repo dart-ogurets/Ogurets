@@ -236,8 +236,9 @@ import 'scenario_session.dart';
 
 class Hooks {
   @Before()
-  void beforeEach(ScenarioSession session) {
+  void beforeEach(ScenarioSession session, ScenarioStatus tracker) {
     session.sharedStepData['before-all'] = 'here';
+    tracker.addendum['before-all'] = true; // this will be attached to the scenario object that generates the report
   }
 
   @After()
