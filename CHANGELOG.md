@@ -1,3 +1,8 @@
+3.1.6
+=======
+* added in beforestep/afterstep annotations
+* added moved examples to own directory, turned them into a test.
+
 3.1.5
 =======
 * logic around tags was causing everything to run even if you specified a scenario name
