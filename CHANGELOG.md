@@ -1,3 +1,7 @@
+3.1.7
+=======
+* opened up the intl version to include 0.16 because Flutter master has changed
+
 3.1.6
 =======
 * added in beforestep/afterstep annotations
