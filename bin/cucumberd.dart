@@ -6,15 +6,15 @@ import "dart:isolate";
 final _STEPS_SRC = "example/steps";
 
 void main(args) {
-  File runFile = new File(".cucumberd");
+  File runFile = File(".cucumberd");
 
   runFile.createSync();
   IOSink sink = runFile.openWrite();
 
   // Scan for sources
-  var directory = new Directory(_STEPS_SRC);
+  var directory = Directory(_STEPS_SRC);
 
-  ReceivePort receiver = new ReceivePort();
+  ReceivePort receiver = ReceivePort();
 
   receiver.listen((data) {
     print("DATA");
@@ -27,7 +27,7 @@ void main(args) {
       sink.writeln("import 'dart:io';");
       sink.writeln("import 'package:ogurets/ogurets.dart';");
       sink.writeln("\nvoid main(args) {run(args).whenComplete(() => exit(0));}");
-      sink.close().whenComplete(() => Isolate.spawnUri(new Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
+      sink.close().whenComplete(() => Isolate.spawnUri(Uri.file(runFile.absolute.path), args, "").then((Isolate iss) {
 
       }));
     });

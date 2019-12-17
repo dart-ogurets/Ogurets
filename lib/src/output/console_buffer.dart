@@ -4,18 +4,18 @@ class ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";
 
   static final colors = {
-    "black": new AnsiPen()..black(),
-    "red": new AnsiPen()..red(),
-    "green": new AnsiPen()..green(),
-    "white": new AnsiPen()..white(),
-    "yellow": new AnsiPen()..yellow(),
-    "gray": new AnsiPen()..gray(level: 0.5),
-    "cyan": new AnsiPen()..cyan(),
-    "magenta": new AnsiPen()..magenta()
+    "black": AnsiPen()..black(),
+    "red": AnsiPen()..red(),
+    "green": AnsiPen()..green(),
+    "white": AnsiPen()..white(),
+    "yellow": AnsiPen()..yellow(),
+    "gray": AnsiPen()..gray(level: 0.5),
+    "cyan": AnsiPen()..cyan(),
+    "magenta": AnsiPen()..magenta()
   };
 
   Map _columns = {};
-  StringBuffer _buffer = new StringBuffer();
+  StringBuffer _buffer = StringBuffer();
 
   StringBuffer buffer() {
     return _buffer;

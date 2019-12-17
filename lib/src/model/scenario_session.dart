@@ -34,7 +34,7 @@ class OguretsScenarioSession {
     InstanceMirror newInst;
 
     List<DeclarationMirror> c = _constructors(cm);
-    if (c.length > 0) {
+    if (c.isNotEmpty) {
       DeclarationMirror constructor = c[0];
       List<ParameterMirror> params = _params(constructor);
       List<Object> positionalArgs = [];

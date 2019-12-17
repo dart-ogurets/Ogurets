@@ -12,7 +12,7 @@ class GherkinTable extends IterableBase {
 
   bool get empty => _table.isEmpty;
 
-  bool get isValid => _columnNames.length > 0;
+  bool get isValid => _columnNames.isNotEmpty;
 
   List<String> get names => _columnNames;
 
@@ -20,17 +20,15 @@ class GherkinTable extends IterableBase {
     if (_columnNames.isEmpty) {
       _columnNames.addAll(row);
     } else {
-      _table.add(new Map.fromIterables(_columnNames, row));
+      _table.add(Map.fromIterables(_columnNames, row));
     }
   }
 
-  /**
-   * Gherkin table
-   */
+  /// Gherkin table
   List<String> gherkinRows() {
     List<String> rows = [];
 
-    if (!_table.isEmpty) {
+    if (_table.isNotEmpty) {
       rows.add("$_SPACER|${_columnNames.join(" | ")}|");
 
       for (var row in _table) {

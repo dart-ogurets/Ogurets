@@ -11,8 +11,8 @@ class Feature {
 
   Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(OguretsState state, {bool debug: false}) async {
-    FeatureStatus featureStatus = new FeatureStatus(state.fmt)..feature = this;
+  Future<FeatureStatus> execute(OguretsState state, {bool debug = false}) async {
+    FeatureStatus featureStatus = FeatureStatus(state.fmt)..feature = this;
     bool matchedFeatureTags = state.tagsMatch(tags);
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
@@ -37,7 +37,7 @@ class Feature {
           scenarioStatuses.forEach((scenarioStatus) {
             if (scenarioStatus.failed ||
                 (state.failOnMissingSteps &&
-                    scenarioStatus.undefinedSteps.length > 0)) {
+                    scenarioStatus.undefinedSteps.isNotEmpty)) {
               featureStatus.failedScenarios.add(scenarioStatus);
             } else {
               featureStatus.passedScenarios.add(scenarioStatus);
@@ -58,9 +58,7 @@ class Feature {
     }
   }
 
-  /**
-   * Converts to printable format
-   */
+  /// Converts to printable format
   String toString() {
     return "$name ${tags == null ? "" : tags}\n $background \n$scenarios";
   }

@@ -9,13 +9,10 @@ import "dart:mirrors";
 import 'ogurets_core.dart';
 export 'ogurets_core.dart';
 
-final Logger _log = new Logger('ogurets');
+final Logger _log = Logger('ogurets');
 
-/**
- * Runs specified gherkin files with provided flags. This is left for backwards compatibility.
- * [args] may be a list of filepaths.
- *
- */
+/// Runs specified gherkin files with provided flags. This is left for backwards compatibility.
+/// [args] may be a list of filepaths.
 run(args) async {
   var options = _parseArguments(args);
 
@@ -45,8 +42,8 @@ run(args) async {
   RunStatus runStatus = RunStatus(state.fmt);
 
   for (String filePath in featureFiles) {
-    List<String> contents = await new File(filePath).readAsLines();
-    Feature feature = await new GherkinParserTask(contents, filePath).execute();
+    List<String> contents = await File(filePath).readAsLines();
+    Feature feature = await GherkinParserTask(contents, filePath).execute();
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
@@ -59,12 +56,10 @@ run(args) async {
   state.fmt.eof(runStatus);
 }
 
-/**
- * Parses command line arguments.
- */
+/// Parses command line arguments.
 
 ArgResults _parseArguments(args) {
-  var argParser = new ArgParser();
+  var argParser = ArgParser();
   argParser.addFlag('debug', defaultsTo: false);
   argParser.addOption("tags");
   return argParser.parse(args);
@@ -73,11 +68,11 @@ ArgResults _parseArguments(args) {
 class OguretsOpts {
   List<String> _features = [];
   List<Type> _stepdefs = [];
-  String _scenario = null;
+  String _scenario;
   Map<Type, InstanceMirror> _instances = {};
   List<Object> _instanceObjects = [];
   bool _debug = false;
-  String _tags = null;
+  String _tags;
   bool _failedOnMissingSteps = true;
 
   void features(String folderOrFile) {
@@ -136,17 +131,15 @@ class OguretsOpts {
     }
   }
 
-  /**
-   * For each of the feature files or folders, determine which type it is, deref folders
-   * into individual feature files.
-   */
+  /// For each of the feature files or folders, determine which type it is, deref folders
+  /// into individual feature files.
   List<String> _determineFeatureFiles() {
     List<String> files = [];
 
     _features.forEach((ff) {
       FileSystemEntityType type = FileSystemEntity.typeSync(ff);
       if (type == FileSystemEntityType.directory) {
-        new Directory(ff)
+        Directory(ff)
             .listSync(recursive: true, followLinks: true)
             .forEach((f) {
           type = FileSystemEntity.typeSync(f.path);
@@ -166,7 +159,7 @@ class OguretsOpts {
       }
     });
 
-    if (files.length == 0) {
+    if (files.isEmpty) {
       _log.severe(
           "No feature files found, offset is ${Directory.current.path}");
     }
@@ -206,7 +199,7 @@ class OguretsOpts {
 
     var featureFiles = _determineFeatureFiles();
 
-    OguretsState state = new OguretsState(new ConsoleBuffer());
+    OguretsState state = OguretsState(ConsoleBuffer());
     state.steps = this._stepdefs;
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;
@@ -217,12 +210,12 @@ class OguretsOpts {
     await state.executeRunHooks(BeforeRun);
 
     try {
-      RunStatus runStatus = new RunStatus(state.fmt);
+      RunStatus runStatus = RunStatus(state.fmt);
 
       for (String filePath in featureFiles) {
-        List<String> contents = await new File(filePath).readAsLines();
+        List<String> contents = await File(filePath).readAsLines();
         Feature feature =
-            await new GherkinParserTask(contents, filePath).execute();
+            await GherkinParserTask(contents, filePath).execute();
         FeatureStatus featureStatus =
             await feature.execute(state, debug: _debug);
         if (featureStatus.failed) {

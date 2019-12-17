@@ -22,7 +22,7 @@ class ColoredFragmentsBuffer implements ResultBuffer {
   List<ColoredBufferFragment> fragments = [];
 
   void write(message, {color}) {
-    fragments.add(new ColoredBufferFragment(message, color));
+    fragments.add(ColoredBufferFragment(message, color));
   }
 
   void writeln(message, {color}) {
@@ -33,11 +33,11 @@ class ColoredFragmentsBuffer implements ResultBuffer {
     if (buffer is ColoredFragmentsBuffer) {
       fragments.addAll(buffer.fragments);
     } else {
-      throw new UnsupportedError("Can only merge another ColoredBuffer.");
+      throw UnsupportedError("Can only merge another ColoredBuffer.");
     }
   }
 
   void flush() {
-    throw new UnsupportedError("ColoredBuffer does not flush().");
+    throw UnsupportedError("ColoredBuffer does not flush().");
   }
 }

@@ -10,7 +10,7 @@ class StepFailure {
     if (e is Exception) {
       this.error = e;
     } else {
-      this.error = new Exception(e.toString());
+      this.error = Exception(e.toString());
     }
     this.trace = s;
   }

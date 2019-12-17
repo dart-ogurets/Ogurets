@@ -41,7 +41,7 @@ part 'src/task.dart';
 /// The purpose of this file is to expose the internals of ogurets
 /// without requiring dart:io, so that it can be used in the browser.
 
-final Logger _log = new Logger('ogurets');
+final Logger _log = Logger('ogurets');
 
 typedef HookFunc = Future<void> Function(
     OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus);
@@ -81,22 +81,22 @@ class OguretsState {
     await _findMethodStyleStepRunners();
     await _findClassStyleStepRunners();
 
-    if (steps != null && steps.length > 0) {
+    if (steps != null && steps.isNotEmpty) {
       await findHooks(Before, namedBeforeTagHooks, beforeScenarioHooks);
       await findHooks(After, namedAfterTagHooks, afterScenarioHooks);
       await findHooks(BeforeStep, namedBeforeStepHooks, beforeStepGlobalHooks);
       await findHooks(AfterStep, namedAfterStepHooks, afterStepGlobalHooks);
     }
 
-    if (formatters.length == 0) {
+    if (formatters.isEmpty) {
       if (Platform.environment['CUCUMBER'] != null) {
-        formatters.add(new IntellijFormatter(resultBuffer));
+        formatters.add(IntellijFormatter(resultBuffer));
       } else {
-        formatters.add(new BasicFormatter(resultBuffer));
+        formatters.add(BasicFormatter(resultBuffer));
       }
     }
 
-    fmt = new DelegatingFormatter(formatters);
+    fmt = DelegatingFormatter(formatters);
 
     if (runTags == null) {
       runTags = [];
@@ -112,9 +112,9 @@ class OguretsState {
   }
 
   List<Symbol> _possibleParams = [
-    new Symbol("out"),
-    new Symbol("table"),
-    new Symbol("exampleRow")
+    Symbol("out"),
+    Symbol("table"),
+    Symbol("exampleRow")
   ];
 
   final TypeMirror _stringMirror = reflectType(String);
@@ -182,10 +182,10 @@ class OguretsState {
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
-            var step = new Step(hookTypeName, hookTypeName,
+            var step = Step(hookTypeName, hookTypeName,
                 scenarioStatus.scenario.location, scenarioStatus.scenario);
 
-            var stepStatus = new StepStatus(scenarioStatus.fmt)..step = step;
+            var stepStatus = StepStatus(scenarioStatus.fmt)..step = step;
             stepStatus.decodedVerbiage =
                 "${hookTypeName} - ${_decodeSymbol(methodName)}";
 
@@ -200,7 +200,7 @@ class OguretsState {
                 await Future.sync(() => invoke.reflectee as Future);
               }
             } catch (e, s) {
-              var failure = new StepFailure(e, s.toString());
+              var failure = StepFailure(e, s.toString());
 
               stepStatus.failure = failure;
               scenarioStatus.failedSteps.add(stepStatus);
@@ -253,12 +253,12 @@ class OguretsState {
   Future<OguretsState> _findMethodStyleStepRunners() async {
     for (LibraryMirror lib in currentMirrorSystem().libraries.values) {
       for (MethodMirror mm in lib.declarations.values
-          .where((DeclarationMirror dm) => dm is MethodMirror)) {
+        .whereType<MethodMirror>()) {          
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
-          stepRunners[new RegExp(
+          stepRunners[RegExp(
                   _transformCucumberExpression(im.reflectee.verbiage))] =
               (params, Map namedParams,
                   OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
@@ -283,7 +283,7 @@ class OguretsState {
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
-          stepRunners[new RegExp(
+          stepRunners[RegExp(
                   _transformCucumberExpression(im.reflectee.verbiage))] =
               (List params, Map namedParams,
                   OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
@@ -313,12 +313,12 @@ class OguretsState {
       await invokeStep(instance, mm, params, convertedNamedParams);
     } catch (e, s) {
       // move this here because the afterStep needs to know it failed.
-      var failure = new StepFailure(e, s.toString());
+      var failure = StepFailure(e, s.toString());
 
       stepStatus.failure = failure;
       scenarioStatus.failedSteps.add(stepStatus);
 
-      throw e;
+      rethrow;
     } finally { // try and ensure that the after step hooks run
       await runScenarioTags(scenarioStatus, scenarioSession, namedAfterStepHooks);
       await runHookList(scenarioStatus, scenarioSession, afterStepGlobalHooks);
@@ -340,9 +340,9 @@ class OguretsState {
 
   Map<Symbol, dynamic> _createParameters(
       Map namedParams, MethodMirror mm, List params, TypeMirror stringMirror) {
-    var convertedKeys = namedParams.keys.map((key) => new Symbol(key));
+    var convertedKeys = namedParams.keys.map((key) => Symbol(key));
     Map<Symbol, dynamic> convertedNamedParams =
-        new Map.fromIterables(convertedKeys, namedParams.values);
+        Map.fromIterables(convertedKeys, namedParams.values);
 
     // add to the end the missing params, however i think this can put
     // TODO: them in the wrong order?
@@ -455,7 +455,7 @@ class OguretsState {
       }
     }
 
-    var ordered = new List<int>()
+    var ordered = List<int>()
       ..addAll(runHooks.keys)
       ..sort();
 

@@ -11,7 +11,7 @@ class Scenario {
   Scenario background;
 
   List<Step> steps = [];
-  GherkinTable examples = new GherkinTable();
+  GherkinTable examples = GherkinTable();
 
   Location location;
 
@@ -21,7 +21,7 @@ class Scenario {
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<List<ScenarioStatus>> execute(OguretsState state,
-      {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
+      {isFirstOfFeature = true, OguretsScenarioSession scenarioSession}) async {
     var statuses = <ScenarioStatus>[];
 
     if (examples._table.isEmpty) {
@@ -35,7 +35,7 @@ class Scenario {
     }
 
     for (Map example in examples) {
-      var scenarioStatus = new ScenarioStatus(state.fmt)
+      var scenarioStatus = ScenarioStatus(state.fmt)
         ..scenario = this
         ..exampleTable = this.examples
         ..example = example
@@ -72,12 +72,12 @@ class Scenario {
 
   Future<ScenarioStatus> _executeSubScenario(
       ScenarioStatus scenarioStatus, exampleRow, OguretsState state,
-      {isFirstOfFeature: true, OguretsScenarioSession scenarioSession}) async {
+      {isFirstOfFeature = true, OguretsScenarioSession scenarioSession}) async {
     List<ScenarioStatus> backgroundStatus;
 
     if (scenarioSession == null) {
       scenarioSession =
-          new OguretsScenarioSession({}..addAll(state.existingInstances));
+          OguretsScenarioSession({}..addAll(state.existingInstances));
     }
 
     await state.runBeforeHooks(scenarioStatus, scenarioSession);
@@ -88,7 +88,7 @@ class Scenario {
             await background.execute(state, scenarioSession: scenarioSession);
       }
 
-      if (backgroundStatus != null && backgroundStatus.length > 0) {
+      if (backgroundStatus != null && backgroundStatus.isNotEmpty) {
         scenarioStatus.mergeBackground(backgroundStatus[0],
             isFirst: isFirstOfFeature);
       }
@@ -96,7 +96,7 @@ class Scenario {
       var iter = steps.iterator;
       while (iter.moveNext()) {
         var step = iter.current;
-        var stepStatus = new StepStatus(state.fmt)
+        var stepStatus = StepStatus(state.fmt)
           ..step = step
           ..decodedVerbiage = step.decodeVerbiage(exampleRow);
 
@@ -147,7 +147,7 @@ class Scenario {
             // to actually run the step
             await state.stepRunners[found](params, moreParams, scenarioSession, scenarioStatus, stepStatus);
           }
-        } catch (e, s) {
+        } catch (e) {
           _log.fine("Step failed: $step");
         } finally {
           if (!stepStatus.failed && !scenarioStatus.failed) {

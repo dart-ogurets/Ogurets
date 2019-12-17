@@ -1,15 +1,15 @@
 part of ogurets_core3;
 
-RegExp tagsPattern = new RegExp(r"(@[^@\r\n\t ]+)");
-RegExp featurePattern = new RegExp(r"\s*Feature\s*:\s*(.+)");
-RegExp scenarioPattern = new RegExp(r"^\s*Scenario\s*(?:Outline)?:\s*(.+)\s*$");
-RegExp backgroundPattern = new RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
-RegExp commentPattern = new RegExp(r"^\s*#");
-RegExp examplesPattern = new RegExp(r"^\s*Examples\s*:\s*");
-RegExp tablePattern = new RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
+RegExp tagsPattern = RegExp(r"(@[^@\r\n\t ]+)");
+RegExp featurePattern = RegExp(r"\s*Feature\s*:\s*(.+)");
+RegExp scenarioPattern = RegExp(r"^\s*Scenario\s*(?:Outline)?:\s*(.+)\s*$");
+RegExp backgroundPattern = RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
+RegExp commentPattern = RegExp(r"^\s*#");
+RegExp examplesPattern = RegExp(r"^\s*Examples\s*:\s*");
+RegExp tablePattern = RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
 RegExp stepPattern =
-    new RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive: false);
-RegExp pyStringPattern = new RegExp(r'^\s*("""|```)\s*$');
+    RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive: false);
+RegExp pyStringPattern = RegExp(r'^\s*("""|```)\s*$');
 
 /// Could this hold the above regexes and misc vocabulary, so
 /// that we can let user provide his, for I18N and other uses ?
@@ -22,12 +22,10 @@ class GherkinSyntaxError extends StateError {
 }
 
 class GherkinParser {
-  /**
-   * Returns a fully populated Feature,
-   * from the Gherkin feature statements in [contents].
-   * If [contents] come from a File, you may provide a [filePath]
-   * that will be used as helper in the output.
-   */
+   /// Returns a fully populated Feature,
+   /// from the Gherkin feature statements in [contents].
+   /// If [contents] come from a File, you may provide a [filePath]
+   /// that will be used as helper in the output.
   Feature parse(List<String> contents, {filePath}) {
     Logger.root.level = Level.INFO;
 
@@ -64,7 +62,7 @@ class GherkinParser {
         var match = iter.current;
         _log.fine(match.group(1));
         feature =
-            new Feature(match.group(1), new Location(filePath, lineCounter));
+            Feature(match.group(1), Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
       }
@@ -75,7 +73,7 @@ class GherkinParser {
         var match = iter.current;
         _log.fine(match.group(1));
         currentScenario =
-            new Scenario(match.group(1), new Location(filePath, lineCounter));
+            Scenario(match.group(1), Location(filePath, lineCounter));
         currentScenario.tags = tags;
         feature.scenarios.add(currentScenario);
         tags = [];
@@ -87,7 +85,7 @@ class GherkinParser {
         var match = iter.current;
         _log.fine("Background: ${match.group(1)}");
         currentScenario =
-            new Background(match.group(1), new Location(filePath, lineCounter));
+            Background(match.group(1), Location(filePath, lineCounter));
         feature.background = currentScenario;
       }
 
@@ -95,8 +93,8 @@ class GherkinParser {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = new Step(match.group(1), match.group(2),
-            new Location(filePath, lineCounter), currentScenario);
+        currentStep = Step(match.group(1), match.group(2),
+            Location(filePath, lineCounter), currentScenario);
         currentTable = currentStep.table;
         currentScenario.addStep(currentStep);
       }
@@ -116,7 +114,7 @@ class GherkinParser {
         if (foundClosingTag) {
           currentStep.pyString = pyString;
         } else {
-          throw new GherkinSyntaxError("PyString's closing tag not found.");
+          throw GherkinSyntaxError("PyString's closing tag not found.");
         }
       }
 
@@ -129,7 +127,7 @@ class GherkinParser {
       //  Tables
       if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
         List<String> row = line.split("|").map((e) => e.trim()).toList();
-        if (!row.isEmpty) {
+        if (row.isNotEmpty) {
           currentTable.addRow(row);
         }
       }

@@ -3,7 +3,7 @@ part of ogurets_core3;
 class BufferedStatus {
   final Formatter fmt;
 
-  BufferedStatus(this.fmt) {}
+  BufferedStatus(this.fmt);
 }
 
 /// A run/feature/scenario status of multiple steps, maybe with undefined ones.
@@ -72,7 +72,7 @@ class RunStatus extends StepsExecutionStatus {
 
   /// Failures
   List<StepFailure> get failures {
-    List<StepFailure> _failures = new List();
+    List<StepFailure> _failures = List();
     for (FeatureStatus feature in features) {
       if (feature.failed) {
         _failures.addAll(feature.failures);
@@ -135,7 +135,7 @@ class FeatureStatus extends StepsExecutionStatus {
 
   /// Failures
   List<StepFailure> get failures {
-    List<StepFailure> _failures = new List();
+    List<StepFailure> _failures = List();
     for (ScenarioStatus scenario in scenarios) {
       if (scenario.failed) {
         _failures.addAll(scenario.failures);
@@ -195,7 +195,7 @@ class ScenarioStatus extends StepsExecutionStatus {
   int get undefinedStepsCount => undefinedSteps.length;
 
   List<StepFailure> get failures {
-    List<StepFailure> _failures = new List();
+    List<StepFailure> _failures = List();
     for (StepStatus stepStatus in steps) {
       if (stepStatus.failed) {
         _failures.add(stepStatus.failure);
@@ -206,7 +206,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   ScenarioStatus(Formatter fmt) : super(fmt);
 
-  void mergeBackground(ScenarioStatus other, {isFirst: true}) {
+  void mergeBackground(ScenarioStatus other, {isFirst = true}) {
     if (other.scenario is Background) {
       background = other.scenario;
       passedSteps.addAll(other.passedSteps);
@@ -220,7 +220,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 //        buffer.merge(other.buffer);
 //      }
     } else {
-      throw new Exception("$other is not a Background");
+      throw Exception("$other is not a Background");
     }
   }
 }
@@ -249,7 +249,7 @@ class StepStatus extends BufferedStatus {
   StepFailure failure;
   bool skipped = false;
 
-  StringBuffer out = new StringBuffer();
+  StringBuffer out = StringBuffer();
 
   StepStatus(Formatter fmt) : super(fmt);
 }

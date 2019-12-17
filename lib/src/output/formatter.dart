@@ -2,10 +2,8 @@ part of ogurets_core3;
 
 // https://github.com/JetBrains/intellij-community/blob/master/plugins/cucumber-jvm-formatter/src/org/jetbrains/plugins/cucumber/java/run/CucumberJvmSMFormatter.java
 
-/**
- * This is the interface you should implement if you want your own custom
- * formatter.
- */
+/// This is the interface you should implement if you want your own custom
+/// formatter.
 abstract class Formatter {
   void syntaxError(
       String var1, String var2, List<String> var3, String var4, int var5);
@@ -42,8 +40,8 @@ class Result {
   final int duration;
   final String error_message;
   final Exception error;
-  final Result SKIPPED = new Result("skipped", null);
-  final Result UNDEFINED = new Result("undefined", null);
+  final Result SKIPPED = Result("skipped", null);
+  final Result UNDEFINED = Result("undefined", null);
   final String PASSED = "passed";
   final String FAILED = "failed";
 
@@ -221,7 +219,7 @@ class BasicFormatter implements Formatter {
       buffer.write("\t\t${status.decodedVerbiage}", color: color);
       buffer.write("\t${status.step.location}", color: 'gray');
 
-      if (!status.step.table.isEmpty) {
+      if (status.step.table.isNotEmpty) {
         buffer.write("\n${status.step.table.gherkinRows().join("\n")}",
             color: 'cyan');
       }
@@ -303,14 +301,14 @@ class IntellijFormatter implements Formatter {
       "[customProgressStatus type = 'testFinished' timestamp = '%s']";
 
   IntellijFormatter(this.buffer) {
-    this._basicFormatter = new BasicFormatter(this.buffer);
+    this._basicFormatter = BasicFormatter(this.buffer);
     out(TEMPLATE_ENTER_THE_MATRIX, [getCurrentTime()]);
     out(TEMPLATE_SCENARIO_COUNTING_STARTED, ["0", getCurrentTime()]);
 
     _currentDirectory = Directory.current.path;
   }
 
-  FeatureStatus currentFeature = null;
+  FeatureStatus currentFeature;
 
   static String _escape(String source) {
     if (source == null) {
@@ -333,8 +331,8 @@ class IntellijFormatter implements Formatter {
     String featureHeader = feature.feature.name;
     var lines = featureHeader.split("\n");
     lines.removeWhere((l) =>
-        l.length == 0 || l[0] == '#' || l[0] == '@' || l.indexOf(':') < 0);
-    if (lines.length > 0) {
+        l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'));
+    if (lines.isNotEmpty) {
       return 'Feature: ${lines[0]}';
     } else {
       return 'Feature: ${featureHeader}';
