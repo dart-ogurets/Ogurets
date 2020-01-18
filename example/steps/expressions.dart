@@ -2,6 +2,7 @@
 
 import 'package:ogurets/ogurets_core.dart';
 
+// ignore: avoid_relative_lib_imports
 import '../lib/scenario_session.dart';
 
 class Expressions {
@@ -23,7 +24,7 @@ class Expressions {
   @Then("{string} has a value of {string}")
   void compare(String key, String value) {
     if (value != _session.sharedStepData[key]?.toString()) {
-      throw new Exception("failed compare");
+      throw Exception("failed compare");
     }
   }
 }

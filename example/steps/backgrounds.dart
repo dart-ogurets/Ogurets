@@ -2,6 +2,7 @@ library dherkin_stepdefs_backgrounds;
 
 import 'package:ogurets/ogurets.dart';
 
+// ignore: avoid_relative_lib_imports
 import '../lib/scenario_session.dart';
 
 /// BACKGROUNDS ----------------------------------------------------------------
@@ -29,10 +30,10 @@ class Backgrounds {
   @StepDef("the background-setup variable should hold the (default|different) value")
   the_background_setup_variable_should_hold(defaultOrDifferent, {col1, col2}) {
     if (session.sharedStepData[background] == 'not_set') {
-      throw new Exception("Background was never ran.");
+      throw Exception("Background was never ran.");
     }
     if (session.sharedStepData[background] != defaultOrDifferent) {
-      throw new Exception("Background-setup variable holds '${session.sharedStepData[background]}'"+
+      throw Exception("Background-setup variable holds '${session.sharedStepData[background]}'"+
           ", expected '$defaultOrDifferent'.");
     }
   }

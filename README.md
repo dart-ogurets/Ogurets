@@ -49,8 +49,10 @@ You can still use your existing Dherkin2 style tests and continue by extending w
 
 #### ogurets extensions
 
-- ogurets-flutter
-- ogurets IntelliJ plugin
+- [ogurets-flutter](https://pub.dev/packages/ogurets_flutter) - and extension for Ogurets focused on supporting Flutter.
+- [ogurets IntelliJ plugin](https://plugins.jetbrains.com/plugin/12687-ogurets--cucumber-for-dart) - a plugin for IntelliJ 
+that extends the Cucumber support in IntelliJ and Android Studio to allow you to easily create steps, run and debug 
+your tests, and navigate through test codebase.
 
 ### Usage
 
