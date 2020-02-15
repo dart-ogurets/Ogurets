@@ -181,18 +181,22 @@ class OguretsOpts {
       Logger.root.level = Level.INFO;
     }
 
-    List<String> runTags = _tags == null ? [] : _tags.split(",");
+    List<String> runTags = _tags == null ? [] : _tags.split(",").map((t) => t.trim()).toList();
 
     // command line overrides
     if (args != null) {
       var options = _parseArguments(args);
       if (options["tags"] != null) {
-        runTags = options["tags"].split(",");
+        runTags = options["tags"].split(",").map((t) => t.trim()).toList();
       }
 
       if (options["debug"]) {
         Logger.root.level = Level.FINE;
       }
+    }
+
+    if (Platform.environment['OGURETS_TAGS'] != null) {
+      runTags = Platform.environment['OGURETS_TAGS'].split(",").map((t) => t.trim()).toList();
     }
 
     _log.info("Tags used are $runTags");
