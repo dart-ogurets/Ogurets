@@ -7,6 +7,7 @@ import "package:logging/logging.dart";
 import "dart:mirrors";
 
 import 'ogurets_core.dart';
+import 'ogurets_core.dart';
 export 'ogurets_core.dart';
 
 final Logger _log = Logger('ogurets');
@@ -71,6 +72,7 @@ class OguretsOpts {
   String _scenario;
   Map<Type, InstanceMirror> _instances = {};
   List<Object> _instanceObjects = [];
+  List<Formatter> _formatters = <Formatter>[];
   bool _debug = false;
   String _tags;
   bool _failedOnMissingSteps = true;
@@ -98,6 +100,10 @@ class OguretsOpts {
   void instance(Object o) {
     _instances[o.runtimeType] = reflect(o);
     _instanceObjects.add(o);
+  }
+
+  void formatters(List<Formatter> fmts){
+    _formatters.addAll(fmts);
   }
 
   void debug() {
@@ -208,6 +214,7 @@ class OguretsOpts {
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;
     state.existingInstances = _instances;
+    state.formatters = _formatters;
     state.runTags = runTags;
 
     await state.build();

@@ -32,6 +32,12 @@ part 'src/output/console_buffer.dart';
 
 part 'src/output/formatter.dart';
 
+part 'src/output/delegating_formatter.dart';
+
+part 'src/output/basic_formatter.dart';
+
+part 'src/output/intellij_formatter.dart';
+
 part 'src/output/output.dart';
 
 part "src/status/status.dart";
@@ -45,8 +51,12 @@ final Logger _log = Logger('ogurets');
 
 typedef HookFunc = Future<void> Function(
     OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus);
-typedef Future StepFunc(List params, Map namedParams,
-    OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus, StepStatus stepStatus);
+typedef Future StepFunc(
+    List params,
+    Map namedParams,
+    OguretsScenarioSession scenarioSession,
+    ScenarioStatus scenarioStatus,
+    StepStatus stepStatus);
 
 class OguretsState {
   Map<RegExp, StepFunc> stepRunners = {};
@@ -59,9 +69,11 @@ class OguretsState {
   Map<String, List<HookFunc>> namedBeforeStepHooks = {};
   Map<String, List<HookFunc>> namedAfterStepHooks = {};
   List<Type> steps = [];
+
   /// these are not named, but are global and always run
   List<HookFunc> beforeScenarioHooks = [];
   List<HookFunc> afterScenarioHooks = [];
+
   /// these are not named, but are global and always run
   List<HookFunc> beforeStepGlobalHooks = [];
   List<HookFunc> afterStepGlobalHooks = [];
@@ -252,20 +264,21 @@ class OguretsState {
   ///  This only picks up method level steps, not those in classes.
   Future<OguretsState> _findMethodStyleStepRunners() async {
     for (LibraryMirror lib in currentMirrorSystem().libraries.values) {
-      for (MethodMirror mm in lib.declarations.values
-        .whereType<MethodMirror>()) {          
+      for (MethodMirror mm
+          in lib.declarations.values.whereType<MethodMirror>()) {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
-          stepRunners[RegExp(
-                  _transformCucumberExpression(im.reflectee.verbiage))] =
-              (params, Map namedParams,
-                  OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
+          stepRunners[
+                  RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
+              (params, Map namedParams, OguretsScenarioSession scenarioSession,
+                  ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
-            return executeStep(scenarioStatus, scenarioSession, namedParams, mm, params, lib, stepStatus);
+            return executeStep(scenarioStatus, scenarioSession, namedParams, mm,
+                params, lib, stepStatus);
           };
         }
       }
@@ -283,16 +296,20 @@ class OguretsState {
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
           _log.fine(im.reflectee.verbiage);
-          stepRunners[RegExp(
-                  _transformCucumberExpression(im.reflectee.verbiage))] =
-              (List params, Map namedParams,
-                  OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
+          stepRunners[
+                  RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
+              (List params,
+                  Map namedParams,
+                  OguretsScenarioSession scenarioSession,
+                  ScenarioStatus scenarioStatus,
+                  StepStatus stepStatus) async {
             _log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);
-            
-            await executeStep(scenarioStatus, scenarioSession, namedParams, mm, params, instance, stepStatus);
+
+            await executeStep(scenarioStatus, scenarioSession, namedParams, mm,
+                params, instance, stepStatus);
           };
         }
       }
@@ -300,15 +317,22 @@ class OguretsState {
     return this;
   }
 
-  Future executeStep(ScenarioStatus scenarioStatus, OguretsScenarioSession scenarioSession,
-      Map namedParams, MethodMirror mm, List params, ObjectMirror instance, StepStatus stepStatus) async {
+  Future executeStep(
+      ScenarioStatus scenarioStatus,
+      OguretsScenarioSession scenarioSession,
+      Map namedParams,
+      MethodMirror mm,
+      List params,
+      ObjectMirror instance,
+      StepStatus stepStatus) async {
     await runHookList(scenarioStatus, scenarioSession, beforeStepGlobalHooks);
-    await runScenarioTags(scenarioStatus, scenarioSession, namedBeforeStepHooks);
-    
+    await runScenarioTags(
+        scenarioStatus, scenarioSession, namedBeforeStepHooks);
+
     // these are the named parameters that were found in the scenario itself
     Map<Symbol, dynamic> convertedNamedParams =
         _createParameters(namedParams, mm, params, _stringMirror);
-    
+
     try {
       await invokeStep(instance, mm, params, convertedNamedParams);
     } catch (e, s) {
@@ -319,8 +343,10 @@ class OguretsState {
       scenarioStatus.failedSteps.add(stepStatus);
 
       rethrow;
-    } finally { // try and ensure that the after step hooks run
-      await runScenarioTags(scenarioStatus, scenarioSession, namedAfterStepHooks);
+    } finally {
+      // try and ensure that the after step hooks run
+      await runScenarioTags(
+          scenarioStatus, scenarioSession, namedAfterStepHooks);
       await runHookList(scenarioStatus, scenarioSession, afterStepGlobalHooks);
     }
   }
@@ -394,8 +420,7 @@ class OguretsState {
       OguretsScenarioSession scenarioSession) async {
     await runHookList(scenarioStatus, scenarioSession, beforeScenarioHooks);
 
-    await runScenarioTags(
-        scenarioStatus, scenarioSession, namedBeforeTagHooks);
+    await runScenarioTags(scenarioStatus, scenarioSession, namedBeforeTagHooks);
   }
 
   void runScenarioTags(
@@ -423,8 +448,7 @@ class OguretsState {
       OguretsScenarioSession scenarioSession) async {
     await runHookList(scenarioStatus, scenarioSession, afterScenarioHooks);
 
-    await runScenarioTags(
-        scenarioStatus, scenarioSession, namedAfterTagHooks);
+    await runScenarioTags(scenarioStatus, scenarioSession, namedAfterTagHooks);
   }
 
   Future executeRunHooks(Type hookType) async {
