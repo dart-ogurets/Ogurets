@@ -21,6 +21,7 @@ abstract class Formatter {
 
   void scenario(ScenarioStatus scenario);
 
+  // this is run before the execution of the step
   void step(StepStatus step);
 
   // end of scenario including any and all examples

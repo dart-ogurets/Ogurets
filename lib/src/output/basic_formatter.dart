@@ -14,26 +14,84 @@ class BasicFormatter implements Formatter {
   @override
   void done(Object status) {
     if (status is FeatureStatus) {
-      FeatureStatus featureStatus = status;
       buffer.writeln("-------------------");
-      buffer.writeln("Scenarios passed: ${featureStatus.passedScenariosCount}",
-          color: 'green');
+      buffer.writeln("Scenarios passed: ${status.passedScenariosCount}", color: 'green');
 
-      if (featureStatus.failedScenariosCount > 0) {
-        buffer.writeln(
-            "Scenarios failed: ${featureStatus.failedScenariosCount}",
-            color: 'red');
+      if (status.skippedScenariosCount > 0) {
+        buffer.writeln("Scenarios skipped: ${status.skippedScenariosCount}", color: 'gray');
       }
 
-      buffer.flush();
+      if (status.failedScenariosCount > 0) {
+        buffer.writeln("Scenarios failed: ${status.failedScenariosCount}", color: 'red');
+      }
+      
+    } else if (status is ScenarioStatus) {
+      // only write for the whole scenario - background will be reflected in the scenario status
+      if (!(status.scenario is Background)) {
+        if ((status.failed || status.undefinedStepsCount > 0)) {
+          buffer.writeln("Scenario failed!", color: 'red');
+        } else {
+          buffer.writeln("Scenario passed!", color: 'green');
+        }
+      }
     } else if (status is StepStatus) {
-      StepStatus ss = status;
-      if (ss.failed) {
-        buffer.writeln(
-            "Step: ${ss.decodedVerbiage} failed (${ss.step.location.toString()}:\n${ss.failure.error}: ${ss.failure.trace}",
-            color: 'red');
+      var color = 'green';
+      var failureMessage = "";
+
+      // set the color based on status or type
+      if (status.step.hook) {
+        color = 'blue';
+        buffer.write("\t");
+      }
+
+      if (status.skipped) {
+        color = 'gray';
+      }
+
+      if (!status.defined) {
+        color = 'yellow';
+      }
+
+      if (status.failed) {
+        color = "red";
+        failureMessage = "\n${status.failure.error}\n${status.failure.trace}";
+      }
+
+      // always write out the verbiage - this will be the step text
+      buffer.write("\t\t${status.decodedVerbiage}", color: color);
+
+      if (status.step.pyString != null) {
+        buffer.writeln("\n\"\"\n${status.step.pyString}\"\"\"");
+      } else {
+        buffer.write("\t${status.step.location}", color: 'gray');
+      }
+
+      // write out the table to match irrespective of status
+      // don't write a newline after the last row to keep inline with the steps
+      if (status.step.table.isNotEmpty) {
+        var counter = 0;
+        buffer.write("\n");
+        var rows = status.step.table.gherkinRows();
+        rows.forEach((row) {
+          buffer.write(row, color: counter == 0 ? 'magenta' : 'cyan');
+          counter < rows.length - 1 ? buffer.write("\n") : null;
+          counter++;
+        });
+      }
+
+      if (failureMessage.isNotEmpty) {
+        buffer.writeln(failureMessage);
+      }
+
+      // need to write out when it's done, or it won't have anything
+      // because fmt.step writes before execution
+      if (status.out.isNotEmpty) {
+        buffer.write("\n");
+        buffer.write(status.out.toString());
       }
     }
+
+    buffer.flush();
   }
 
   @override
@@ -41,19 +99,30 @@ class BasicFormatter implements Formatter {
 
   @override
   void eof(RunStatus runStatus) {
-    // Tally the failed / passed features
     buffer.writeln("==================");
+
+    // Tally the passed / skipped / failed features
     if (runStatus.passedFeaturesCount > 0) {
       buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}",
           color: "green");
     }
+
+    if (runStatus.skippedFeaturesCount > 0) {
+      buffer.writeln("Features skipped: ${runStatus.skippedFeaturesCount}",
+          color: "gray");
+    }
+
     if (runStatus.failedFeaturesCount > 0) {
       buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}",
           color: "red");
     }
-    buffer.flush();
+
     // Tally the missing stepdefs boilerplate
-    buffer.write(runStatus.boilerplate, color: "yellow");
+    if (runStatus.undefinedStepsCount > 0) {
+      buffer.writeln("\nMissing steps:", color: "yellow");
+      buffer.write(runStatus.boilerplate, color: "yellow");
+    }
+
     buffer.flush();
   }
 
@@ -76,7 +145,7 @@ class BasicFormatter implements Formatter {
 
   @override
   void scenario(ScenarioStatus startScenario) {
-    if (!startScenario.exampleTable.isValid) {
+    if (startScenario.exampleTable.isValid) {
       buffer.write(
           "\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
       buffer.writeln("${startScenario.scenario.location}", color: 'gray');
@@ -85,45 +154,18 @@ class BasicFormatter implements Formatter {
 
   @override
   void startOfScenarioLifeCycle(Scenario scenario) {
-    buffer.write("\n\t${scenario.gherkinKeyword}: ${scenario.name}");
+    if (scenario is Background) {
+      buffer.write("\t");
+    } else {
+      buffer.write("\n");
+    }
+
+    buffer.write("\t${scenario.gherkinKeyword}: ${scenario.name}");
     buffer.writeln("${scenario.location}", color: 'gray');
   }
 
   @override
-  void step(StepStatus status) {
-    var color = "green";
-    var failureMessage = "";
-
-    if (!status.defined) {
-      color = "yellow";
-    }
-    if (status.failed) {
-      color = "red";
-      failureMessage = "\n${status.failure.error}\n${status.failure.trace}";
-    }
-    if (status.step.pyString != null) {
-      buffer.writeln(
-          "\t\t${status.decodedVerbiage}\n\"\"\"\n${status.step.pyString}\"\"\"$failureMessage",
-          color: color);
-    } else {
-      buffer.write("\t\t${status.decodedVerbiage}", color: color);
-      buffer.write("\t${status.step.location}", color: 'gray');
-
-      if (status.step.table.isNotEmpty) {
-        buffer.write("\n${status.step.table.gherkinRows().join("\n")}",
-            color: 'cyan');
-      }
-
-      if (status.out.isNotEmpty) {
-        buffer.write("\n");
-        buffer.write(status.out.toString());
-      }
-
-      buffer.writeln(failureMessage, color: color);
-    }
-
-    buffer.flush();
-  }
+  void step(StepStatus status) {}
 
   @override
   void syntaxError(

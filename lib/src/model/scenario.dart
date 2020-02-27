@@ -21,19 +21,23 @@ class Scenario {
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<List<ScenarioStatus>> execute(OguretsState state,
-      {isFirstOfFeature = true, OguretsScenarioSession scenarioSession}) async {
+      {isFirstOfFeature = true, OguretsScenarioSession scenarioSession, bool skip = false}) async {
     var statuses = <ScenarioStatus>[];
 
-    if (examples._table.isEmpty) {
-      examples._table.add({});
+      if (examples._table.isEmpty) {
+        examples._table.add({});
+      }
+
+    // only call the formatters if the scenario is actually run
+    if (!skip) {
+      state.fmt.startOfScenarioLifeCycle(this);
+
+      if (examples.isValid) {
+        state.fmt.examples(examples);
+      }
     }
 
-    state.fmt.startOfScenarioLifeCycle(this);
-
-    if (examples.isValid) {
-      state.fmt.examples(examples);
-    }
-
+    // this needs to run even if skipping to get an accurate scenario count
     for (Map example in examples) {
       var scenarioStatus = ScenarioStatus(state.fmt)
         ..scenario = this
@@ -42,22 +46,28 @@ class Scenario {
         ..background = this.background;
 
       statuses.add(scenarioStatus);
-      state.fmt.scenario(scenarioStatus);
 
-      try {
-        await _executeSubScenario(scenarioStatus, example, state,
-            isFirstOfFeature: isFirstOfFeature,
-            scenarioSession: scenarioSession);
-      } finally {
-        state.fmt.done(scenarioStatus);
+      // only call the formatters if the scenario is actually run
+      if (!skip) {
+        state.fmt.scenario(scenarioStatus);
+
+        try {
+          await _executeSubScenario(scenarioStatus, example, state,
+              isFirstOfFeature: isFirstOfFeature,
+              scenarioSession: scenarioSession);
+        } finally {
+          state.fmt.done(scenarioStatus);
+        }
+
+        if (examples.isValid) {
+          state.fmt.done(examples);
+        }
+
+        state.fmt.endOfScenarioLifeCycle(this);
+      } else {
+        scenarioStatus.skipped = true;
       }
     }
-
-    if (examples.isValid) {
-      state.fmt.done(examples);
-    }
-
-    state.fmt.endOfScenarioLifeCycle(this);
 
     return statuses;
   }
@@ -141,7 +151,8 @@ class Scenario {
         }
 
         try {
-          if (scenarioStatus.failed) {
+          // should also skip steps where we have a previous one that is undefined - that means the scenario already "failed"
+          if (scenarioStatus.failed || scenarioStatus.undefinedStepsCount > 0) {
             stepStatus.skipped = true;
           } else {
             // to actually run the step

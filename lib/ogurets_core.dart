@@ -115,12 +115,11 @@ class OguretsState {
     }
 
     // grab the negs
-    negativeTags = runTags
-        .where((prefix) => prefix.startsWith("~"))
-        .map((tag) => tag.substring(1))
-        .toList();
-    runTags
-        .removeWhere((tag) => negativeTags.contains(tag)); // take the negs out
+    negativeTags = runTags.where((prefix) => prefix.startsWith("~"))
+        .map((tag) => tag.substring(1)).toList();
+    
+    // take the negs out - can't do the previous way because negative tags will have stripped the "~"
+    runTags.removeWhere((tag) => tag.startsWith("~"));
   }
 
   List<Symbol> _possibleParams = [
@@ -144,7 +143,7 @@ class OguretsState {
             .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") +
         r"$";
 
-    _log.info("transformed ${stepName} to ${nameIs}");
+    _log.info("Transformed step: ${stepName} to ${nameIs}");
 
     return nameIs;
   }
@@ -194,8 +193,9 @@ class OguretsState {
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
+            // this is really a hook that's getting created as a step
             var step = Step(hookTypeName, hookTypeName,
-                scenarioStatus.scenario.location, scenarioStatus.scenario);
+                scenarioStatus.scenario.location, scenarioStatus.scenario, hook: true);
 
             var stepStatus = StepStatus(scenarioStatus.fmt)..step = step;
             stepStatus.decodedVerbiage =
@@ -269,13 +269,12 @@ class OguretsState {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
-          _log.fine(im.reflectee.verbiage);
+          _log.fine("Found step runner: ${im.reflectee.verbiage}");
           stepRunners[
                   RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
               (params, Map namedParams, OguretsScenarioSession scenarioSession,
                   ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
-            _log.fine(
-                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+            _log.fine("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             return executeStep(scenarioStatus, scenarioSession, namedParams, mm,
                 params, lib, stepStatus);
@@ -295,7 +294,7 @@ class OguretsState {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
-          _log.fine(im.reflectee.verbiage);
+          _log.fine("Found class runner: ${im.reflectee.verbiage}");
           stepRunners[
                   RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
               (List params,
@@ -303,8 +302,7 @@ class OguretsState {
                   OguretsScenarioSession scenarioSession,
                   ScenarioStatus scenarioStatus,
                   StepStatus stepStatus) async {
-            _log.fine(
-                "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
+            _log.fine("Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);
 
@@ -326,8 +324,7 @@ class OguretsState {
       ObjectMirror instance,
       StepStatus stepStatus) async {
     await runHookList(scenarioStatus, scenarioSession, beforeStepGlobalHooks);
-    await runScenarioTags(
-        scenarioStatus, scenarioSession, namedBeforeStepHooks);
+    await runScenarioTags(scenarioStatus, scenarioSession, namedBeforeStepHooks);
 
     // these are the named parameters that were found in the scenario itself
     Map<Symbol, dynamic> convertedNamedParams =
@@ -345,8 +342,7 @@ class OguretsState {
       rethrow;
     } finally {
       // try and ensure that the after step hooks run
-      await runScenarioTags(
-          scenarioStatus, scenarioSession, namedAfterStepHooks);
+      await runScenarioTags(scenarioStatus, scenarioSession, namedAfterStepHooks);
       await runHookList(scenarioStatus, scenarioSession, afterStepGlobalHooks);
     }
   }
@@ -402,18 +398,16 @@ class OguretsState {
 
   /// Do any of the [tags] match one of [expectedTags] ?
   /// If [expectedTags] is empty, anything matches.
+  /// If there are no [tags], return true as well since it shouldn't be limiting
   bool tagsMatch(List<String> expectedTags) {
-    return expectedTags.isEmpty ||
-        runTags.any((element) => expectedTags.contains(element));
+    return expectedTags.isEmpty || runTags.isEmpty ? true : runTags.any((element) => expectedTags.contains(element));
   }
 
+  /// Do any of the [negativeTags] match one of [expectedTags] or @ignore?
+  /// If [expectedTags] is empty, nothing matches.
+  /// If there are no [negativeTags], return false as well
   bool negativeTagsMatch(List<String> expectedTags) {
-    if (expectedTags.isEmpty) {
-      return false;
-    }
-
-    return negativeTags.isNotEmpty &&
-        expectedTags.any((element) => negativeTags.contains(element));
+    return  negativeTags.isEmpty ? false : negativeTags.any((element) => (expectedTags.contains(element) || element == "@ignore"));
   }
 
   void runBeforeHooks(ScenarioStatus scenarioStatus,

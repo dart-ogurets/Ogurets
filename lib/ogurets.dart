@@ -7,7 +7,6 @@ import "package:logging/logging.dart";
 import "dart:mirrors";
 
 import 'ogurets_core.dart';
-import 'ogurets_core.dart';
 export 'ogurets_core.dart';
 
 final Logger _log = Logger('ogurets');
@@ -48,6 +47,8 @@ run(args) async {
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
+    } else if (featureStatus.skipped) {
+      runStatus.skippedFeatures.add(featureStatus);
     } else {
       runStatus.passedFeatures.add(featureStatus);
     }
@@ -102,7 +103,7 @@ class OguretsOpts {
     _instanceObjects.add(o);
   }
 
-  void formatters(List<Formatter> fmts){
+  void formatters(List<Formatter> fmts) {
     _formatters.addAll(fmts);
   }
 
@@ -118,8 +119,8 @@ class OguretsOpts {
     _failedOnMissingSteps = f;
   }
 
-  String get scenario {
-    return _scenario;
+  void scenario(String s) {
+    _scenario = s;
   }
 
   void _checkForEnvOverride() {
@@ -145,19 +146,17 @@ class OguretsOpts {
     _features.forEach((ff) {
       FileSystemEntityType type = FileSystemEntity.typeSync(ff);
       if (type == FileSystemEntityType.directory) {
-        Directory(ff)
-            .listSync(recursive: true, followLinks: true)
-            .forEach((f) {
+        Directory(ff).listSync(recursive: true, followLinks: true).forEach((f) {
           type = FileSystemEntity.typeSync(f.path);
           if (type == FileSystemEntityType.file &&
               f.path.endsWith(".feature")) {
-            _log.info("loaded feature ${f.path}");
+            _log.info("Loaded feature: ${f.path}");
             files.add(f.path);
           }
         });
       } else if (type == FileSystemEntityType.file) {
         if (ff.endsWith(".feature")) {
-          _log.info("loaded feature ${ff}");
+          _log.info("Loaded feature: ${ff}");
           files.add(ff);
         }
       } else {
@@ -166,8 +165,7 @@ class OguretsOpts {
     });
 
     if (files.isEmpty) {
-      _log.severe(
-          "No feature files found, offset is ${Directory.current.path}");
+      _log.severe("No feature files found, offset is ${Directory.current.path}");
     }
 
     return files;
@@ -225,12 +223,13 @@ class OguretsOpts {
 
       for (String filePath in featureFiles) {
         List<String> contents = await File(filePath).readAsLines();
-        Feature feature =
-            await GherkinParserTask(contents, filePath).execute();
-        FeatureStatus featureStatus =
-            await feature.execute(state, debug: _debug);
+        Feature feature = await GherkinParserTask(contents, filePath).execute();
+        FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
+
         if (featureStatus.failed) {
           runStatus.failedFeatures.add(featureStatus);
+        } else if (featureStatus.skipped) {
+          runStatus.skippedFeatures.add(featureStatus);
         } else {
           runStatus.passedFeatures.add(featureStatus);
         }

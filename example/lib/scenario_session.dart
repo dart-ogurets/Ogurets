@@ -1,8 +1,9 @@
 
 
 class ScenarioSession {
+
   ScenarioSession() {
-    print("created session");
+    print("created scenario session");
   }
 
   Map<String, Object> sharedStepData = {};
