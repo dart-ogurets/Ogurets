@@ -7,10 +7,11 @@ class Step {
   Scenario scenario;
   GherkinTable table = GherkinTable();
   Location location;
+  bool hook;
 
   String get boilerplate => _generateBoilerplate();
 
-  Step(this.verb, this.verbiage, this.location, this.scenario);
+  Step(this.verb, this.verbiage, this.location, this.scenario, {this.hook = false});
 
   // replace all instances of <column1> with 3 where example data has it as such
   String decodeVerbiage(Map exampleRow) {

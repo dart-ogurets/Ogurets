@@ -27,7 +27,6 @@ class GherkinParser {
    /// If [contents] come from a File, you may provide a [filePath]
    /// that will be used as helper in the output.
   Feature parse(List<String> contents, {filePath}) {
-    Logger.root.level = Level.INFO;
 
     Feature feature;
     Scenario currentScenario;
@@ -52,7 +51,7 @@ class GherkinParser {
       var iter = tagsPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine(match.group(1));
+        _log.fine("Adding tag: ${match.group(1)}");
         tags.add(match.group(1));
       }
 
@@ -60,7 +59,7 @@ class GherkinParser {
       iter = featurePattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine(match.group(1));
+        _log.fine("Adding feature: ${match.group(1)}");
         feature =
             Feature(match.group(1), Location(filePath, lineCounter));
         feature.tags = tags;
@@ -71,10 +70,18 @@ class GherkinParser {
       iter = scenarioPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine(match.group(1));
+        _log.fine("Adding scenario: ${match.group(1)}");
         currentScenario =
             Scenario(match.group(1), Location(filePath, lineCounter));
+
+        //Add all of our feature tags to the scenario, since they apply to each
+        if(feature.tags.isNotEmpty)
+        {
+          tags.addAll(feature.tags);
+        }
+
         currentScenario.tags = tags;
+
         feature.scenarios.add(currentScenario);
         tags = [];
       }
@@ -83,7 +90,7 @@ class GherkinParser {
       iter = backgroundPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine("Background: ${match.group(1)}");
+        _log.fine("Adding background: ${match.group(1)}");
         currentScenario =
             Background(match.group(1), Location(filePath, lineCounter));
         feature.background = currentScenario;
@@ -127,6 +134,11 @@ class GherkinParser {
       //  Tables
       if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
         List<String> row = line.split("|").map((e) => e.trim()).toList();
+        //Need to remove the first and last entries in the list, since they will be empty
+        //due to the split
+        row.removeAt(0);
+        row.removeLast();
+        
         if (row.isNotEmpty) {
           currentTable.addRow(row);
         }

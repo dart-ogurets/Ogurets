@@ -1,6 +1,7 @@
 @Ftag
 @Ftag2 @Ftag3 @Ftag4
-@feature @feature2 @feature3 Feature: Basic Parser
+@feature @feature2 @feature3 
+Feature: Basic Parser
 
   Background:
     Given I run some background
@@ -8,7 +9,8 @@
 
   @STAG1
   @STAG2
-  @STAG3 @STAG4 Scenario: First one
+  @STAG3 @STAG4 
+  Scenario: First one
     Given I am a step with a table
       | column1 | column2 | column3 | column4 |
       | A       | B       | C       | D       |

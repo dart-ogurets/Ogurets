@@ -11,7 +11,8 @@ class ConsoleBuffer implements ResultBuffer {
     "yellow": AnsiPen()..yellow(),
     "gray": AnsiPen()..gray(level: 0.5),
     "cyan": AnsiPen()..cyan(),
-    "magenta": AnsiPen()..magenta()
+    "magenta": AnsiPen()..magenta(),
+    "blue": AnsiPen()..blue()
   };
 
   Map _columns = {};
@@ -54,8 +55,10 @@ class ConsoleBuffer implements ResultBuffer {
 
   void flush() {
     _log.fine("Flushing");
-    print(_buffer.toString());
 
+    //Print will automatically add a newline
+    print(_buffer);
+    
     _buffer.clear();
   }
 }

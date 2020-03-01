@@ -43,16 +43,21 @@ class RunStatus extends StepsExecutionStatus {
   /// Has the run [failed] ? (any feature failed)
   bool get failed => failedFeaturesCount > 0;
 
-  /// Features. (could also add skipped features)
+  /// Features
   int get passedFeaturesCount => passedFeatures.length;
 
+  int get skippedFeaturesCount => skippedFeatures.length;
+
   int get failedFeaturesCount => failedFeatures.length;
+
   List<FeatureStatus> passedFeatures = [];
   List<FeatureStatus> failedFeatures = [];
+  List<FeatureStatus> skippedFeatures = [];
 
   List<FeatureStatus> get features {
     List<FeatureStatus> all = [];
     all.addAll(passedFeatures);
+    all.addAll(skippedFeatures);
     all.addAll(failedFeatures);
     return all;
   }
@@ -111,22 +116,26 @@ class FeatureStatus extends StepsExecutionStatus {
   List<ScenarioStatus> get scenarios {
     List<ScenarioStatus> all = [];
     all.addAll(passedScenarios);
+    all.addAll(skippedScenarios);
     all.addAll(failedScenarios);
     return all;
   }
 
   List<ScenarioStatus> passedScenarios = [];
+  List<ScenarioStatus> skippedScenarios = [];
   List<ScenarioStatus> failedScenarios = [];
 
   int get passedScenariosCount => passedScenarios.length;
+
+  int get skippedScenariosCount => skippedScenarios.length;
 
   int get failedScenariosCount => failedScenarios.length;
 
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
-    for (ScenarioStatus senario in scenarios) {
-      list.addAll(senario.undefinedSteps);
+    for (ScenarioStatus scenario in scenarios) {
+      list.addAll(scenario.undefinedSteps);
     }
     return list;
   }
