@@ -1,3 +1,10 @@
+3.1.8
+=======
+* added @ignore syntax (tobindh)
+* allowed specification of extra formatters via Opts (tobindh)
+* tidied up logging messages (tobindh)
+* added support for skipped scenarios in reporting
+
 3.1.7
 =======
 * opened up the intl version to include 0.16 because Flutter master has changed
