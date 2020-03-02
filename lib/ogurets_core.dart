@@ -217,6 +217,7 @@ class OguretsState {
               stepStatus.failure = failure;
               scenarioStatus.failedSteps.add(stepStatus);
             } finally {
+              stepStatus.sw.stop();
               scenarioStatus.fmt.done(stepStatus);
             }
           };
@@ -396,11 +397,11 @@ class OguretsState {
     return convertedNamedParams;
   }
 
-  /// Do any of the [tags] match one of [expectedTags] ?
-  /// If [expectedTags] is empty, anything matches.
-  /// If there are no [tags], return true as well since it shouldn't be limiting
+  /// Do any of the [runTags] match one of [expectedTags]?
+  /// If [runTags] is empty, anything matches.
+  /// If there are [runTags] but no [expectedTags], don't match.
   bool tagsMatch(List<String> expectedTags) {
-    return expectedTags.isEmpty || runTags.isEmpty ? true : runTags.any((element) => expectedTags.contains(element));
+    return runTags.isEmpty ? true : runTags.any((element) => expectedTags.contains(element));
   }
 
   /// Do any of the [negativeTags] match one of [expectedTags] or @ignore?

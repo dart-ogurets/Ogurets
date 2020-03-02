@@ -56,6 +56,7 @@ class Scenario {
               isFirstOfFeature: isFirstOfFeature,
               scenarioSession: scenarioSession);
         } finally {
+          scenarioStatus.sw.stop();
           state.fmt.done(scenarioStatus);
         }
 
@@ -65,6 +66,7 @@ class Scenario {
 
         state.fmt.endOfScenarioLifeCycle(this);
       } else {
+        scenarioStatus.sw.stop();
         scenarioStatus.skipped = true;
       }
     }

@@ -224,6 +224,7 @@ class OguretsOpts {
       for (String filePath in featureFiles) {
         List<String> contents = await File(filePath).readAsLines();
         Feature feature = await GherkinParserTask(contents, filePath).execute();
+        _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
         FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
 
         if (featureStatus.failed) {
@@ -235,6 +236,7 @@ class OguretsOpts {
         }
       }
 
+      runStatus.sw.stop();
       state.fmt.eof(runStatus);
 
       state.resultBuffer.flush();
