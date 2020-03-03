@@ -72,6 +72,10 @@ class RunStatus extends StepsExecutionStatus {
 
   int get passedScenarios => features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
 
+  int get skippedScenarios =>  features.map((f) => f.skippedScenariosCount).reduce((i1, i2) => i1 + i2);
+
+  int get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
+
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
@@ -101,7 +105,6 @@ class RunStatus extends StepsExecutionStatus {
 
   RunStatus(Formatter fmt) : super(fmt);
 
-  get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 }
 
 /// Feedback from one feature's execution.
