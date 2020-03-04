@@ -77,6 +77,7 @@ class OguretsOpts {
   bool _debug = false;
   String _tags;
   bool _failedOnMissingSteps = true;
+  bool _useAsserts = true;
 
   void features(String folderOrFile) {
     _features.add(folderOrFile);
@@ -121,6 +122,10 @@ class OguretsOpts {
 
   void scenario(String s) {
     _scenario = s;
+  }
+
+  void useAsserts(bool u) {
+    _useAsserts = u;
   }
 
   void _checkForEnvOverride() {
@@ -177,7 +182,12 @@ class OguretsOpts {
     });
 
     _checkForEnvOverride();
-    _ensureAssertsActive();
+
+    // flutter drive starts dart without enable-asserts to run tests, so we can't always check
+    if(_useAsserts)
+    {
+      _ensureAssertsActive();
+    }
 
     if (_debug) {
       Logger.root.level = Level.FINE;
@@ -252,10 +262,11 @@ class OguretsOpts {
       assert(true == false);
     } catch (e) {
       // all good
+      _log.info("Asserts are enabled");
       return;
     }
 
     throw Exception(
-        "Please enable asserts with --enable-asserts - VM options are: ${Platform.environment['DART_VM_OPTIONS']}");
+      "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}");
   }
 }
