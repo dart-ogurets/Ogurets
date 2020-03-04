@@ -69,6 +69,7 @@ ArgResults _parseArguments(args) {
 
 class OguretsOpts {
   List<String> _features = [];
+  List<String> _stepdefLocs = [];
   List<Type> _stepdefs = [];
   String _scenario;
   Map<Type, InstanceMirror> _instances = {};
@@ -79,51 +80,73 @@ class OguretsOpts {
   bool _failedOnMissingSteps = true;
   bool _useAsserts = true;
 
-  void features(String folderOrFile) {
+  /// Add a [List<String>] that are locations of folders
+  /// that contain feature files (recursed), specific paths to feature files
+  /// or a mix of the two
+  void features(List<String> foldersOrFiles) {
+    _features.addAll(foldersOrFiles);
+  }
+
+  /// Add a location of a folder that contains feature files
+  /// or a specific path to a feature file
+  void feature(String folderOrFile) {
     _features.add(folderOrFile);
   }
 
-  void feature(String folderOrFile) {
-    features(folderOrFile);
+  /// Add a location of a folder
+  /// that contains step definition files.
+  /// It will load all classes found as step def types (recursive)
+  void steps(String folder) {
+    _stepdefLocs.add(folder);
   }
 
-  void steps(Type clazz) {
-    step(clazz);
-  }
-
+  /// Add a [Type] with defined step definitions
   void step(Type clazz) {
     _stepdefs.add(clazz);
   }
 
+  /// Add a [Type] with defined hook definitions
   void hooks(Type clazz) {
     _stepdefs.add(clazz);
   }
 
+  /// Shared [Object] instance for all tests
   void instance(Object o) {
     _instances[o.runtimeType] = reflect(o);
     _instanceObjects.add(o);
   }
 
+  /// List of [Formatter] derived classes
+  /// that can be used to provide custom output formats
   void formatters(List<Formatter> fmts) {
     _formatters.addAll(fmts);
   }
 
+  /// Enable fine output logging
   void debug() {
     _debug = true;
   }
 
+  /// Tags in a comma-separated string
+  /// @TagName would be a tag to limit
+  /// ~@TagName would be a tag to exclude
   void tags(String tags) {
     _tags = tags;
   }
 
+  /// Specify whether or not to log scenarios with missing steps as failures
   void failOnMissingSteps(bool f) {
     _failedOnMissingSteps = f;
   }
 
+  /// Name of a specific scenario to run
   void scenario(String s) {
     _scenario = s;
   }
 
+  /// Specify whether or not to use asserts
+  /// true by default, but flutter drive doesn't
+  /// call dart with enable-asserts
   void useAsserts(bool u) {
     _useAsserts = u;
   }
@@ -141,6 +164,42 @@ class OguretsOpts {
         _features = [Platform.environment['CUCUMBER_FOLDER']];
       }
     }
+  }
+
+  /// For the list of step definition locations, find the types in the files and add them
+  /// to the current isolate so that the runner can resolve the steps
+  /// Does not handle steps outside of classes
+  List<Type> _determineStepDefs() {
+    List<File> files = [];
+
+    _stepdefLocs.forEach((sl) {
+      FileSystemEntityType type = FileSystemEntity.typeSync(sl);
+      if (type == FileSystemEntityType.directory) {
+        Directory(sl).listSync(recursive: true, followLinks: true).forEach((f) {
+          type = FileSystemEntity.typeSync(f.path);
+          if (type == FileSystemEntityType.file && f.path.endsWith(".dart")) {
+            _log.fine("Loaded step file: ${f.path}");
+            files.add(File(f.path));
+          }
+        });
+      } else {
+        _log.severe("Cannot find ${sl}");
+      }
+    });
+
+    List<Type> classes = [];
+    files.forEach((f) async {
+      // load the found files into the current isolate
+      var im = await currentMirrorSystem().isolate.loadUri(f.absolute.uri);
+
+      // add any classes found to our return set
+      for (var classMirror in im.declarations.values.whereType<ClassMirror>()) {
+        _log.fine("Step class added: ${classMirror.reflectedType}");
+        classes.add(classMirror.reflectedType);
+      }
+    });
+
+    return classes;
   }
 
   /// For each of the feature files or folders, determine which type it is, deref folders
@@ -184,8 +243,7 @@ class OguretsOpts {
     _checkForEnvOverride();
 
     // flutter drive starts dart without enable-asserts to run tests, so we can't always check
-    if(_useAsserts)
-    {
+    if (_useAsserts) {
       _ensureAssertsActive();
     }
 
@@ -216,6 +274,8 @@ class OguretsOpts {
     _log.info("Tags used are $runTags");
 
     var featureFiles = _determineFeatureFiles();
+    var steps = await _determineStepDefs();
+    this._stepdefs.addAll(steps);
 
     OguretsState state = OguretsState(ConsoleBuffer());
     state.steps = this._stepdefs;
@@ -267,6 +327,6 @@ class OguretsOpts {
     }
 
     throw Exception(
-      "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}");
+        "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}");
   }
 }
