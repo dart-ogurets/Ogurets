@@ -1,9 +1,17 @@
 part of ogurets_core3;
 
 class BufferedStatus {
+  /// how long the item took to execute
+  Duration get duration => sw.elapsed;
+
   final Formatter fmt;
 
-  BufferedStatus(this.fmt);
+  BufferedStatus(this.fmt)
+  {
+    sw.start();
+  }
+
+  Stopwatch sw = Stopwatch();
 }
 
 /// A run/feature/scenario status of multiple steps, maybe with undefined ones.
@@ -64,6 +72,10 @@ class RunStatus extends StepsExecutionStatus {
 
   int get passedScenarios => features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
 
+  int get skippedScenarios =>  features.map((f) => f.skippedScenariosCount).reduce((i1, i2) => i1 + i2);
+
+  int get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
+
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
     List<StepStatus> list = [];
@@ -93,7 +105,6 @@ class RunStatus extends StepsExecutionStatus {
 
   RunStatus(Formatter fmt) : super(fmt);
 
-  get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 }
 
 /// Feedback from one feature's execution.
@@ -180,7 +191,7 @@ class ScenarioStatus extends StepsExecutionStatus {
   bool skipped = false;
 
   /// Has the [scenario] [passed] ? (all steps passed)
-  bool get passed => failedStepsCount == 0;
+  bool get passed => failedStepsCount == 0 && !skipped;
 
   /// Has the [scenario] [failed] ? (any step failed)
   bool get failed => failedStepsCount > 0;
@@ -240,7 +251,7 @@ class StepStatus extends BufferedStatus {
   Step step;
 
   /// Has the [step] [passed] ?
-  bool get passed => failure == null;
+  bool get passed => failure == null && !skipped;
 
   /// Has the [step] [failed] ?
   bool get failed => failure != null;

@@ -49,13 +49,15 @@ class Feature {
         });
       }
 
+      featureStatus.sw.stop();
       state.fmt.done(featureStatus);
 
       return featureStatus;
     } else {
       _log.info("Skipping feature $name");
       featureStatus.skipped = true;
-
+      featureStatus.sw.stop();
+      
       return featureStatus;
     }
   }

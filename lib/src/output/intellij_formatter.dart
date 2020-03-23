@@ -132,8 +132,7 @@ class IntellijFormatter implements Formatter {
         out(TEMPLATE_TEST_PENDING, [ss.decodedVerbiage, getCurrentTime()]);
       }
 
-      // TODO: add timing to step
-      out(TEMPLATE_TEST_FINISHED, [getCurrentTime(), "1", ss.decodedVerbiage]);
+      out(TEMPLATE_TEST_FINISHED, [getCurrentTime(), ss.duration.inSeconds.toString(), ss.decodedVerbiage]);
     } else if (status is GherkinTable) {
       out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), "Examples:"]);
       out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);

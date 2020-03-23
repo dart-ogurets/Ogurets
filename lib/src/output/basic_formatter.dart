@@ -25,6 +25,7 @@ class BasicFormatter implements Formatter {
         buffer.writeln("Scenarios failed: ${status.failedScenariosCount}", color: 'red');
       }
       
+      buffer.write("Feature time: ${status.duration.inMilliseconds} ms");
     } else if (status is ScenarioStatus) {
       // only write for the whole scenario - background will be reflected in the scenario status
       if (!(status.scenario is Background)) {
@@ -33,6 +34,8 @@ class BasicFormatter implements Formatter {
         } else {
           buffer.writeln("Scenario passed!", color: 'green');
         }
+
+        buffer.write("Scenario time: ${status.duration.inMilliseconds} ms");
       }
     } else if (status is StepStatus) {
       var color = 'green';
@@ -116,6 +119,8 @@ class BasicFormatter implements Formatter {
       buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}",
           color: "red");
     }
+
+    buffer.writeln("Run time: ${runStatus.duration.inMilliseconds} ms");
 
     // Tally the missing stepdefs boilerplate
     if (runStatus.undefinedStepsCount > 0) {
