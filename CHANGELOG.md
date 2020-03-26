@@ -1,3 +1,10 @@
+3.1.9
+=======
+* load steps from disk instead of having to specify them all
+* better reporting
+* timings
+* all updates from tobindh
+
 3.1.8
 =======
 * added @ignore syntax (tobindh)
