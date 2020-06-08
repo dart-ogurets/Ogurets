@@ -210,6 +210,13 @@ class Expressions {
 
 NOTE: You cannot include anything in the constructor that it does not know about.
 
+### parallel runs
+
+If you are doing API testing, you can tell Ogurets to run using parallel features, and it is considerably
+faster. for your OguretsOpts object, add `.parallel()`. If you are using IntelliJ IDEA, then use an
+environment variable `CUCUMBER_PARALLEL=true`. This option does work in IDEA, but the reporting is pretty
+terrible and will take a while to get sorted. 
+
 ### ogurets hooks
 
 Hooks work largely like you would expect them to. You can:

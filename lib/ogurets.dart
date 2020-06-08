@@ -1,12 +1,13 @@
 library ogurets;
 
 import "dart:io";
+import "dart:mirrors";
 
 import 'package:args/args.dart';
 import "package:logging/logging.dart";
-import "dart:mirrors";
 
 import 'ogurets_core.dart';
+
 export 'ogurets_core.dart';
 
 final Logger _log = Logger('ogurets');
@@ -22,7 +23,7 @@ run(args) async {
     options = _parseArguments(hardcodedArg);
   }
 
-  var debug = options["debug"];
+  final debug = options["debug"];
   if (debug) {
     Logger.root.level = Level.FINE;
   } else {
@@ -34,7 +35,7 @@ run(args) async {
     runTags = options["tags"].split(",");
   }
 
-  var featureFiles = options.rest;
+  final featureFiles = options.rest;
   OguretsState state = OguretsState(ConsoleBuffer());
   state.runTags = runTags;
   await state.build();
@@ -79,12 +80,17 @@ class OguretsOpts {
   String _tags;
   bool _failedOnMissingSteps = true;
   bool _useAsserts = true;
+  bool _parallel = false;
 
   /// Add a [List<String>] that are locations of folders
   /// that contain feature files (recursed), specific paths to feature files
   /// or a mix of the two
   void features(List<String> foldersOrFiles) {
     _features.addAll(foldersOrFiles);
+  }
+
+  void parallelize() {
+    _parallel = true;
   }
 
   /// Add a location of a folder that contains feature files
@@ -160,8 +166,12 @@ class OguretsOpts {
         _scenario = Platform.environment['CUCUMBER_SCENARIO'];
       } else if ('FEATURE' == envOverride) {
         _features = [Platform.environment['CUCUMBER_FEATURE']];
-      } else {
+      } else if (Platform.environment['CUCUMBER_FOLDER'] != null) {
         _features = [Platform.environment['CUCUMBER_FOLDER']];
+      }
+
+      if (Platform.environment['CUCUMBER_PARALLEL'] != null) {
+        _parallel = true;
       }
     }
   }
@@ -229,7 +239,8 @@ class OguretsOpts {
     });
 
     if (files.isEmpty) {
-      _log.severe("No feature files found, offset is ${Directory.current.path}");
+      _log.severe(
+          "No feature files found, offset is ${Directory.current.path}");
     }
 
     return files;
@@ -253,7 +264,8 @@ class OguretsOpts {
       Logger.root.level = Level.INFO;
     }
 
-    List<String> runTags = _tags == null ? [] : _tags.split(",").map((t) => t.trim()).toList();
+    List<String> runTags =
+        _tags == null ? [] : _tags.split(",").map((t) => t.trim()).toList();
 
     // command line overrides
     if (args != null) {
@@ -268,7 +280,10 @@ class OguretsOpts {
     }
 
     if (Platform.environment['OGURETS_TAGS'] != null) {
-      runTags = Platform.environment['OGURETS_TAGS'].split(",").map((t) => t.trim()).toList();
+      runTags = Platform.environment['OGURETS_TAGS']
+          .split(",")
+          .map((t) => t.trim())
+          .toList();
     }
 
     _log.info("Tags used are $runTags");
@@ -284,6 +299,7 @@ class OguretsOpts {
     state.existingInstances = _instances;
     state.formatters = _formatters;
     state.runTags = runTags;
+    state.parallelRun = _parallel;
 
     await state.build();
     await state.executeRunHooks(BeforeRun);
@@ -291,19 +307,17 @@ class OguretsOpts {
     try {
       RunStatus runStatus = RunStatus(state.fmt);
 
+      List<Future> awaitingFeatures = [];
       for (String filePath in featureFiles) {
-        List<String> contents = await File(filePath).readAsLines();
-        Feature feature = await GherkinParserTask(contents, filePath).execute();
-        _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
-        FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
-
-        if (featureStatus.failed) {
-          runStatus.failedFeatures.add(featureStatus);
-        } else if (featureStatus.skipped) {
-          runStatus.skippedFeatures.add(featureStatus);
+        if (state.parallelRun) {
+          awaitingFeatures.add(processFeatureFile(filePath, runStatus, state));
         } else {
-          runStatus.passedFeatures.add(featureStatus);
+          await processFeatureFile(filePath, runStatus, state);
         }
+      }
+
+      if (awaitingFeatures.isNotEmpty) {
+        await Future.wait(awaitingFeatures); // wait for all features to finish
       }
 
       runStatus.sw.stop();
@@ -314,6 +328,22 @@ class OguretsOpts {
       return runStatus;
     } finally {
       await state.executeRunHooks(AfterRun);
+    }
+  }
+
+  Future processFeatureFile(
+      String filePath, RunStatus runStatus, OguretsState state) async {
+    List<String> contents = await File(filePath).readAsLines();
+    Feature feature = await GherkinParserTask(contents, filePath).execute();
+//    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
+    FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
+
+    if (featureStatus.failed) {
+      runStatus.failedFeatures.add(featureStatus);
+    } else if (featureStatus.skipped) {
+      runStatus.skippedFeatures.add(featureStatus);
+    } else {
+      runStatus.passedFeatures.add(featureStatus);
     }
   }
 

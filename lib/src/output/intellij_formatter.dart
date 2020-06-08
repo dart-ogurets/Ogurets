@@ -1,4 +1,5 @@
 part of ogurets_core3;
+
 /*
 
 see: https://github.com/JetBrains/intellij-community/blob/master/plugins/cucumber-jvm-formatter/src/org/jetbrains/plugins/cucumber/java/run/CucumberJvmSMFormatter.java
@@ -69,6 +70,8 @@ class IntellijFormatter implements Formatter {
     }
     return source
         .replaceAll("|", "||")
+        .replaceAll('[', "|[")
+        .replaceAll(']', "|]")
         .replaceAll("\n", "|n")
         .replaceAll("\r", "|r")
         .replaceAll("'", "|'");
@@ -83,8 +86,8 @@ class IntellijFormatter implements Formatter {
   String _getFeatureName(FeatureStatus feature) {
     String featureHeader = feature.feature.name;
     var lines = featureHeader.split("\n");
-    lines.removeWhere((l) =>
-        l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'));
+    lines.removeWhere(
+        (l) => l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'));
     if (lines.isNotEmpty) {
       return 'Feature: ${lines[0]}';
     } else {
@@ -132,17 +135,21 @@ class IntellijFormatter implements Formatter {
         out(TEMPLATE_TEST_PENDING, [ss.decodedVerbiage, getCurrentTime()]);
       }
 
-      out(TEMPLATE_TEST_FINISHED, [getCurrentTime(), ss.duration.inSeconds.toString(), ss.decodedVerbiage]);
+      out(TEMPLATE_TEST_FINISHED, [
+        getCurrentTime(),
+        ss.duration.inSeconds.toString(),
+        ss.decodedVerbiage
+      ]);
     } else if (status is GherkinTable) {
       out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), "Examples:"]);
       out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
     } else if (status is ScenarioStatus) {
       ScenarioStatus scenario = status;
-      out(TEMPLATE_TEST_SUITE_FINISHED,
-          [getCurrentTime(), _getScenarioName(scenario)]);
       if (scenario.failed) {
         out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
       }
+      out(TEMPLATE_TEST_SUITE_FINISHED,
+          [getCurrentTime(), _getScenarioName(scenario)]);
 
       out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
     }

@@ -1,3 +1,7 @@
+3.1.10
+=====
+* support square brackets in errors in IDEA
+
 3.1.9
 =======
 * load steps from disk instead of having to specify them all
