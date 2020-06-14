@@ -1,3 +1,9 @@
+3.2.0
+=====
+* this is a rearrangement into a single library and hiding of internal classes so they don't
+cause conflict with our work on FeatureHub (and because they aren't neeeded to be seen externally)
+* includes failure fix from tobindh 
+
 3.1.10
 =====
 * support square brackets in errors in IDEA

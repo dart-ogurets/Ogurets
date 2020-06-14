@@ -187,7 +187,10 @@ void main(args) async {
 
   await def.run();
 }
-````
+```` 
+
+Note, you can include the much easier mechanism of just `..steps(folderName)` now and it will include all steps from
+that folder into the scan list for hooks and steps (thanks to tobindh).
 
 Your classes can be constructed so as to take classes that are either defined in the `OguretsOpts` or they are
 dynamically constructed at runtime. If they themselves depend on a class it will cycle through creating the entire
