@@ -163,8 +163,14 @@ class _Scenario {
             await state.stepRunners[found](params, moreParams, scenarioSession,
                 scenarioStatus, stepStatus);
           }
-        } catch (e) {
+        } catch (e, s) {
           _log.fine("Step failed: $step");
+          // if we get here and it's not set as failed, make sure to set it.
+          // this can happen if there are runtime constructor issues on the step class construction, for example
+          if(!stepStatus.failed)
+          {
+            stepStatus.failure = StepFailure(e, s.toString());
+          }
         } finally {
           if (!stepStatus.failed && !scenarioStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);

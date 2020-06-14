@@ -199,7 +199,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   /// Steps.
   List<StepStatus> get steps {
-    List<BufferedStatus> all = [];
+    List<StepStatus> all = [];
     all.addAll(passedSteps);
     all.addAll(failedSteps);
     return all;
