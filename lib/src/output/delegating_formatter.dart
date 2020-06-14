@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class DelegatingFormatter implements Formatter {
   final List<Formatter> formatters;
@@ -6,7 +6,7 @@ class DelegatingFormatter implements Formatter {
   DelegatingFormatter(this.formatters);
 
   @override
-  void background(Background background) {
+  void background(_Background background) {
     formatters.forEach((f) => f.background(background));
   }
 
@@ -21,7 +21,7 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(Scenario endScenario) {
+  void endOfScenarioLifeCycle(_Scenario endScenario) {
     formatters.forEach((f) => f.endOfScenarioLifeCycle(endScenario));
   }
 
@@ -46,7 +46,7 @@ class DelegatingFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(Scenario startScenario) {
+  void startOfScenarioLifeCycle(_Scenario startScenario) {
     formatters.forEach((f) => f.startOfScenarioLifeCycle(startScenario));
   }
 

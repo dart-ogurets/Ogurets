@@ -1,13 +1,10 @@
+import 'package:ogurets/ogurets.dart';
 
-
-import 'package:ogurets/ogurets_core.dart';
-
-// ignore: avoid_relative_lib_imports
 import '../lib/scenario_session.dart';
 
 class Expressions {
   ScenarioSession _session;
-  
+
   Expressions(this._session);
 
   @Given("I have a {string} with {float}")
@@ -28,4 +25,3 @@ class Expressions {
     }
   }
 }
-

@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 RegExp tagsPattern = RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = RegExp(r"\s*Feature\s*:\s*(.+)");
@@ -21,16 +21,15 @@ class GherkinSyntaxError extends StateError {
   GherkinSyntaxError(String msg) : super(msg);
 }
 
-class GherkinParser {
-   /// Returns a fully populated Feature,
-   /// from the Gherkin feature statements in [contents].
-   /// If [contents] come from a File, you may provide a [filePath]
-   /// that will be used as helper in the output.
-  Feature parse(List<String> contents, {filePath}) {
-
-    Feature feature;
-    Scenario currentScenario;
-    Step currentStep;
+class _GherkinParser {
+  /// Returns a fully populated Feature,
+  /// from the Gherkin feature statements in [contents].
+  /// If [contents] come from a File, you may provide a [filePath]
+  /// that will be used as helper in the output.
+  _Feature parse(List<String> contents, {filePath}) {
+    _Feature feature;
+    _Scenario currentScenario;
+    _Step currentStep;
     GherkinTable currentTable;
     String pyString;
 
@@ -60,8 +59,7 @@ class GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         _log.fine("Adding feature: ${match.group(1)}");
-        feature =
-            Feature(match.group(1), Location(filePath, lineCounter));
+        feature = _Feature(match.group(1), Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
       }
@@ -72,11 +70,10 @@ class GherkinParser {
         var match = iter.current;
         _log.fine("Adding scenario: ${match.group(1)}");
         currentScenario =
-            Scenario(match.group(1), Location(filePath, lineCounter));
+            _Scenario(match.group(1), Location(filePath, lineCounter));
 
         //Add all of our feature tags to the scenario, since they apply to each
-        if(feature.tags.isNotEmpty)
-        {
+        if (feature.tags.isNotEmpty) {
           tags.addAll(feature.tags);
         }
 
@@ -92,7 +89,7 @@ class GherkinParser {
         var match = iter.current;
         _log.fine("Adding background: ${match.group(1)}");
         currentScenario =
-            Background(match.group(1), Location(filePath, lineCounter));
+            _Background(match.group(1), Location(filePath, lineCounter));
         feature.background = currentScenario;
       }
 
@@ -100,7 +97,7 @@ class GherkinParser {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = Step(match.group(1), match.group(2),
+        currentStep = _Step(match.group(1), match.group(2),
             Location(filePath, lineCounter), currentScenario);
         currentTable = currentStep.table;
         currentScenario.addStep(currentStep);
@@ -138,7 +135,7 @@ class GherkinParser {
         //due to the split
         row.removeAt(0);
         row.removeLast();
-        
+
         if (row.isNotEmpty) {
           currentTable.addRow(row);
         }

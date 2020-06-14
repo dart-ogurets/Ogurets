@@ -1,6 +1,6 @@
-part of ogurets_core3;
+part of ogurets;
 
-class Scenario {
+class _Scenario {
   // todo: Fetch this from GherkinVocabulary or something
   String gherkinKeyword = "Scenario";
 
@@ -8,25 +8,27 @@ class Scenario {
 
   List<String> tags;
 
-  Scenario background;
+  _Scenario background;
 
-  List<Step> steps = [];
+  List<_Step> steps = [];
   GherkinTable examples = GherkinTable();
 
   Location location;
 
-  Scenario(this.name, this.location);
+  _Scenario(this.name, this.location);
 
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
   Future<List<ScenarioStatus>> execute(OguretsState state,
-      {isFirstOfFeature = true, OguretsScenarioSession scenarioSession, bool skip = false}) async {
+      {isFirstOfFeature = true,
+      OguretsScenarioSession scenarioSession,
+      bool skip = false}) async {
     var statuses = <ScenarioStatus>[];
 
-      if (examples._table.isEmpty) {
-        examples._table.add({});
-      }
+    if (examples._table.isEmpty) {
+      examples._table.add({});
+    }
 
     // only call the formatters if the scenario is actually run
     if (!skip) {
@@ -74,7 +76,7 @@ class Scenario {
     return statuses;
   }
 
-  void addStep(Step step) {
+  void addStep(_Step step) {
     steps.add(step);
   }
 
@@ -135,7 +137,7 @@ class Scenario {
         // Parameters from Regex
         var params = [];
         for (var i = 1; i <= match.groupCount; i++) {
-          params.add(Step.unserialize(match.group(i)));
+          params.add(_Step.unserialize(match.group(i)));
         }
         // PyString
         if (step.pyString != null) {
@@ -158,7 +160,8 @@ class Scenario {
             stepStatus.skipped = true;
           } else {
             // to actually run the step
-            await state.stepRunners[found](params, moreParams, scenarioSession, scenarioStatus, stepStatus);
+            await state.stepRunners[found](params, moreParams, scenarioSession,
+                scenarioStatus, stepStatus);
           }
         } catch (e) {
           _log.fine("Step failed: $step");

@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class ConsoleBuffer implements ResultBuffer {
   static final ANSI_ESC = "\x1B[";
@@ -58,7 +58,7 @@ class ConsoleBuffer implements ResultBuffer {
 
     //Print will automatically add a newline
     print(_buffer);
-    
+
     _buffer.clear();
   }
 }

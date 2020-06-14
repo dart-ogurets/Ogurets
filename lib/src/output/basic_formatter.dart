@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class BasicFormatter implements Formatter {
   final ResultBuffer buffer;
@@ -6,7 +6,7 @@ class BasicFormatter implements Formatter {
   BasicFormatter(this.buffer);
 
   @override
-  void background(Background background) {}
+  void background(_Background background) {}
 
   @override
   void close() {}
@@ -15,20 +15,23 @@ class BasicFormatter implements Formatter {
   void done(Object status) {
     if (status is FeatureStatus) {
       buffer.writeln("-------------------");
-      buffer.writeln("Scenarios passed: ${status.passedScenariosCount}", color: 'green');
+      buffer.writeln("Scenarios passed: ${status.passedScenariosCount}",
+          color: 'green');
 
       if (status.skippedScenariosCount > 0) {
-        buffer.writeln("Scenarios skipped: ${status.skippedScenariosCount}", color: 'gray');
+        buffer.writeln("Scenarios skipped: ${status.skippedScenariosCount}",
+            color: 'gray');
       }
 
       if (status.failedScenariosCount > 0) {
-        buffer.writeln("Scenarios failed: ${status.failedScenariosCount}", color: 'red');
+        buffer.writeln("Scenarios failed: ${status.failedScenariosCount}",
+            color: 'red');
       }
-      
+
       buffer.write("Feature time: ${status.duration.inMilliseconds} ms");
     } else if (status is ScenarioStatus) {
       // only write for the whole scenario - background will be reflected in the scenario status
-      if (!(status.scenario is Background)) {
+      if (!(status.scenario is _Background)) {
         if ((status.failed || status.undefinedStepsCount > 0)) {
           buffer.writeln("Scenario failed!", color: 'red');
         } else {
@@ -98,7 +101,7 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(Scenario endScenario) {}
+  void endOfScenarioLifeCycle(_Scenario endScenario) {}
 
   @override
   void eof(RunStatus runStatus) {
@@ -158,8 +161,8 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(Scenario scenario) {
-    if (scenario is Background) {
+  void startOfScenarioLifeCycle(_Scenario scenario) {
+    if (scenario is _Background) {
       buffer.write("\t");
     } else {
       buffer.write("\n");

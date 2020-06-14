@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 abstract class ResultBuffer {
   void write(message, {color});

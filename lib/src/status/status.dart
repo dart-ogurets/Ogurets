@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class BufferedStatus {
   /// how long the item took to execute
@@ -6,8 +6,7 @@ class BufferedStatus {
 
   final Formatter fmt;
 
-  BufferedStatus(this.fmt)
-  {
+  BufferedStatus(this.fmt) {
     sw.start();
   }
 
@@ -24,16 +23,16 @@ abstract class StepsExecutionStatus extends BufferedStatus {
 
   String _generateBoilerplate() {
     String bp = '';
-    List<Step> uniqueSteps = [];
+    List<_Step> uniqueSteps = [];
     for (StepStatus stepStatus in this.undefinedSteps) {
       if (null ==
           uniqueSteps.firstWhere(
-              (Step s) => s.verbiage == stepStatus.step.verbiage,
+              (_Step s) => s.verbiage == stepStatus.step.verbiage,
               orElse: () => null)) {
         uniqueSteps.add(stepStatus.step);
       }
     }
-    for (Step step in uniqueSteps) {
+    for (_Step step in uniqueSteps) {
       bp += step.boilerplate;
     }
 
@@ -70,11 +69,14 @@ class RunStatus extends StepsExecutionStatus {
     return all;
   }
 
-  int get passedScenarios => features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
+  int get passedScenarios =>
+      features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
 
-  int get skippedScenarios =>  features.map((f) => f.skippedScenariosCount).reduce((i1, i2) => i1 + i2);
+  int get skippedScenarios =>
+      features.map((f) => f.skippedScenariosCount).reduce((i1, i2) => i1 + i2);
 
-  int get failedScenarios => features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
+  int get failedScenarios =>
+      features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 
   /// Undefined steps
   List<StepStatus> get undefinedSteps {
@@ -104,13 +106,12 @@ class RunStatus extends StepsExecutionStatus {
   String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
 
   RunStatus(Formatter fmt) : super(fmt);
-
 }
 
 /// Feedback from one feature's execution.
 class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
-  Feature feature;
+  _Feature feature;
 
   /// Was the whole [feature] [skipped] because of mismatching tags ?
   /// It does not care about internal scenario skipping.
@@ -176,7 +177,7 @@ class FeatureStatus extends StepsExecutionStatus {
 class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   /// If this ScenarioStatus is one of a Background, it is here.
-  Scenario scenario;
+  _Scenario scenario;
 
   /// this is information that a hook or step might wish to add to
   /// keep track of in reporting. We expect to be able to encode it in reports.
@@ -184,7 +185,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
-  Background background;
+  _Background background;
   GherkinTable exampleTable; // the examples for this scenario
   Map example; // the example for this specific line
   /// Was the [scenario] [skipped] because of mismatching tags ?
@@ -227,7 +228,7 @@ class ScenarioStatus extends StepsExecutionStatus {
   ScenarioStatus(Formatter fmt) : super(fmt);
 
   void mergeBackground(ScenarioStatus other, {isFirst = true}) {
-    if (other.scenario is Background) {
+    if (other.scenario is _Background) {
       background = other.scenario;
       passedSteps.addAll(other.passedSteps);
       failedSteps.addAll(other.failedSteps);
@@ -248,7 +249,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 /// Feedback from one step's execution.
 class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
-  Step step;
+  _Step step;
 
   /// Has the [step] [passed] ?
   bool get passed => failure == null && !skipped;

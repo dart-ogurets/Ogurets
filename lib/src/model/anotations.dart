@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class Hook {
   final String tag;
@@ -15,11 +15,11 @@ class After extends Hook {
 }
 
 class BeforeStep extends Hook {
-  const BeforeStep({String tag, int order}) : super(tag: tag,  order: order);
+  const BeforeStep({String tag, int order}) : super(tag: tag, order: order);
 }
 
 class AfterStep extends Hook {
-  const AfterStep({String tag, int order}) : super(tag: tag,  order: order);
+  const AfterStep({String tag, int order}) : super(tag: tag, order: order);
 }
 
 // only available on given instances

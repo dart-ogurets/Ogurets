@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 /// This is the interface you should implement if you want your own custom
 /// formatter.
@@ -15,9 +15,9 @@ abstract class Formatter {
 
   // always followed by "examples" if there are examples, but we have to have them as separate steps so we can insert info between them
   // start of scenario including any and all examples
-  void startOfScenarioLifeCycle(Scenario startScenario);
+  void startOfScenarioLifeCycle(_Scenario startScenario);
 
-  void background(Background background);
+  void background(_Background background);
 
   void scenario(ScenarioStatus scenario);
 
@@ -25,7 +25,7 @@ abstract class Formatter {
   void step(StepStatus step);
 
   // end of scenario including any and all examples
-  void endOfScenarioLifeCycle(Scenario endScenario);
+  void endOfScenarioLifeCycle(_Scenario endScenario);
 
   void done(Object status);
 

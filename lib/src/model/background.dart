@@ -1,10 +1,10 @@
-part of ogurets_core3;
+part of ogurets;
 
-class Background extends Scenario {
+class _Background extends _Scenario {
   // todo: Fetch this from GherkinVocabulary or something
   String gherkinKeyword = "Background";
 
   //bool bufferIsMerged = false;
 
-  Background(name, location) : super(name, location);
+  _Background(name, location) : super(name, location);
 }

@@ -1,6 +1,6 @@
 
 
-import 'package:ogurets/ogurets_core.dart';
+import 'package:ogurets/ogurets.dart';
 
 // ignore: avoid_relative_lib_imports
 import '../lib/shared_instance.dart';

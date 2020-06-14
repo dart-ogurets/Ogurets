@@ -1,37 +1,7 @@
-library ogurets_core3;
-
-import "dart:async";
-import "dart:collection";
-import 'dart:io';
-import "dart:mirrors";
-
-import "package:ansicolor/ansicolor.dart";
-import 'package:intl/intl.dart';
-import "package:logging/logging.dart";
-import 'package:sprintf/sprintf.dart';
-
-part "src/gherkin_parser.dart";
-part 'src/model/anotations.dart';
-part 'src/model/background.dart';
-part 'src/model/feature.dart';
-part 'src/model/runtime.dart';
-part 'src/model/scenario.dart';
-part 'src/model/scenario_session.dart';
-part 'src/model/step.dart';
-part 'src/model/table.dart';
-part 'src/output/basic_formatter.dart';
-part 'src/output/console_buffer.dart';
-part 'src/output/delegating_formatter.dart';
-part 'src/output/formatter.dart';
-part 'src/output/intellij_formatter.dart';
-part 'src/output/output.dart';
-part "src/status/status.dart";
-part 'src/task.dart';
+part of ogurets;
 
 /// The purpose of this file is to expose the internals of ogurets
 /// without requiring dart:io, so that it can be used in the browser.
-
-final Logger _log = Logger('ogurets');
 
 typedef HookFunc = Future<void> Function(
     OguretsScenarioSession scenarioSession, ScenarioStatus scenarioStatus);
@@ -181,7 +151,7 @@ class OguretsState {
             InstanceMirror instance = scenarioSession.getInstance(type);
 
             // this is really a hook that's getting created as a step
-            var step = Step(hookTypeName, hookTypeName,
+            var step = _Step(hookTypeName, hookTypeName,
                 scenarioStatus.scenario.location, scenarioStatus.scenario,
                 hook: true);
 

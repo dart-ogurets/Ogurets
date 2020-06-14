@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 class GherkinTable extends IterableBase {
   final String _SPACER = "\t\t  ";

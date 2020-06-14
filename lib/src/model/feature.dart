@@ -1,17 +1,18 @@
-part of ogurets_core3;
+part of ogurets;
 
-class Feature {
+class _Feature {
   String name;
   List<String> tags;
 
-  Scenario background;
-  List<Scenario> scenarios = [];
+  _Scenario background;
+  List<_Scenario> scenarios = [];
 
   Location location;
 
-  Feature(this.name, this.location);
+  _Feature(this.name, this.location);
 
-  Future<FeatureStatus> execute(OguretsState state, {bool debug = false}) async {
+  Future<FeatureStatus> execute(OguretsState state,
+      {bool debug = false}) async {
     FeatureStatus featureStatus = FeatureStatus(state.fmt)..feature = this;
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
@@ -19,12 +20,16 @@ class Feature {
       state.fmt.feature(featureStatus);
 
       bool isFirstScenario = true;
-      for (Scenario scenario in scenarios) {
-        _log.fine("Requested tags: ${state.runTags}.  Scenario is tagged with: ${scenario.tags}.");
+      for (_Scenario scenario in scenarios) {
+        _log.fine(
+            "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario.tags}.");
 
         // skip if it doesn't match the scenario name (when present), is excluded by the tags or doesn't match when tags are present
         // assumption is that if you specify a scenario, you wouldn't exclude it by tags
-        var skip = state.scenarioToRun != null ? !(state.scenarioToRun == scenario.name) : (state.negativeTagsMatch(scenario.tags) || !state.tagsMatch(scenario.tags));
+        var skip = state.scenarioToRun != null
+            ? !(state.scenarioToRun == scenario.name)
+            : (state.negativeTagsMatch(scenario.tags) ||
+                !state.tagsMatch(scenario.tags));
 
         if (!skip) {
           _log.fine("Executing scenario: ${scenario.name}");
@@ -57,7 +62,7 @@ class Feature {
       _log.info("Skipping feature $name");
       featureStatus.skipped = true;
       featureStatus.sw.stop();
-      
+
       return featureStatus;
     }
   }

@@ -1,4 +1,4 @@
-part of ogurets_core3;
+part of ogurets;
 
 /*
 
@@ -105,7 +105,7 @@ class IntellijFormatter implements Formatter {
   }
 
   @override
-  void background(Background background) {
+  void background(_Background background) {
     _basicFormatter.background(background);
   }
 
@@ -178,12 +178,12 @@ class IntellijFormatter implements Formatter {
   }
 
   @override
-  void startOfScenarioLifeCycle(Scenario startScenario) {
+  void startOfScenarioLifeCycle(_Scenario startScenario) {
     _basicFormatter.startOfScenarioLifeCycle(startScenario);
   }
 
   @override
-  void endOfScenarioLifeCycle(Scenario endScenario) {
+  void endOfScenarioLifeCycle(_Scenario endScenario) {
     _basicFormatter.endOfScenarioLifeCycle(endScenario);
   }
 
