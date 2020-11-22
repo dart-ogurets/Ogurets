@@ -225,6 +225,6 @@ class IntellijFormatter implements Formatter {
   }
 
   String _getScenarioName(ScenarioStatus startScenario) {
-    return "Scenario: ${startScenario.scenario.name}";
+    return "Scenario: ${startScenario.decodedName}";
   }
 }

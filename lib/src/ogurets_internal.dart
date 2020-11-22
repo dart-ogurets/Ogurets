@@ -155,9 +155,9 @@ class OguretsState {
                 scenarioStatus.scenario.location, scenarioStatus.scenario,
                 hook: true);
 
-            var stepStatus = StepStatus(scenarioStatus.fmt)..step = step;
-            stepStatus.decodedVerbiage =
-                "${hookTypeName} - ${_decodeSymbol(methodName)}";
+            var stepStatus = StepStatus(scenarioStatus.fmt)
+              ..step = step
+              ..decodedVerbiage = "${hookTypeName} - ${_decodeSymbol(methodName)}";
 
             scenarioStatus.fmt.step(stepStatus);
 
