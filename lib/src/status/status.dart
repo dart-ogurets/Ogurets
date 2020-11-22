@@ -225,6 +225,11 @@ class ScenarioStatus extends StepsExecutionStatus {
     return _failures;
   }
 
+  String get decodedName => example.entries.fold(
+      scenario.name,
+      (prevText, element) => prevText.replaceAll('<${element.key}>', element.value)
+  );
+
   ScenarioStatus(Formatter fmt) : super(fmt);
 
   void mergeBackground(ScenarioStatus other, {isFirst = true}) {

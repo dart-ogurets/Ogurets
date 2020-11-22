@@ -155,7 +155,7 @@ class BasicFormatter implements Formatter {
   void scenario(ScenarioStatus startScenario) {
     if (startScenario.exampleTable.isValid) {
       buffer.write(
-          "\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.scenario.name}");
+          "\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.decodedName}");
       buffer.writeln("${startScenario.scenario.location}", color: 'gray');
     }
   }
