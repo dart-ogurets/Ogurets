@@ -1,3 +1,7 @@
+3.2.1
+=====
+* Update to allow correct interpolation of scenario name when using data tables; contribution
+
 3.2.0
 =====
 * this is a rearrangement into a single library and hiding of internal classes so they don't
