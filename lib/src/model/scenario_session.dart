@@ -2,6 +2,7 @@ part of ogurets;
 
 class OguretsScenarioSession {
   Map<Type, InstanceMirror> _scenarioInstances = {};
+  Map<Type, InstanceMirror> _sharedInstances = {};
 
   OguretsScenarioSession(this._scenarioInstances);
 
@@ -37,12 +38,12 @@ class OguretsScenarioSession {
     if (c.isNotEmpty) {
       DeclarationMirror constructor = c[0];
       List<ParameterMirror> params = _params(constructor);
-      List<Object> positionalArgs = [];
+      List<Object?> positionalArgs = [];
       // find the positional arguments in the existing instances map, and if they aren't
       // there try and recursively create them. This will of course explode with a stack overflow
       // if we have a circular situation.
       params.forEach((p) {
-        InstanceMirror inst = instances[p.type.reflectedType];
+        InstanceMirror? inst = instances[p.type.reflectedType];
         if (inst == null) {
           inst = _newInstance(reflectClass(p.type.reflectedType), instances);
         }
@@ -63,7 +64,7 @@ class OguretsScenarioSession {
   }
 
   InstanceMirror getInstance(Type type) {
-    InstanceMirror im = _scenarioInstances[type];
+    InstanceMirror? im = _scenarioInstances[type];
 
     if (im == null) {
       im = _newInstance(reflectClass(type), _scenarioInstances);

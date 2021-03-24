@@ -4,7 +4,7 @@ import 'package:ogurets/ogurets.dart';
 
 /// PYSTRINGS ------------------------------------------------------------------
 
-String actualPyString;
+String? actualPyString;
 String expectedPyString = """
 line 1
 line 2
@@ -20,9 +20,7 @@ the_above_stepdef_should_have_the_pystring() {
   // maybe we could use the `matchers` package ? Assertions make sense here.
   // also, dherkin could recognize crash errors from assertions errors using core's AssertionError
   if (actualPyString != expectedPyString) {
-    throw Exception(
-        "PyString was not as expected :\n"+
+    throw Exception("PyString was not as expected :\n" +
         "[actual]\n$actualPyString\n[expected]\n$expectedPyString");
   }
 }
-

@@ -24,7 +24,7 @@ class ConsoleBuffer implements ResultBuffer {
 
   void write(message, {color}) {
     if (color != null) {
-      _buffer.write(colors[color](message));
+      _buffer.write(colors[color]!(message));
     } else {
       _buffer.write(message);
     }
@@ -32,13 +32,13 @@ class ConsoleBuffer implements ResultBuffer {
 
   void writeln(message, {color}) {
     if (color != null) {
-      _buffer.writeln(colors[color](message));
+      _buffer.writeln(colors[color]!(message));
     } else {
       _buffer.writeln(message);
     }
   }
 
-  void merge(ResultBuffer other) {
+  void merge(ResultBuffer? other) {
     if (other == null || other == this) {
       return;
     } else if (other is ConsoleBuffer) {

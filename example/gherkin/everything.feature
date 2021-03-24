@@ -10,11 +10,11 @@ Feature: Making sure that parser works
     When I run dherkin
     And the phase of the moon is "favorable"
     Then everything "works"
+    And Shared instance count is still 1
 
   Scenario Outline:  Outline Some examples
     Given I read another "<column1>"
     And I evaluate "<column2>"
-    And Shared instance count is still 1
   Examples:
     | column1 | column2 |
     | hello   | world   |

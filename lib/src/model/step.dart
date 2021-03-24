@@ -1,10 +1,10 @@
 part of ogurets;
 
 class _Step {
-  String verb;
-  String verbiage;
-  String pyString;
-  _Scenario scenario;
+  String? verb;
+  String? verbiage;
+  String? pyString;
+  _Scenario? scenario;
   GherkinTable table = GherkinTable();
   Location location;
   bool hook;
@@ -15,11 +15,11 @@ class _Step {
       {this.hook = false});
 
   // replace all instances of <column1> with 3 where example data has it as such
-  String decodeVerbiage(Map exampleRow) {
+  String? decodeVerbiage(Map exampleRow) {
     var text = verbiage;
 
     exampleRow.forEach((k, v) {
-      text = text.replaceAll('<${k}>', v.toString());
+      text = text!.replaceAll('<${k}>', v.toString());
     });
 
     return text;
@@ -54,7 +54,7 @@ class _Step {
 
   String _generateBoilerplate() {
     var matchString =
-        verbiage.replaceAll(RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
+        verbiage!.replaceAll(RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
 
     var params = "";
     var counter = 1;
@@ -65,7 +65,7 @@ class _Step {
 
     params = params.replaceAll(RegExp(",\$"), "");
 
-    var columnsVerbiage = scenario.examples.length > 1
+    var columnsVerbiage = scenario!.examples.length > 1
         ? "{exampleRow ${!table.empty ? ", table" : ""}}"
         : "";
     var tableVerbiage = columnsVerbiage.isEmpty && !table.empty
@@ -76,7 +76,7 @@ class _Step {
   }
 
   String _generateFunctionName() {
-    var chunks = verbiage
+    var chunks = verbiage!
         .replaceAll(RegExp("\""), "")
         .replaceAll(RegExp("[<>]"), r"$")
         .split(RegExp(" "));

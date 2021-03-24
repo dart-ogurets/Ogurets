@@ -11,8 +11,8 @@ abstract class ResultBuffer {
 }
 
 class ColoredBufferFragment {
-  String color;
-  String contents;
+  String? color;
+  String? contents;
 
   ColoredBufferFragment(this.contents, this.color);
 }

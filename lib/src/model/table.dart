@@ -1,12 +1,12 @@
 part of ogurets;
 
-class GherkinTable extends IterableBase {
+class GherkinTable extends IterableBase<Map<dynamic, dynamic>> {
   final String _SPACER = "\t\t  ";
 
   List<String> _columnNames = [];
   List<Map> _table = [];
 
-  Iterator get iterator => _table.iterator;
+  Iterator<Map<dynamic, dynamic>> get iterator => _table.iterator;
 
   int get length => _table.length;
 

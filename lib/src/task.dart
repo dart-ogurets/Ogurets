@@ -9,8 +9,7 @@ class GherkinParserTask {
   /// Returns a Future to a fully populated Feature,
   /// from the Gherkin feature statements in [contents],
   /// which is a List of lines.
-  Future<_Feature> execute() async {
-    _Feature feature = _GherkinParser().parse(contents, filePath: filePath);
-    return feature;
+  Future<_Feature?> execute() async {
+    return _GherkinParser().parse(contents, filePath: filePath);
   }
 }

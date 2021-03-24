@@ -4,7 +4,7 @@ class BufferedStatus {
   /// how long the item took to execute
   Duration get duration => sw.elapsed;
 
-  final Formatter fmt;
+  final Formatter? fmt;
 
   BufferedStatus(this.fmt) {
     sw.start();
@@ -23,23 +23,23 @@ abstract class StepsExecutionStatus extends BufferedStatus {
 
   String _generateBoilerplate() {
     String bp = '';
-    List<_Step> uniqueSteps = [];
+    List<_Step?> uniqueSteps = [];
     for (StepStatus stepStatus in this.undefinedSteps) {
       if (null ==
           uniqueSteps.firstWhere(
-              (_Step s) => s.verbiage == stepStatus.step.verbiage,
+              (_Step? s) => s!.verbiage == stepStatus.step!.verbiage,
               orElse: () => null)) {
         uniqueSteps.add(stepStatus.step);
       }
     }
-    for (_Step step in uniqueSteps) {
-      bp += step.boilerplate;
+    for (_Step? step in uniqueSteps) {
+      bp += step!.boilerplate;
     }
 
     return bp;
   }
 
-  StepsExecutionStatus(Formatter fmt) : super(fmt);
+  StepsExecutionStatus(Formatter? fmt) : super(fmt);
 }
 
 /// Feedback from a run of one or more features
@@ -90,8 +90,8 @@ class RunStatus extends StepsExecutionStatus {
   int get undefinedStepsCount => undefinedSteps.length;
 
   /// Failures
-  List<StepFailure> get failures {
-    List<StepFailure> _failures = List();
+  List<StepFailure?> get failures {
+    List<StepFailure?> _failures = [];
     for (FeatureStatus feature in features) {
       if (feature.failed) {
         _failures.addAll(feature.failures);
@@ -101,17 +101,17 @@ class RunStatus extends StepsExecutionStatus {
   }
 
   String get trace =>
-      failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+      failures.fold("", (p, n) => "$p${n!.error.toString()}\n${n.trace}\n");
 
-  String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
+  String get error => failures.fold("", (p, n) => "$p${n!.error.toString()}\n");
 
-  RunStatus(Formatter fmt) : super(fmt);
+  RunStatus(Formatter? fmt) : super(fmt);
 }
 
 /// Feedback from one feature's execution.
 class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
-  _Feature feature;
+  late _Feature feature;
 
   /// Was the whole [feature] [skipped] because of mismatching tags ?
   /// It does not care about internal scenario skipping.
@@ -155,8 +155,8 @@ class FeatureStatus extends StepsExecutionStatus {
   int get undefinedStepsCount => undefinedSteps.length;
 
   /// Failures
-  List<StepFailure> get failures {
-    List<StepFailure> _failures = List();
+  List<StepFailure?> get failures {
+    List<StepFailure?> _failures = [];
     for (ScenarioStatus scenario in scenarios) {
       if (scenario.failed) {
         _failures.addAll(scenario.failures);
@@ -166,18 +166,18 @@ class FeatureStatus extends StepsExecutionStatus {
   }
 
   String get trace =>
-      failures.fold("", (p, n) => "$p${n.error.toString()}\n${n.trace}\n");
+      failures.fold("", (p, n) => "$p${n!.error.toString()}\n${n.trace}\n");
 
-  String get error => failures.fold("", (p, n) => "$p${n.error.toString()}\n");
+  String get error => failures.fold("", (p, n) => "$p${n!.error.toString()}\n");
 
-  FeatureStatus(Formatter fmt) : super(fmt);
+  FeatureStatus(Formatter? fmt) : super(fmt);
 }
 
 /// Feedback from one scenario's execution.
 class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   /// If this ScenarioStatus is one of a Background, it is here.
-  _Scenario scenario;
+  _Scenario? scenario;
 
   /// this is information that a hook or step might wish to add to
   /// keep track of in reporting. We expect to be able to encode it in reports.
@@ -185,9 +185,9 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
-  _Background background;
-  GherkinTable exampleTable; // the examples for this scenario
-  Map example; // the example for this specific line
+  _Background? background;
+  late GherkinTable exampleTable; // the examples for this scenario
+  late Map example; // the example for this specific line
   /// Was the [scenario] [skipped] because of mismatching tags ?
   bool skipped = false;
 
@@ -215,8 +215,8 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   int get undefinedStepsCount => undefinedSteps.length;
 
-  List<StepFailure> get failures {
-    List<StepFailure> _failures = List();
+  List<StepFailure?> get failures {
+    List<StepFailure?> _failures = [];
     for (StepStatus stepStatus in steps) {
       if (stepStatus.failed) {
         _failures.add(stepStatus.failure);
@@ -225,16 +225,16 @@ class ScenarioStatus extends StepsExecutionStatus {
     return _failures;
   }
 
-  String get decodedName => example.entries.fold(
-      scenario.name,
-      (prevText, element) => prevText.replaceAll('<${element.key}>', element.value)
-  );
+  String? get decodedName => example.entries.fold(
+      scenario!.name,
+      (prevText, element) =>
+          prevText!.replaceAll('<${element.key}>', element.value));
 
-  ScenarioStatus(Formatter fmt) : super(fmt);
+  ScenarioStatus(Formatter? fmt) : super(fmt);
 
   void mergeBackground(ScenarioStatus other, {isFirst = true}) {
     if (other.scenario is _Background) {
-      background = other.scenario;
+      background = other.scenario as _Background?;
       passedSteps.addAll(other.passedSteps);
       failedSteps.addAll(other.failedSteps);
       undefinedSteps.addAll(other.undefinedSteps);
@@ -254,7 +254,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 /// Feedback from one step's execution.
 class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
-  _Step step;
+  _Step? step;
 
   /// Has the [step] [passed] ?
   bool get passed => failure == null && !skipped;
@@ -269,13 +269,13 @@ class StepStatus extends BufferedStatus {
   bool defined = true;
 
   /// what is the name of the step with the exampleRow decoded into it?
-  String decodedVerbiage;
+  String? decodedVerbiage;
 
   /// A possible [failure].
-  StepFailure failure;
+  StepFailure? failure;
   bool skipped = false;
 
   StringBuffer out = StringBuffer();
 
-  StepStatus(Formatter fmt) : super(fmt);
+  StepStatus(Formatter? fmt) : super(fmt);
 }

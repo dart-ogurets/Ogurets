@@ -2,11 +2,11 @@ part of ogurets;
 
 /// Runs specified gherkin files with provided flags. This is left for backwards compatibility.
 /// [args] may be a list of filepaths.
-run(args) async {
+Future<void> run(args) async {
   var options = _parseArguments(args);
 
   // Use this to run with argument in IDE. Useful for debug.
-  if (options.arguments == null || options.arguments.isEmpty) {
+  if (options.arguments.isEmpty) {
     var hardcodedArg = ['example/gherkin/test_feature.feature'];
     options = _parseArguments(hardcodedArg);
   }
@@ -18,7 +18,7 @@ run(args) async {
     Logger.root.level = Level.INFO;
   }
 
-  List<String> runTags = [];
+  List<String>? runTags = [];
   if (options["tags"] != null) {
     runTags = options["tags"].split(",");
   }
@@ -32,7 +32,8 @@ run(args) async {
 
   for (String filePath in featureFiles) {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature feature = await GherkinParserTask(contents, filePath).execute();
+    _Feature feature = await (GherkinParserTask(contents, filePath).execute()
+        as FutureOr<_Feature>);
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
@@ -41,10 +42,10 @@ run(args) async {
     } else {
       runStatus.passedFeatures.add(featureStatus);
     }
-    state.fmt.done(featureStatus);
+    state.fmt!.done(featureStatus);
   }
 
-  state.fmt.eof(runStatus);
+  state.fmt!.eof(runStatus);
 }
 
 /// Parses command line arguments.
@@ -57,15 +58,15 @@ ArgResults _parseArguments(args) {
 }
 
 class OguretsOpts {
-  List<String> _features = [];
+  List<String?> _features = [];
   List<String> _stepdefLocs = [];
   List<Type> _stepdefs = [];
-  String _scenario;
+  String? _scenario;
   Map<Type, InstanceMirror> _instances = {};
   List<Object> _instanceObjects = [];
   List<Formatter> _formatters = <Formatter>[];
   bool _debug = false;
-  String _tags;
+  String? _tags;
   bool _failedOnMissingSteps = true;
   bool _useAsserts = true;
   bool _parallel = false;
@@ -146,7 +147,7 @@ class OguretsOpts {
   }
 
   void _checkForEnvOverride() {
-    String envOverride = Platform.environment['CUCUMBER'];
+    String? envOverride = Platform.environment['CUCUMBER'];
 
     if (envOverride != null) {
       if ("SCENARIO" == envOverride) {
@@ -202,11 +203,11 @@ class OguretsOpts {
 
   /// For each of the feature files or folders, determine which type it is, deref folders
   /// into individual feature files.
-  List<String> _determineFeatureFiles() {
-    List<String> files = [];
+  List<String?> _determineFeatureFiles() {
+    List<String?> files = [];
 
     _features.forEach((ff) {
-      FileSystemEntityType type = FileSystemEntity.typeSync(ff);
+      FileSystemEntityType type = FileSystemEntity.typeSync(ff!);
       if (type == FileSystemEntityType.directory) {
         Directory(ff).listSync(recursive: true, followLinks: true).forEach((f) {
           type = FileSystemEntity.typeSync(f.path);
@@ -234,7 +235,7 @@ class OguretsOpts {
     return files;
   }
 
-  Future<RunStatus> run({List<String> args}) async {
+  Future<RunStatus> run({List<String>? args}) async {
     Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
@@ -252,8 +253,8 @@ class OguretsOpts {
       Logger.root.level = Level.INFO;
     }
 
-    List<String> runTags =
-        _tags == null ? [] : _tags.split(",").map((t) => t.trim()).toList();
+    List<String>? runTags =
+        _tags == null ? [] : _tags!.split(",").map((t) => t.trim()).toList();
 
     // command line overrides
     if (args != null) {
@@ -268,7 +269,7 @@ class OguretsOpts {
     }
 
     if (Platform.environment['OGURETS_TAGS'] != null) {
-      runTags = Platform.environment['OGURETS_TAGS']
+      runTags = Platform.environment['OGURETS_TAGS']!
           .split(",")
           .map((t) => t.trim())
           .toList();
@@ -296,11 +297,11 @@ class OguretsOpts {
       RunStatus runStatus = RunStatus(state.fmt);
 
       List<Future> awaitingFeatures = [];
-      for (String filePath in featureFiles) {
+      for (String? filePath in featureFiles) {
         if (state.parallelRun) {
-          awaitingFeatures.add(processFeatureFile(filePath, runStatus, state));
+          awaitingFeatures.add(processFeatureFile(filePath!, runStatus, state));
         } else {
-          await processFeatureFile(filePath, runStatus, state);
+          await processFeatureFile(filePath!, runStatus, state);
         }
       }
 
@@ -309,7 +310,7 @@ class OguretsOpts {
       }
 
       runStatus.sw.stop();
-      state.fmt.eof(runStatus);
+      state.fmt!.eof(runStatus);
 
       state.resultBuffer.flush();
 
@@ -322,16 +323,20 @@ class OguretsOpts {
   Future processFeatureFile(
       String filePath, RunStatus runStatus, OguretsState state) async {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature feature = await GherkinParserTask(contents, filePath).execute();
-//    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
-    FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
+    _Feature? feature = await (GherkinParserTask(contents, filePath).execute()
+        as FutureOr<_Feature?>);
 
-    if (featureStatus.failed) {
-      runStatus.failedFeatures.add(featureStatus);
-    } else if (featureStatus.skipped) {
-      runStatus.skippedFeatures.add(featureStatus);
-    } else {
-      runStatus.passedFeatures.add(featureStatus);
+    if (feature != null) {
+//    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
+      FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
+
+      if (featureStatus.failed) {
+        runStatus.failedFeatures.add(featureStatus);
+      } else if (featureStatus.skipped) {
+        runStatus.skippedFeatures.add(featureStatus);
+      } else {
+        runStatus.passedFeatures.add(featureStatus);
+      }
     }
   }
 

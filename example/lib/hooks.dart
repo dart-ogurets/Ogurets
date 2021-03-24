@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:ogurets/ogurets.dart';
@@ -47,14 +46,14 @@ class Hooks {
 
   @AfterStep(order: 10)
   void afterStepCounter(ScenarioStatus tracker) {
-    int val = tracker.addendum['after-all-step-counter'] ?? 0;
+    int val = tracker.addendum['after-all-step-counter'] as int? ?? 0;
     val = val + 1;
     tracker.addendum['after-all-step-counter'] = val;
   }
 
   @BeforeStep(order: 10)
   void beforeStepCounter(ScenarioStatus tracker) {
-    int val = tracker.addendum['before-all-step-counter'] ?? 0;
+    int val = tracker.addendum['before-all-step-counter'] as int? ?? 0;
     val = val + 1;
     tracker.addendum['before-all-step-counter'] = val;
   }
@@ -62,7 +61,7 @@ class Hooks {
   // interfere with the same counter
   @BeforeStep(order: 11, tag: 'TimerBeforeStepHook')
   void beforeStepTimerCounter(ScenarioStatus tracker) {
-    int val = tracker.addendum['before-all-step-counter'] ?? 0;
+    int val = tracker.addendum['before-all-step-counter'] as int? ?? 0;
     val = val + 1;
     tracker.addendum['before-all-step-counter'] = val;
   }
@@ -71,13 +70,11 @@ class Hooks {
   @AfterStep(order: 11, tag: 'TimerAfterStepHook')
   void afterStepTimerCounter(ScenarioStatus tracker) {
     if (tracker.failedStepsCount == 0) {
-      int val = tracker.addendum['after-all-step-counter'] ?? 0;
+      int val = tracker.addendum['after-all-step-counter'] as int? ?? 0;
       val = val + 1;
       tracker.addendum['after-all-step-counter'] = val;
     }
   }
-
-
 
   // should come first
   @After(tag: "TimerTag")
@@ -100,5 +97,4 @@ class Hooks {
 
     return completer.future;
   }
-
 }

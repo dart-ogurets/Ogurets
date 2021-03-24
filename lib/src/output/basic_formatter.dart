@@ -12,7 +12,7 @@ class BasicFormatter implements Formatter {
   void close() {}
 
   @override
-  void done(Object status) {
+  void done(Object? status) {
     if (status is FeatureStatus) {
       buffer.writeln("-------------------");
       buffer.writeln("Scenarios passed: ${status.passedScenariosCount}",
@@ -45,7 +45,7 @@ class BasicFormatter implements Formatter {
       var failureMessage = "";
 
       // set the color based on status or type
-      if (status.step.hook) {
+      if (status.step!.hook) {
         color = 'blue';
         buffer.write("\t");
       }
@@ -60,24 +60,24 @@ class BasicFormatter implements Formatter {
 
       if (status.failed) {
         color = "red";
-        failureMessage = "\n${status.failure.error}\n${status.failure.trace}";
+        failureMessage = "\n${status.failure!.error}\n${status.failure!.trace}";
       }
 
       // always write out the verbiage - this will be the step text
       buffer.write("\t\t${status.decodedVerbiage}", color: color);
 
-      if (status.step.pyString != null) {
-        buffer.writeln("\n\"\"\n${status.step.pyString}\"\"\"");
+      if (status.step!.pyString != null) {
+        buffer.writeln("\n\"\"\n${status.step!.pyString}\"\"\"");
       } else {
-        buffer.write("\t${status.step.location}", color: 'gray');
+        buffer.write("\t${status.step!.location}", color: 'gray');
       }
 
       // write out the table to match irrespective of status
       // don't write a newline after the last row to keep inline with the steps
-      if (status.step.table.isNotEmpty) {
+      if (status.step!.table.isNotEmpty) {
         var counter = 0;
         buffer.write("\n");
-        var rows = status.step.table.gherkinRows();
+        var rows = status.step!.table.gherkinRows();
         rows.forEach((row) {
           buffer.write(row, color: counter == 0 ? 'magenta' : 'cyan');
           counter < rows.length - 1 ? buffer.write("\n") : null;
@@ -155,8 +155,8 @@ class BasicFormatter implements Formatter {
   void scenario(ScenarioStatus startScenario) {
     if (startScenario.exampleTable.isValid) {
       buffer.write(
-          "\n\t${startScenario.scenario.gherkinKeyword}: ${startScenario.decodedName}");
-      buffer.writeln("${startScenario.scenario.location}", color: 'gray');
+          "\n\t${startScenario.scenario!.gherkinKeyword}: ${startScenario.decodedName}");
+      buffer.writeln("${startScenario.scenario!.location}", color: 'gray');
     }
   }
 

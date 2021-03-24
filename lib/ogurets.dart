@@ -7,6 +7,7 @@ import "dart:mirrors";
 
 import "package:ansicolor/ansicolor.dart";
 import 'package:args/args.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:intl/intl.dart';
 import "package:logging/logging.dart";
 import 'package:sprintf/sprintf.dart';

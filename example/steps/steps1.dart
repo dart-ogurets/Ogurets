@@ -9,8 +9,7 @@ class SampleSteps {
   }
 
   @But("I run dherkin")
-  i_run_dherkin() {
-  }
+  i_run_dherkin() {}
 
   @When("everything \"(\\w+?)\"")
   everything_works(worksArg, StringBuffer out) {
@@ -22,12 +21,12 @@ class SampleSteps {
     out.writeln("I run some background");
   }
 
-  @StepDef("I have a table")
-  i_have_a_table(StringBuffer out, GherkinTable table) {
-    out.writeln("Table step $table");
+  @Then("I have a table")
+  i_have_a_table(GherkinTable table) {
+    // out.writeln("Table step $table");
   }
 
-  @StepDef("I am a step after the table")
+  @Then("I am a step after the table")
   i_am_a_step_after(StringBuffer out) {
     out.writeln("Table2");
   }
@@ -36,30 +35,27 @@ class SampleSteps {
     out.writeln("Table3");
   }
 
-  @StepDef("everything works just fine")
+  @Then("everything works just fine")
   everything_works_just(StringBuffer out) {
     out.writeln("Table4");
   }
 
-  @StepDef("I evaluate {string}")
+  @Then("I evaluate {string}")
   i_evaluate_$column2$(String eval, {exampleRow, out}) {
     out.writeln("ROW: $exampleRow");
   }
 
   @StepDef("I {string} table with example {string}")
-  i_evaluate_table_with(String verb, String col2, { exampleRow, table, out }) {
+  i_evaluate_table_with(String verb, String col2, {exampleRow, table, out}) {
     out.writeln("Step with table on scenario with example");
     out.writeln("TABLE: $table");
   }
 
   @And("I am a table step \"(\\w+?)\"")
-  i_am_a_table(arg1, {table}) {
-  }
+  i_am_a_table(arg1, {table}) {}
 
   @StepDef("the \"(\\w+?)\" of the \"(\\w+?)\" is \"(\\w+?)\"")
-  the_phase_of_the(arg1, arg2, arg3) {
-
-  }
+  the_phase_of_the(arg1, arg2, arg3) {}
 
   @StepDef("I read {string}")
   i_read_$column1$(String name, {out}) {

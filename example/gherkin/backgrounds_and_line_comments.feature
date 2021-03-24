@@ -16,12 +16,12 @@ Feature: Supporting Backgrounds and Comments
   Scenario: Second Scenario
     Given this scenario has ran the background first
      Then the background-setup variable should hold the default value
+      And Shared instance count is still 1
 
   Scenario Outline: With each example of an outline
     Given this scenario outline example has ran the background first
      Then the background-setup variable should hold the default value
       And I set the background-setup variable to a different value
-      And Shared instance count is still 1
   Examples:
     |col1|col2 |
     |imus|nocte|

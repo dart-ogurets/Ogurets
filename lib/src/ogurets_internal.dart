@@ -16,12 +16,12 @@ class OguretsState {
   Map<RegExp, StepFunc> stepRunners = {};
 
   // all lists of hooks are sorted into order
-  Map<String, List<HookFunc>> namedBeforeTagHooks = {};
-  Map<String, List<HookFunc>> namedAfterTagHooks = {};
+  Map<String?, List<HookFunc>> namedBeforeTagHooks = {};
+  Map<String?, List<HookFunc>> namedAfterTagHooks = {};
 
   // collections of before and after step runners. These get passed the step (thus an after step can trigger a screen shot for example)
-  Map<String, List<HookFunc>> namedBeforeStepHooks = {};
-  Map<String, List<HookFunc>> namedAfterStepHooks = {};
+  Map<String?, List<HookFunc>> namedBeforeStepHooks = {};
+  Map<String?, List<HookFunc>> namedAfterStepHooks = {};
   List<Type> steps = [];
 
   /// these are not named, but are global and always run
@@ -31,24 +31,24 @@ class OguretsState {
   /// these are not named, but are global and always run
   List<HookFunc> beforeStepGlobalHooks = [];
   List<HookFunc> afterStepGlobalHooks = [];
-  String scenarioToRun;
+  String? scenarioToRun;
   Map<Type, InstanceMirror> existingInstances = {};
   bool failOnMissingSteps = false;
   List<Formatter> formatters = [];
-  Formatter fmt;
+  Formatter? fmt;
   final ResultBuffer resultBuffer;
   bool parallelRun = false;
 
-  List<String> runTags;
-  List<String> negativeTags;
+  List<String>? runTags;
+  late List<String> negativeTags;
 
   OguretsState(this.resultBuffer);
 
-  void build() async {
+  Future<void> build() async {
     await _findMethodStyleStepRunners();
     await _findClassStyleStepRunners();
 
-    if (steps != null && steps.isNotEmpty) {
+    if (steps.isNotEmpty) {
       await findHooks(Before, namedBeforeTagHooks, beforeScenarioHooks);
       await findHooks(After, namedAfterTagHooks, afterScenarioHooks);
       await findHooks(BeforeStep, namedBeforeStepHooks, beforeStepGlobalHooks);
@@ -70,13 +70,13 @@ class OguretsState {
     }
 
     // grab the negs
-    negativeTags = runTags
+    negativeTags = runTags!
         .where((prefix) => prefix.startsWith("~"))
         .map((tag) => tag.substring(1))
         .toList();
 
     // take the negs out - can't do the previous way because negative tags will have stripped the "~"
-    runTags.removeWhere((tag) => tag.startsWith("~"));
+    runTags!.removeWhere((tag) => tag.startsWith("~"));
   }
 
   List<Symbol> _possibleParams = [
@@ -112,17 +112,19 @@ class OguretsState {
 
   Future<OguretsState> findHooks(
       Type hookType,
-      Map<String, List<HookFunc>> sortedTagRunners,
+      Map<String?, List<HookFunc>> sortedTagRunners,
       List<HookFunc> sortedRunners) async {
     String hookTypeName = _decodeSymbol(reflectClass(hookType).simpleName);
-    final hooksInOrder = Map<int, List<HookFunc>>();
-    final tagHooksInOrder = Map<String, Map<int, List<HookFunc>>>();
+    final hooksInOrder = <int, List<HookFunc>>{};
+    final tagHooksInOrder = <String?, Map<int, List<HookFunc>>>{};
 
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
 
-      for (final MethodMirror mm in lib.declarations.values.where(
-          (DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+      for (final MethodMirror mm in lib.declarations.values
+          .where((DeclarationMirror dm) =>
+              dm is MethodMirror && dm.isRegularMethod)
+          .map((dm) => dm as MethodMirror) as Iterable<MethodMirror>) {
         final filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
         final methodName = mm.simpleName;
@@ -152,21 +154,22 @@ class OguretsState {
 
             // this is really a hook that's getting created as a step
             var step = _Step(hookTypeName, hookTypeName,
-                scenarioStatus.scenario.location, scenarioStatus.scenario,
+                scenarioStatus.scenario!.location, scenarioStatus.scenario,
                 hook: true);
 
             var stepStatus = StepStatus(scenarioStatus.fmt)
               ..step = step
-              ..decodedVerbiage = "${hookTypeName} - ${_decodeSymbol(methodName)}";
+              ..decodedVerbiage =
+                  "${hookTypeName} - ${_decodeSymbol(methodName)}";
 
-            scenarioStatus.fmt.step(stepStatus);
+            scenarioStatus.fmt!.step(stepStatus);
 
             _log.fine("Executing ${methodName} hook with params: ${params}");
 
             try {
-              var invoke = instance.invoke(methodName, params);
+              final invoke = instance.invoke(methodName, params);
 
-              if (invoke != null && invoke.reflectee is Future) {
+              if (invoke.reflectee is Future) {
                 await Future.sync(() => invoke.reflectee as Future);
               }
             } catch (e, s) {
@@ -176,7 +179,7 @@ class OguretsState {
               scenarioStatus.failedSteps.add(stepStatus);
             } finally {
               stepStatus.sw.stop();
-              scenarioStatus.fmt.done(stepStatus);
+              scenarioStatus.fmt!.done(stepStatus);
             }
           };
 
@@ -185,17 +188,17 @@ class OguretsState {
           if (im.reflectee.tag != null) {
             _log.fine("Tag ${im.reflectee.tag} Hook -> ${mm.simpleName}");
             if (tagHooksInOrder[im.reflectee.tag] == null) {
-              tagHooksInOrder[im.reflectee.tag] = Map<int, List<HookFunc>>();
+              tagHooksInOrder[im.reflectee.tag] = <int, List<HookFunc>>{};
             }
-            if (tagHooksInOrder[im.reflectee.tag][order] == null) {
-              tagHooksInOrder[im.reflectee.tag][order] = List<HookFunc>();
+            if (tagHooksInOrder[im.reflectee.tag]![order] == null) {
+              tagHooksInOrder[im.reflectee.tag]![order] = <HookFunc>[];
             }
-            tagHooksInOrder[im.reflectee.tag][order].add(func);
+            tagHooksInOrder[im.reflectee.tag]![order]!.add(func);
           } else {
             if (hooksInOrder[order] == null) {
-              hooksInOrder[order] = List<HookFunc>();
+              hooksInOrder[order] = <HookFunc>[];
             }
-            hooksInOrder[order].add(func);
+            hooksInOrder[order]!.add(func);
           }
         }
       }
@@ -203,16 +206,16 @@ class OguretsState {
 
     hooksInOrder.keys.toList()
       ..sort()
-      ..forEach((o) => sortedRunners.addAll(hooksInOrder[o]));
+      ..forEach((o) => sortedRunners.addAll(hooksInOrder[o]!));
     tagHooksInOrder.keys.forEach((k) {
-      tagHooksInOrder[k].keys.toList()
+      tagHooksInOrder[k]!.keys.toList()
         ..sort()
         ..forEach((o) {
           if (sortedTagRunners[k] == null) {
-            sortedTagRunners[k] = List<HookFunc>();
+            sortedTagRunners[k] = <HookFunc>[];
           }
 
-          sortedTagRunners[k].addAll(tagHooksInOrder[k][o]);
+          sortedTagRunners[k]!.addAll(tagHooksInOrder[k]![o]!);
         });
     });
 
@@ -249,8 +252,10 @@ class OguretsState {
   Future<OguretsState> _findClassStyleStepRunners() async {
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
-      for (MethodMirror mm in lib.declarations.values.where(
-          (DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+      for (MethodMirror mm in lib.declarations.values
+          .where((dm) => dm is MethodMirror && dm.isRegularMethod)
+          .map((dm) => dm as MethodMirror)
+          .toList()) {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
@@ -313,9 +318,10 @@ class OguretsState {
   Future invokeStep(ObjectMirror instance, MethodMirror mm, List params,
       Map<Symbol, dynamic> convertedNamedParams) async {
     return await Future.sync(() {
-      var invoke = instance.invoke(mm.simpleName, params, convertedNamedParams);
+      final invoke =
+          instance.invoke(mm.simpleName, params, convertedNamedParams);
 
-      if (invoke != null && invoke.reflectee is Future) {
+      if (invoke.reflectee is Future) {
         return invoke.reflectee as Future;
       }
 
@@ -349,12 +355,11 @@ class OguretsState {
 
     //  Remove possible optional params if the function doesn't want them
     for (Symbol possibleParam in _possibleParams) {
-      mm.parameters.firstWhere(
-          (ParameterMirror param) =>
-              param.isNamed && param.simpleName == possibleParam, orElse: () {
+      if (mm.parameters.firstWhereIndexedOrNull((index, param) =>
+              param.isNamed && param.simpleName == possibleParam) ==
+          null) {
         convertedNamedParams.remove(possibleParam);
-        return null;
-      });
+      }
     }
     return convertedNamedParams;
   }
@@ -362,36 +367,36 @@ class OguretsState {
   /// Do any of the [runTags] match one of [expectedTags]?
   /// If [runTags] is empty, anything matches.
   /// If there are [runTags] but no [expectedTags], don't match.
-  bool tagsMatch(List<String> expectedTags) {
-    return runTags.isEmpty
+  bool tagsMatch(List<String?>? expectedTags) {
+    return runTags!.isEmpty
         ? true
-        : runTags.any((element) => expectedTags.contains(element));
+        : runTags!.any((element) => expectedTags!.contains(element));
   }
 
   /// Do any of the [negativeTags] match one of [expectedTags] or @ignore?
   /// If [expectedTags] is empty, nothing matches.
   /// If there are no [negativeTags], return false as well
-  bool negativeTagsMatch(List<String> expectedTags) {
+  bool negativeTagsMatch(List<String?>? expectedTags) {
     return negativeTags.isEmpty
         ? false
         : negativeTags.any((element) =>
-            (expectedTags.contains(element) || element == "@ignore"));
+            (expectedTags!.contains(element) || element == "@ignore"));
   }
 
-  void runBeforeHooks(ScenarioStatus scenarioStatus,
+  Future<void> runBeforeHooks(ScenarioStatus scenarioStatus,
       OguretsScenarioSession scenarioSession) async {
     await runHookList(scenarioStatus, scenarioSession, beforeScenarioHooks);
 
     await runScenarioTags(scenarioStatus, scenarioSession, namedBeforeTagHooks);
   }
 
-  void runScenarioTags(
+  Future<void> runScenarioTags(
       ScenarioStatus scenarioStatus,
       OguretsScenarioSession scenarioSession,
-      Map<String, List<HookFunc>> tagRunners) async {
-    if (scenarioStatus.scenario.tags != null) {
-      await Future.wait(scenarioStatus.scenario.tags.map((t) async {
-        var funcList = tagRunners[t.substring(1)];
+      Map<String?, List<HookFunc>> tagRunners) async {
+    if (scenarioStatus.scenario!.tags != null) {
+      await Future.wait(scenarioStatus.scenario!.tags!.map((t) async {
+        var funcList = tagRunners[t!.substring(1)];
         if (funcList != null) {
           await runHookList(scenarioStatus, scenarioSession, funcList);
         }
@@ -399,14 +404,14 @@ class OguretsState {
     }
   }
 
-  void runHookList(ScenarioStatus scenarioStatus,
+  Future<void> runHookList(ScenarioStatus scenarioStatus,
       OguretsScenarioSession scenarioSession, List<HookFunc> funcList) async {
     for (var f in funcList) {
       await f(scenarioSession, scenarioStatus);
     }
   }
 
-  void runAfterHooks(ScenarioStatus scenarioStatus,
+  Future<void> runAfterHooks(ScenarioStatus scenarioStatus,
       OguretsScenarioSession scenarioSession) async {
     await runHookList(scenarioStatus, scenarioSession, afterScenarioHooks);
 
@@ -417,21 +422,22 @@ class OguretsState {
     Map<int, List<Function>> runHooks = {};
     for (final Type type in existingInstances.keys) {
       final ClassMirror lib = reflectClass(type);
-      for (MethodMirror mm in lib.declarations.values.where(
-          (DeclarationMirror dm) => dm is MethodMirror && dm.isRegularMethod)) {
+      for (MethodMirror mm in lib.declarations.values
+              .where((dm) => dm is MethodMirror && dm.isRegularMethod)
+          as Iterable<MethodMirror>) {
         var filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
 
         // essentially an IF on the meta-data,  this filters if this method
         for (InstanceMirror im in filteredMetadata) {
           var hook = () async {
-            var result = existingInstances[type].invoke(mm.simpleName, []);
+            var result = existingInstances[type]?.invoke(mm.simpleName, []);
             if (result != null && result.reflectee is Future) {
               await Future.sync(() => result.reflectee as Future);
             }
           };
           final order = im.reflectee.order ?? 0;
-          List<Function> functions = runHooks[order];
+          List<Function>? functions = runHooks[order];
           if (functions == null) {
             functions = <Function>[];
             runHooks[order] = functions;
@@ -441,12 +447,10 @@ class OguretsState {
       }
     }
 
-    var ordered = List<int>()
-      ..addAll(runHooks.keys)
-      ..sort();
+    var ordered = [...runHooks.keys]..sort();
 
     for (int order in ordered) {
-      for (Function f in runHooks[order]) {
+      for (Function f in runHooks[order]!) {
         await f();
       }
     }

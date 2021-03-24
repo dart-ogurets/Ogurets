@@ -26,14 +26,14 @@ class _GherkinParser {
   /// from the Gherkin feature statements in [contents].
   /// If [contents] come from a File, you may provide a [filePath]
   /// that will be used as helper in the output.
-  _Feature parse(List<String> contents, {filePath}) {
-    _Feature feature;
-    _Scenario currentScenario;
-    _Step currentStep;
-    GherkinTable currentTable;
+  _Feature? parse(List<String> contents, {filePath}) {
+    _Feature? feature;
+    _Scenario? currentScenario;
+    _Step? currentStep;
+    late GherkinTable currentTable;
     String pyString;
 
-    List<String> tags = [];
+    List<String?> tags = [];
 
     var lineIter = contents.iterator;
     var lineCounter = 0;
@@ -73,8 +73,8 @@ class _GherkinParser {
             _Scenario(match.group(1), Location(filePath, lineCounter));
 
         //Add all of our feature tags to the scenario, since they apply to each
-        if (feature.tags.isNotEmpty) {
-          tags.addAll(feature.tags);
+        if (feature!.tags!.isNotEmpty) {
+          tags.addAll(feature.tags!);
         }
 
         currentScenario.tags = tags;
@@ -90,7 +90,7 @@ class _GherkinParser {
         _log.fine("Adding background: ${match.group(1)}");
         currentScenario =
             _Background(match.group(1), Location(filePath, lineCounter));
-        feature.background = currentScenario;
+        feature!.background = currentScenario;
       }
 
       //  Steps
@@ -100,7 +100,7 @@ class _GherkinParser {
         currentStep = _Step(match.group(1), match.group(2),
             Location(filePath, lineCounter), currentScenario);
         currentTable = currentStep.table;
-        currentScenario.addStep(currentStep);
+        currentScenario!.addStep(currentStep);
       }
 
       //  PyStrings
@@ -116,7 +116,7 @@ class _GherkinParser {
           }
         }
         if (foundClosingTag) {
-          currentStep.pyString = pyString;
+          currentStep!.pyString = pyString;
         } else {
           throw GherkinSyntaxError("PyString's closing tag not found.");
         }
@@ -125,7 +125,7 @@ class _GherkinParser {
       //  Examples
       iter = examplesPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
-        currentTable = currentScenario.examples;
+        currentTable = currentScenario!.examples;
       }
 
       //  Tables

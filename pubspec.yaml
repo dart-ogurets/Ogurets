@@ -1,15 +1,16 @@
 name: ogurets
-version: 3.2.1
+version: 4.0.0
 description: Gherkin/Cucumber implementation in dart, supporting classes and simple libraries, hooks, dependency injection, and all the things you would want in an easy to use format.
 homepage: https://github.com/dart-ogurets/Ogurets
 dependencies:
-  logging: ^0.11.3+2
-  args: ^1.5.0
-  ansicolor: ^1.0.2
-  intl: ">=0.15.8"
-  sprintf: "^4.0.0"
+  logging: ^1.0.0
+  args: ^2.0.0
+  ansicolor: ^2.0.1
+  intl: ^0.17.0
+  sprintf: ^6.0.0
+  collection: ^1.15.0-nullsafety.4
 environment:
-  sdk: ">=2.3.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 
 dev_dependencies:
-  pedantic: ^1.9.0
+  pedantic: ^1.11.0

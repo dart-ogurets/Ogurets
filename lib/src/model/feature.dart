@@ -1,11 +1,11 @@
 part of ogurets;
 
 class _Feature {
-  String name;
-  List<String> tags;
+  String? name;
+  List<String?>? tags;
 
-  _Scenario background;
-  List<_Scenario> scenarios = [];
+  _Scenario? background;
+  List<_Scenario?> scenarios = [];
 
   Location location;
 
@@ -17,12 +17,12 @@ class _Feature {
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
     if (!negativeTagsMatch) {
-      state.fmt.feature(featureStatus);
+      state.fmt!.feature(featureStatus);
 
       bool isFirstScenario = true;
-      for (_Scenario scenario in scenarios) {
+      for (_Scenario? scenario in scenarios) {
         _log.fine(
-            "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario.tags}.");
+            "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario!.tags}.");
 
         // skip if it doesn't match the scenario name (when present), is excluded by the tags or doesn't match when tags are present
         // assumption is that if you specify a scenario, you wouldn't exclude it by tags
@@ -55,7 +55,7 @@ class _Feature {
       }
 
       featureStatus.sw.stop();
-      state.fmt.done(featureStatus);
+      state.fmt!.done(featureStatus);
 
       return featureStatus;
     } else {

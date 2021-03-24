@@ -1,5 +1,3 @@
-
-
 import 'package:ogurets/ogurets.dart';
 
 // ignore: avoid_relative_lib_imports
@@ -13,8 +11,8 @@ class SharedInstanceStepdef {
   @And("Shared instance count is still 1")
   void stillOne() {
     if (_sharedInstance.count != 1) {
-      throw Exception("new instances of the shared instance are being created by the construction injection.");
+      throw Exception(
+          "new instances of the shared instance are being created by the construction injection ${_sharedInstance.count} and should be 1.");
     }
   }
-
 }

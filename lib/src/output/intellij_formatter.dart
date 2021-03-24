@@ -14,8 +14,8 @@ example name is specifically:
  */
 class IntellijFormatter implements Formatter {
   final ResultBuffer buffer;
-  BasicFormatter _basicFormatter;
-  String _currentDirectory;
+  late BasicFormatter _basicFormatter;
+  String? _currentDirectory;
 
   static const String TEAMCITY_PREFIX = "##teamcity";
 
@@ -62,9 +62,9 @@ class IntellijFormatter implements Formatter {
     _currentDirectory = Directory.current.path;
   }
 
-  FeatureStatus currentFeature;
+  FeatureStatus? currentFeature;
 
-  static String _escape(String source) {
+  static String _escape(String? source) {
     if (source == null) {
       return "";
     }
@@ -77,14 +77,14 @@ class IntellijFormatter implements Formatter {
         .replaceAll("'", "|'");
   }
 
-  static String _escapeCommand(String command, List<String> parameters) {
+  static String? _escapeCommand(String command, List<String?> parameters) {
     var escapedParameters = parameters.map((p) => _escape(p)).toList();
 
     return sprintf(command, escapedParameters);
   }
 
   String _getFeatureName(FeatureStatus feature) {
-    String featureHeader = feature.feature.name;
+    String featureHeader = feature.feature.name!;
     var lines = featureHeader.split("\n");
     lines.removeWhere(
         (l) => l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'));
@@ -95,7 +95,7 @@ class IntellijFormatter implements Formatter {
     }
   }
 
-  void out(String template, List<String> params) {
+  void out(String template, List<String?> params) {
     buffer.writeln(_escapeCommand(template, params));
     buffer.flush();
   }
@@ -115,19 +115,19 @@ class IntellijFormatter implements Formatter {
   }
 
   @override
-  void done(Object status) {
+  void done(Object? status) {
     _basicFormatter.done(status);
 
     if (status == currentFeature) {
       out(TEMPLATE_TEST_SUITE_FINISHED,
-          [getCurrentTime(), _getFeatureName(currentFeature)]);
+          [getCurrentTime(), _getFeatureName(currentFeature!)]);
     } else if (status is StepStatus) {
       StepStatus ss = status;
       if (ss.failed) {
         out(TEMPLATE_TEST_FAILED, [
           getCurrentTime(),
-          _location(ss.step.location),
-          ss.failure.error.toString(),
+          _location(ss.step!.location),
+          ss.failure!.error.toString(),
           ss.decodedVerbiage,
           ''
         ]);
@@ -192,7 +192,7 @@ class IntellijFormatter implements Formatter {
     out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
     out(TEMPLATE_TEST_SUITE_STARTED, [
       getCurrentTime(),
-      _location(scenario.scenario.location),
+      _location(scenario.scenario!.location),
       _getScenarioName(scenario)
     ]);
 
@@ -203,7 +203,7 @@ class IntellijFormatter implements Formatter {
   void step(StepStatus step) {
     out(TEMPLATE_TEST_STARTED, [
       getCurrentTime(),
-      _location(step.step.location),
+      _location(step.step!.location),
       step.decodedVerbiage
     ]);
     _basicFormatter.step(step);

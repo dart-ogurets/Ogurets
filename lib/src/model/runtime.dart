@@ -3,8 +3,8 @@ part of ogurets;
 class StepDefUndefined implements Exception {}
 
 class StepFailure {
-  Exception error;
-  String trace;
+  Exception? error;
+  String? trace;
 
   StepFailure(e, s) {
     if (e is Exception) {
@@ -19,7 +19,7 @@ class StepFailure {
 }
 
 class Location {
-  String srcFilePath;
+  String? srcFilePath;
   int srcLineNumber;
 
   Location(this.srcFilePath, this.srcLineNumber);
