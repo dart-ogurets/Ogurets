@@ -14,10 +14,15 @@ class OguretsScenarioSession {
     _scenarioInstances.addAll(sharedInstances);
   }
 
-  List<DeclarationMirror> _constructors(ClassMirror mirror) {
-    return List.from(mirror.declarations.values.where((declare) {
-      return declare is MethodMirror && declare.isConstructor;
-    }));
+  List<MethodMirror> _constructors(ClassMirror mirror) {
+    return mirror.declarations.values
+        .where((d) => d is MethodMirror)
+        .map((d) => d as MethodMirror)
+        .where((MethodMirror declare) =>
+            declare.isConstructor || declare.isFactoryConstructor)
+        .sorted((MethodMirror a, MethodMirror b) =>
+            (a.isFactoryConstructor ? 'a' : 'b')
+                .compareTo(b.isFactoryConstructor ? 'a' : 'b'));
   }
 
   List<ParameterMirror> _params(var methodMirror) {
@@ -34,9 +39,9 @@ class OguretsScenarioSession {
       ClassMirror cm, Map<Type, InstanceMirror> instances) {
     InstanceMirror newInst;
 
-    List<DeclarationMirror> c = _constructors(cm);
+    List<MethodMirror> c = _constructors(cm);
     if (c.isNotEmpty) {
-      DeclarationMirror constructor = c[0];
+      MethodMirror constructor = c[0];
       List<ParameterMirror> params = _params(constructor);
       List<Object?> positionalArgs = [];
       // find the positional arguments in the existing instances map, and if they aren't
@@ -50,10 +55,15 @@ class OguretsScenarioSession {
         positionalArgs.add(inst.reflectee);
       });
 
-      Symbol constName = constructor.simpleName == cm.simpleName
-          ? const Symbol("")
-          : constructor.simpleName;
-      newInst = cm.newInstance(constName, positionalArgs);
+      if (constructor.isFactoryConstructor) {
+        newInst = cm.newInstance(constructor.constructorName, positionalArgs);
+      } else {
+        Symbol constName = constructor.simpleName == cm.simpleName
+            ? const Symbol("")
+            : constructor.simpleName;
+        newInst = cm.newInstance(constName, positionalArgs);
+      }
+
       instances[cm.reflectedType] = newInst;
     } else {
       newInst = cm.newInstance(const Symbol(""), []);
