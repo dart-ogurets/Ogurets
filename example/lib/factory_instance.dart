@@ -15,8 +15,8 @@ class FactoryInstance {
   FactoryInstance._(this.a, this.b);
 
   factory FactoryInstance.create() {
-    ClassA a = new ClassA();
-    ClassB b = new ClassB(a: a);
+    ClassA a = ClassA();
+    ClassB b = ClassB(a: a);
 
     return FactoryInstance._(a, b);
   }

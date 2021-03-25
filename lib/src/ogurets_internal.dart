@@ -124,7 +124,7 @@ class OguretsState {
       for (final MethodMirror mm in lib.declarations.values
           .where((DeclarationMirror dm) =>
               dm is MethodMirror && dm.isRegularMethod)
-          .map((dm) => dm as MethodMirror) as Iterable<MethodMirror>) {
+          .map((dm) => dm as MethodMirror)) {
         final filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
         final methodName = mm.simpleName;

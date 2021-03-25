@@ -40,7 +40,7 @@ class _Scenario {
     }
 
     // this needs to run even if skipping to get an accurate scenario count
-    for (Map example in examples as Iterable<Map<dynamic, dynamic>>) {
+    for (Map example in examples) {
       var scenarioStatus = ScenarioStatus(state.fmt)
         ..scenario = this
         ..exampleTable = this.examples
