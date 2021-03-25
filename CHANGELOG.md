@@ -1,3 +1,8 @@
+4.0.0
+=====
+* updated to support null safety
+* updated to support factory based constructors by preference when doing "dependency injection"
+
 3.2.1
 =====
 * Update to allow correct interpolation of scenario name when using data tables; contribution
