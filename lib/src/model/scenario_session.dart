@@ -16,8 +16,7 @@ class OguretsScenarioSession {
 
   List<MethodMirror> _constructors(ClassMirror mirror) {
     return mirror.declarations.values
-        .where((d) => d is MethodMirror)
-        .map((d) => d as MethodMirror)
+        .whereType<MethodMirror>()
         .where((MethodMirror declare) =>
             declare.isConstructor || declare.isFactoryConstructor)
         .sorted((MethodMirror a, MethodMirror b) =>
