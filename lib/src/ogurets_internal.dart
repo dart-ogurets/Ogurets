@@ -122,9 +122,7 @@ class OguretsState {
       final ClassMirror lib = reflectClass(type);
 
       for (final MethodMirror mm in lib.declarations.values
-          .where((DeclarationMirror dm) =>
-              dm is MethodMirror && dm.isRegularMethod)
-          .map((dm) => dm as MethodMirror)) {
+          .whereType<MethodMirror>().where((dm) => dm.isRegularMethod)) {
         final filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
         final methodName = mm.simpleName;
@@ -253,8 +251,7 @@ class OguretsState {
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
       for (MethodMirror mm in lib.declarations.values
-          .where((dm) => dm is MethodMirror && dm.isRegularMethod)
-          .map((dm) => dm as MethodMirror)
+          .whereType<MethodMirror>().where((dm) => dm.isRegularMethod)
           .toList()) {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
@@ -423,8 +420,7 @@ class OguretsState {
     for (final Type type in existingInstances.keys) {
       final ClassMirror lib = reflectClass(type);
       for (MethodMirror mm in lib.declarations.values
-              .where((dm) => dm is MethodMirror && dm.isRegularMethod)
-          as Iterable<MethodMirror>) {
+          .whereType<MethodMirror>().where((dm) => dm.isRegularMethod)) {
         var filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
 
