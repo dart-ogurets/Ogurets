@@ -15,7 +15,7 @@ class _Step {
       {this.hook = false});
 
   // replace all instances of <column1> with 3 where example data has it as such
-  String? decodeVerbiage(Map exampleRow) {
+  String? decodeVerbiage(String? verbiage, Map exampleRow) {
     var text = verbiage;
 
     exampleRow.forEach((k, v) {

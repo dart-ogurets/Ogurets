@@ -1,3 +1,8 @@
+4.0.2
+=====
+* Automatically replace placeholders in ``Scenario Outline`` table columns with exampleRow values
+  in "table" param, instead of requiring users to look up and replace using the "exampleRow" param
+
 4.0.1
 =====
 * issue with types with new versions of Dart where the methods aren't being picked up

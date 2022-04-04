@@ -113,7 +113,7 @@ class _Scenario {
         var step = iter.current!;
         var stepStatus = StepStatus(state.fmt)
           ..step = step
-          ..decodedVerbiage = step.decodeVerbiage(exampleRow);
+          ..decodedVerbiage = step.decodeVerbiage(step.verbiage, exampleRow);
 
         state.fmt!.step(stepStatus);
 
@@ -152,6 +152,14 @@ class _Scenario {
 
         if (!step.table.empty) {
           moreParams["table"] = step.table;
+          // Replace placeholders with exampleRow values
+          final newTable = GherkinTable();
+          for (final oldRow in step.table.gherkinRows()) {
+            List<String> newRow = step.decodeVerbiage(oldRow, exampleRow)!.trim().split("|").map((e) => e.trim()).toList()
+              ..removeAt(0)..removeLast();
+            newTable.addRow(newRow);
+          }
+          moreParams["table"] = newTable;
         }
 
         try {
