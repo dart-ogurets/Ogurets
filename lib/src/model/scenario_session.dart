@@ -38,7 +38,25 @@ class OguretsScenarioSession {
       ClassMirror cm, Map<Type, InstanceMirror> instances) {
     InstanceMirror newInst;
 
-    List<MethodMirror> c = _constructors(cm);
+    // In case of abstract class type parameter, try to get a subclass to instantiate
+    ClassMirror? subclassMirror;
+    if (cm.isAbstract) {
+      for (final libMirror in currentMirrorSystem().libraries.values) {
+        if (libMirror.declarations.isNotEmpty) {
+          for (final classMirror in libMirror.declarations.values) {
+            if (classMirror is ClassMirror && classMirror.superclass == cm) {
+              subclassMirror = classMirror;
+              break;
+            }
+          }
+        }
+        if (subclassMirror != null) {
+          break;
+        }
+      }
+    }
+    final mirror = subclassMirror ?? cm;
+    List<MethodMirror> c = _constructors(mirror);
     if (c.isNotEmpty) {
       MethodMirror constructor = c[0];
       List<ParameterMirror> params = _params(constructor);
@@ -49,25 +67,34 @@ class OguretsScenarioSession {
       params.forEach((p) {
         InstanceMirror? inst = instances[p.type.reflectedType];
         if (inst == null) {
-          inst = _newInstance(reflectClass(p.type.reflectedType), instances);
+          // Check if we already have a concrete subclass available before instantiating a new one
+          for (final instance in instances.values) {
+            if (p.type == instance.type.superclass) {
+              inst = instance;
+              break;
+            }
+          }
+          inst = inst ?? _newInstance(reflectClass(p.type.reflectedType), instances);
         }
         positionalArgs.add(inst.reflectee);
       });
 
       if (constructor.isFactoryConstructor) {
-        newInst = cm.newInstance(constructor.constructorName, positionalArgs);
+        newInst = mirror.newInstance(constructor.constructorName, positionalArgs);
       } else {
-        Symbol constName = constructor.simpleName == cm.simpleName
+        Symbol constName = constructor.simpleName == mirror.simpleName
             ? const Symbol("")
             : constructor.simpleName;
-        newInst = cm.newInstance(constName, positionalArgs);
+        newInst = mirror.newInstance(constName, positionalArgs);
       }
-
-      instances[cm.reflectedType] = newInst;
     } else {
-      newInst = cm.newInstance(const Symbol(""), []);
-      instances[cm.reflectedType] = newInst;
+      newInst = mirror.newInstance(const Symbol(""), []);
     }
+    // Make sure to link the resolved subclass to both itself as the abstract class it was resolved for in the first place
+    if (mirror.reflectedType != cm.reflectedType) {
+      instances[mirror.reflectedType] = newInst;
+    }
+    instances[cm.reflectedType] = newInst;
 
     return newInst;
   }
