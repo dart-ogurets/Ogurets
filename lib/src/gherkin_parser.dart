@@ -74,7 +74,7 @@ class _GherkinParser {
 
         //Add all of our feature tags to the scenario, since they apply to each
         if (feature!.tags!.isNotEmpty) {
-          tags.addAll(feature.tags!);
+          tags = [...feature.tags!, ...tags];
         }
 
         currentScenario.tags = tags;
