@@ -120,9 +120,15 @@ class OguretsState {
 
     for (final Type type in steps) {
       final ClassMirror lib = reflectClass(type);
-
-      for (final MethodMirror mm in lib.declarations.values
-          .whereType<MethodMirror>().where((dm) => dm.isRegularMethod)) {
+      // Skip abstract classes, they can't be instantiated anyway... should be picked up by subclasses
+      if (lib.isAbstract) {
+        _log.warning('Skipping steps from abstract type ${lib.simpleName}');
+        continue;
+      }
+      // Collect all methods that could be used as hooks, including those from (abstract) parent classes
+      Set<MethodMirror> eligibleMethods = {};
+      _getEligibleHookMethods(lib, eligibleMethods);
+      for (final MethodMirror mm in eligibleMethods) {
         final filteredMetadata = mm.metadata
             .where((InstanceMirror im) => im.reflectee.runtimeType == hookType);
         final methodName = mm.simpleName;
@@ -218,6 +224,18 @@ class OguretsState {
     });
 
     return this;
+  }
+
+  /// Recursively get all methods that could be annotated as hooks
+  /// This will first look in the given ClassMirror, and add methods from superclasses
+  void _getEligibleHookMethods(ClassMirror lib, Set<MethodMirror> eligibleMethods) {
+    for (final MethodMirror mm in lib.declarations.values
+        .whereType<MethodMirror>().where((dm) => dm.isRegularMethod)) {
+      eligibleMethods.add(mm);
+    }
+    if (lib.superclass?.reflectedType != Object) {
+      _getEligibleHookMethods(lib.superclass!, eligibleMethods);
+    }
   }
 
   ///  Scans the entirety of the vm for step definitions executables

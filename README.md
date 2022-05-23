@@ -28,7 +28,7 @@ The current authors are:
 
 The Dart Authors have indicated that Dart::Mirrors is obsolete and will be removed. This is causing grief for many
 projects and will cause grief for this project as well as it used runtime checking to find your methods. We will
-be moving to a 5.x version will will require code generation to resolve the issue as we use Ogurets heavily in
+be moving to a 5.x version which will require code generation to resolve the issue as we use Ogurets heavily in
 our testing at FeatureHub.IO (https://featurehub.io)
 
 # an overview of ogurets

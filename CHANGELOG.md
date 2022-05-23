@@ -1,3 +1,8 @@
+4.0.3
+=====
+* Skip abstract classes containing step definitions
+* When passing abstract ``ScenarioSession`` type as parameter, instantiate a concrete subclass instead
+
 4.0.2
 =====
 * Automatically replace placeholders in ``Scenario Outline`` table columns with exampleRow values

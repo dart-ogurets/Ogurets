@@ -97,7 +97,12 @@ class OguretsOpts {
 
   /// Add a [Type] with defined step definitions
   void step(Type clazz) {
-    _stepdefs.add(clazz);
+    final ClassMirror lib = reflectClass(clazz);
+    if (lib.isAbstract) {
+      _log.warning('Skipping abstract type ${lib.simpleName}, assuming a subclass will be present to pick up its step methods');
+    } else {
+      _stepdefs.add(clazz);
+    }
   }
 
   /// Add a [Type] with defined hook definitions
