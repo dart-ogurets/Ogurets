@@ -16,7 +16,12 @@ class ConsoleBuffer implements ResultBuffer {
   };
 
   Map _columns = {};
+
   StringBuffer _buffer = StringBuffer();
+
+  final Logger log;
+
+  ConsoleBuffer(this.log);
 
   StringBuffer buffer() {
     return _buffer;
@@ -54,11 +59,11 @@ class ConsoleBuffer implements ResultBuffer {
   }
 
   void flush() {
-    _log.fine("Flushing");
-
-    //Print will automatically add a newline
-    print(_buffer);
-
+    log.finer("Flushing");
+    // Print will automatically add a newline, but only print when something's present
+    if (_buffer.isNotEmpty) {
+      print(_buffer);
+    }
     _buffer.clear();
   }
 }

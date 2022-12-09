@@ -2,6 +2,7 @@ part of ogurets;
 
 /// Runs specified gherkin files with provided flags. This is left for backwards compatibility.
 /// [args] may be a list of filepaths.
+@Deprecated("Left for backwards compatibility...")
 Future<void> run(args) async {
   var options = _parseArguments(args);
 
@@ -24,7 +25,8 @@ Future<void> run(args) async {
   }
 
   final featureFiles = options.rest;
-  OguretsState state = OguretsState(ConsoleBuffer());
+  final _log = Logger('ogurets');
+  OguretsState state = OguretsState(_log, ConsoleBuffer(_log));
   state.runTags = runTags;
   await state.build();
 
@@ -32,7 +34,7 @@ Future<void> run(args) async {
 
   for (String filePath in featureFiles) {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature feature = await (GherkinParserTask(contents, filePath).execute()
+    _Feature feature = await (GherkinParserTask(_log, contents, filePath).execute()
         as FutureOr<_Feature>);
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
@@ -64,12 +66,14 @@ class OguretsOpts {
   String? _scenario;
   Map<Type, InstanceMirror> _instances = {};
   List<Object> _instanceObjects = [];
-  List<Formatter> _formatters = <Formatter>[];
+  Set<Formatter> _formatters = <Formatter>{};
+  Set<Filter> filters = {};
   bool _debug = false;
   String? _tags;
   bool _failedOnMissingSteps = true;
   bool _useAsserts = true;
   bool _parallel = false;
+  Logger _log = Logger('ogurets');
 
   /// Add a [List<String>] that are locations of folders
   /// that contain feature files (recursed), specific paths to feature files
@@ -110,6 +114,23 @@ class OguretsOpts {
     _stepdefs.add(clazz);
   }
 
+  /// Set the [LogLevel] used while running ogurets.
+  void logLevel(LogLevel level) {
+    hierarchicalLoggingEnabled = true;
+    switch (level) {
+      case LogLevel.ALL : _log.level = Level.ALL; break;
+      case LogLevel.OFF : _log.level = Level.OFF; break;
+      case LogLevel.FINEST : _log.level = Level.FINEST; break;
+      case LogLevel.FINER : _log.level = Level.FINER; break;
+      case LogLevel.FINE : _log.level = Level.FINE; break;
+      case LogLevel.CONFIG : _log.level = Level.CONFIG; break;
+      case LogLevel.INFO : _log.level = Level.INFO; break;
+      case LogLevel.WARNING : _log.level = Level.WARNING; break;
+      case LogLevel.SEVERE : _log.level = Level.SEVERE; break;
+      case LogLevel.SHOUT : _log.level = Level.SHOUT; break;
+    }
+  }
+
   /// Shared [Object] instance for all tests
   void instance(Object o) {
     _instances[o.runtimeType] = reflect(o);
@@ -118,8 +139,12 @@ class OguretsOpts {
 
   /// List of [Formatter] derived classes
   /// that can be used to provide custom output formats
-  void formatters(List<Formatter> fmts) {
+  void formatters(Set<Formatter> fmts) {
     _formatters.addAll(fmts);
+  }
+
+  void filter(Filter filter) {
+    filters.add(filter);
   }
 
   /// Enable fine output logging
@@ -286,7 +311,7 @@ class OguretsOpts {
     var steps = await _determineStepDefs();
     this._stepdefs.addAll(steps);
 
-    OguretsState state = OguretsState(ConsoleBuffer());
+    OguretsState state = OguretsState(_log, ConsoleBuffer(_log));
     state.steps = this._stepdefs;
     state.failOnMissingSteps = this._failedOnMissingSteps;
     state.scenarioToRun = this._scenario;
@@ -294,6 +319,7 @@ class OguretsOpts {
     state.formatters = _formatters;
     state.runTags = runTags;
     state.parallelRun = _parallel;
+    state.formatFilters = filters;
 
     await state.build();
     await state.executeRunHooks(BeforeRun);
@@ -328,8 +354,7 @@ class OguretsOpts {
   Future processFeatureFile(
       String filePath, RunStatus runStatus, OguretsState state) async {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature? feature = await (GherkinParserTask(contents, filePath).execute()
-        as FutureOr<_Feature?>);
+    _Feature? feature = await GherkinParserTask(_log, contents, filePath).execute();
 
     if (feature != null) {
 //    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
@@ -357,4 +382,18 @@ class OguretsOpts {
     throw Exception(
         "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}");
   }
+}
+
+/// Abstraction of log levels so packages don't need to add the "logger" depencency
+enum LogLevel {
+  ALL,
+  OFF,
+  FINEST,
+  FINER,
+  FINE,
+  CONFIG,
+  INFO,
+  WARNING,
+  SEVERE,
+  SHOUT,
 }

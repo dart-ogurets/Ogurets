@@ -19,6 +19,7 @@ void main(args) async {
   var def = OguretsOpts()
    ..feature("example/gherkin/table.feature")
    ..debug()
+   ..logLevel(LogLevel.FINE)
    ..instance(SharedInstance())
    ..failOnMissingSteps(false)
    ..step(Backgrounds)

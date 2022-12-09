@@ -11,6 +11,7 @@ class _Scenario {
   _Scenario? background;
 
   List<_Step?> steps = [];
+
   GherkinTable examples = GherkinTable();
 
   Location location;
@@ -172,7 +173,7 @@ class _Scenario {
                 scenarioStatus, stepStatus);
           }
         } catch (e, s) {
-          _log.fine("Step failed: $step");
+          state.log.warning("Step failed: $step");
           // if we get here and it's not set as failed, make sure to set it.
           // this can happen if there are runtime constructor issues on the step class construction, for example
           if (!stepStatus.failed) {

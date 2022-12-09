@@ -26,7 +26,7 @@ class _GherkinParser {
   /// from the Gherkin feature statements in [contents].
   /// If [contents] come from a File, you may provide a [filePath]
   /// that will be used as helper in the output.
-  _Feature? parse(List<String> contents, {filePath}) {
+  _Feature? parse(Logger log, List<String> contents, {filePath}) {
     _Feature? feature;
     _Scenario? currentScenario;
     _Step? currentStep;
@@ -50,7 +50,7 @@ class _GherkinParser {
       var iter = tagsPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine("Adding tag: ${match.group(1)}");
+        log.fine("Adding tag: ${match.group(1)}");
         tags.add(match.group(1));
       }
 
@@ -58,7 +58,7 @@ class _GherkinParser {
       iter = featurePattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine("Adding feature: ${match.group(1)}");
+        log.fine("Adding feature: ${match.group(1)}");
         feature = _Feature(match.group(1), Location(filePath, lineCounter));
         feature.tags = tags;
         tags = [];
@@ -68,7 +68,7 @@ class _GherkinParser {
       iter = scenarioPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine("Adding scenario: ${match.group(1)}");
+        log.fine("Adding scenario: ${match.group(1)}");
         currentScenario =
             _Scenario(match.group(1), Location(filePath, lineCounter));
 
@@ -87,7 +87,7 @@ class _GherkinParser {
       iter = backgroundPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        _log.fine("Adding background: ${match.group(1)}");
+        log.fine("Adding background: ${match.group(1)}");
         currentScenario =
             _Background(match.group(1), Location(filePath, lineCounter));
         feature!.background = currentScenario;

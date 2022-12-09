@@ -1,7 +1,7 @@
 part of ogurets;
 
 class DelegatingFormatter implements Formatter {
-  final List<Formatter> formatters;
+  final Set<Formatter> formatters;
 
   DelegatingFormatter(this.formatters);
 
