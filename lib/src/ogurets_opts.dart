@@ -66,7 +66,8 @@ class OguretsOpts {
   String? _scenario;
   Map<Type, InstanceMirror> _instances = {};
   List<Object> _instanceObjects = [];
-  List<Formatter> _formatters = <Formatter>[];
+  Set<Formatter> _formatters = <Formatter>{};
+  Set<Filter> filters = {};
   bool _debug = false;
   String? _tags;
   bool _failedOnMissingSteps = true;
@@ -138,8 +139,12 @@ class OguretsOpts {
 
   /// List of [Formatter] derived classes
   /// that can be used to provide custom output formats
-  void formatters(List<Formatter> fmts) {
+  void formatters(Set<Formatter> fmts) {
     _formatters.addAll(fmts);
+  }
+
+  void filter(Filter filter) {
+    filters.add(filter);
   }
 
   /// Enable fine output logging
@@ -314,6 +319,7 @@ class OguretsOpts {
     state.formatters = _formatters;
     state.runTags = runTags;
     state.parallelRun = _parallel;
+    state.formatFilters = filters;
 
     await state.build();
     await state.executeRunHooks(BeforeRun);

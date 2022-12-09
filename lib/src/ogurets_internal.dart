@@ -31,13 +31,22 @@ class OguretsState {
   /// these are not named, but are global and always run
   List<HookFunc> beforeStepGlobalHooks = [];
   List<HookFunc> afterStepGlobalHooks = [];
+
   String? scenarioToRun;
+
   Map<Type, InstanceMirror> existingInstances = {};
+
   bool failOnMissingSteps = false;
-  List<Formatter> formatters = [];
+
+  Set<Formatter> formatters = {};
+
   Formatter? fmt;
+
   final ResultBuffer resultBuffer;
+
   bool parallelRun = false;
+
+  Set<Filter> formatFilters = {};
 
   List<String>? runTags;
   late List<String> negativeTags;
@@ -65,7 +74,11 @@ class OguretsState {
       }
     }
 
-    fmt = DelegatingFormatter(formatters);
+    if (formatFilters.isNotEmpty) {
+      fmt = FilteredFormatter(formatters, formatFilters);
+    } else {
+      fmt = DelegatingFormatter(formatters);
+    }
 
     if (runTags == null) {
       runTags = [];

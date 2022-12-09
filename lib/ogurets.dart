@@ -26,6 +26,7 @@ part 'src/ogurets_opts.dart';
 part 'src/output/basic_formatter.dart';
 part 'src/output/console_buffer.dart';
 part 'src/output/delegating_formatter.dart';
+part 'src/output/filtered_formatter.dart';
 part 'src/output/formatter.dart';
 part 'src/output/intellij_formatter.dart';
 part 'src/output/output.dart';
