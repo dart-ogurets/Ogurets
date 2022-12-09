@@ -5,6 +5,7 @@ class _Feature {
   List<String?>? tags;
 
   _Scenario? background;
+
   List<_Scenario?> scenarios = [];
 
   Location location;
@@ -21,7 +22,7 @@ class _Feature {
 
       bool isFirstScenario = true;
       for (_Scenario? scenario in scenarios) {
-        _log.fine(
+        state.log.fine(
             "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario!.tags}.");
 
         // skip if it doesn't match the scenario name (when present), is excluded by the tags or doesn't match when tags are present
@@ -32,9 +33,9 @@ class _Feature {
                 !state.tagsMatch(scenario.tags));
 
         if (!skip) {
-          _log.fine("Executing scenario: ${scenario.name}");
+          state.log.fine("Executing scenario: ${scenario.name}");
         } else {
-          _log.fine("Skipping scenario: ${scenario.name}");
+          state.log.fine("Skipping scenario: ${scenario.name}");
         }
 
         scenario.background = background;
@@ -59,7 +60,7 @@ class _Feature {
 
       return featureStatus;
     } else {
-      _log.info("Skipping feature $name");
+      state.log.info("Skipping feature $name");
       featureStatus.skipped = true;
       featureStatus.sw.stop();
 

@@ -1,3 +1,7 @@
+4.0.4
+=====
+* Added option to change log level of ogurets through OguretsOpts
+
 4.0.3
 =====
 * Skip abstract classes containing step definitions

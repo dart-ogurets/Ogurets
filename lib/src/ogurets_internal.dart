@@ -42,7 +42,9 @@ class OguretsState {
   List<String>? runTags;
   late List<String> negativeTags;
 
-  OguretsState(this.resultBuffer);
+  final Logger log;
+
+  OguretsState(this.log, this.resultBuffer);
 
   Future<void> build() async {
     await _findMethodStyleStepRunners();
@@ -100,7 +102,7 @@ class OguretsState {
             .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)") +
         r"$";
 
-    _log.info("Transformed step: ${stepName} to ${nameIs}");
+    log.info("Transformed step: ${stepName} to ${nameIs}");
 
     return nameIs;
   }
@@ -122,7 +124,7 @@ class OguretsState {
       final ClassMirror lib = reflectClass(type);
       // Skip abstract classes, they can't be instantiated anyway... should be picked up by subclasses
       if (lib.isAbstract) {
-        _log.warning('Skipping steps from abstract type ${lib.simpleName}');
+        log.warning('Skipping steps from abstract type ${lib.simpleName}');
         continue;
       }
       // Collect all methods that could be used as hooks, including those from (abstract) parent classes
@@ -168,7 +170,7 @@ class OguretsState {
 
             scenarioStatus.fmt!.step(stepStatus);
 
-            _log.fine("Executing ${methodName} hook with params: ${params}");
+            log.fine("Executing ${methodName} hook with params: ${params}");
 
             try {
               final invoke = instance.invoke(methodName, params);
@@ -190,7 +192,7 @@ class OguretsState {
           final order = im.reflectee.order ?? 0;
 
           if (im.reflectee.tag != null) {
-            _log.fine("Tag ${im.reflectee.tag} Hook -> ${mm.simpleName}");
+            log.fine("Tag ${im.reflectee.tag} Hook -> ${mm.simpleName}");
             if (tagHooksInOrder[im.reflectee.tag] == null) {
               tagHooksInOrder[im.reflectee.tag] = <int, List<HookFunc>>{};
             }
@@ -247,12 +249,12 @@ class OguretsState {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
-          _log.fine("Found step runner: ${im.reflectee.verbiage}");
+          log.fine("Found step runner: ${im.reflectee.verbiage}");
           stepRunners[
                   RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
               (params, Map namedParams, OguretsScenarioSession scenarioSession,
                   ScenarioStatus scenarioStatus, StepStatus stepStatus) async {
-            _log.fine(
+            log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             return executeStep(scenarioStatus, scenarioSession, namedParams, mm,
@@ -274,7 +276,7 @@ class OguretsState {
         var filteredMetadata =
             mm.metadata.where((InstanceMirror im) => im.reflectee is StepDef);
         for (InstanceMirror im in filteredMetadata) {
-          _log.fine("Found class runner: ${im.reflectee.verbiage}");
+          log.fine("Found class runner: ${im.reflectee.verbiage}");
           stepRunners[
                   RegExp(_transformCucumberExpression(im.reflectee.verbiage))] =
               (List params,
@@ -282,7 +284,7 @@ class OguretsState {
                   OguretsScenarioSession scenarioSession,
                   ScenarioStatus scenarioStatus,
                   StepStatus stepStatus) async {
-            _log.fine(
+            log.fine(
                 "Executing ${mm.simpleName} with params: ${params} named params: ${namedParams}");
 
             InstanceMirror instance = scenarioSession.getInstance(type);

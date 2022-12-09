@@ -32,4 +32,3 @@ part 'src/output/output.dart';
 part "src/status/status.dart";
 part 'src/task.dart';
 
-final Logger _log = Logger('ogurets');
