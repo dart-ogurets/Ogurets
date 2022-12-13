@@ -10,11 +10,11 @@ void main() {
     expect(status.failedFeaturesCount, 1);
     expect(status.passedScenarios, 2);
     expect(status.failedScenarios, 1);
-    var failed = status.failedFeatures[0].failedScenarios[0];
+    var failed = status.failedFeatures.first.failedScenarios.first;
     expect(failed.addendum['before-all-step-counter'], 6);
     expect(failed.addendum['after-all-step-counter'], 5);
 
-    var passedScenario = status.failedFeatures[0].passedScenarios[0];
+    var passedScenario = status.failedFeatures.first.passedScenarios.first;
     
     expect(passedScenario.addendum['timer check'], true);
     expect(passedScenario.addendum['after timer'], true);
