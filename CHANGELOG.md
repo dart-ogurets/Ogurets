@@ -1,3 +1,7 @@
+4.0.6
+=====
+* Make sure failed "dependency injection" results in failed steps/scenarios/features
+
 4.0.5
 =====
 * Added option to filter out certain types of messages that are logged by default (steps, backgrounds, scenario's, features)

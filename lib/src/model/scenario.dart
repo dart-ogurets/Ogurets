@@ -182,6 +182,8 @@ class _Scenario {
         } finally {
           if (!stepStatus.failed && !scenarioStatus.failed) {
             scenarioStatus.passedSteps.add(stepStatus);
+          } else {
+            scenarioStatus.failedSteps.add(stepStatus);
           }
           state.fmt!.done(stepStatus);
         }

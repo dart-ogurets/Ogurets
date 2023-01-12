@@ -16,14 +16,14 @@ class BufferedStatus {
 /// A run/feature/scenario status of multiple steps, maybe with undefined ones.
 abstract class StepsExecutionStatus extends BufferedStatus {
   /// Undefined steps.
-  List<StepStatus> get undefinedSteps;
+  Set<StepStatus> get undefinedSteps;
 
   /// A [boilerplate] (in Dart) of [undefinedSteps].
   String get boilerplate => _generateBoilerplate();
 
   String _generateBoilerplate() {
     String bp = '';
-    List<_Step?> uniqueSteps = [];
+    Set<_Step?> uniqueSteps = {};
     for (StepStatus stepStatus in this.undefinedSteps) {
       if (null ==
           uniqueSteps.firstWhere(
@@ -57,12 +57,12 @@ class RunStatus extends StepsExecutionStatus {
 
   int get failedFeaturesCount => failedFeatures.length;
 
-  List<FeatureStatus> passedFeatures = [];
-  List<FeatureStatus> failedFeatures = [];
-  List<FeatureStatus> skippedFeatures = [];
+  Set<FeatureStatus> passedFeatures = {};
+  Set<FeatureStatus> failedFeatures = {};
+  Set<FeatureStatus> skippedFeatures = {};
 
-  List<FeatureStatus> get features {
-    List<FeatureStatus> all = [];
+  Set<FeatureStatus> get features {
+    Set<FeatureStatus> all = {};
     all.addAll(passedFeatures);
     all.addAll(skippedFeatures);
     all.addAll(failedFeatures);
@@ -79,19 +79,19 @@ class RunStatus extends StepsExecutionStatus {
       features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 
   /// Undefined steps
-  List<StepStatus> get undefinedSteps {
-    List<StepStatus> list = [];
+  Set<StepStatus> get undefinedSteps {
+    Set<StepStatus> steps = {};
     for (FeatureStatus feature in features) {
-      list.addAll(feature.undefinedSteps);
+      steps.addAll(feature.undefinedSteps);
     }
-    return list;
+    return steps;
   }
 
   int get undefinedStepsCount => undefinedSteps.length;
 
   /// Failures
-  List<StepFailure?> get failures {
-    List<StepFailure?> _failures = [];
+  Set<StepFailure?> get failures {
+    Set<StepFailure?> _failures = {};
     for (FeatureStatus feature in features) {
       if (feature.failed) {
         _failures.addAll(feature.failures);
@@ -125,17 +125,17 @@ class FeatureStatus extends StepsExecutionStatus {
   bool get failed => failedScenariosCount > 0;
 
   /// Scenarios. (could also add skipped scenarios)
-  List<ScenarioStatus> get scenarios {
-    List<ScenarioStatus> all = [];
+  Set<ScenarioStatus> get scenarios {
+    Set<ScenarioStatus> all = {};
     all.addAll(passedScenarios);
     all.addAll(skippedScenarios);
     all.addAll(failedScenarios);
     return all;
   }
 
-  List<ScenarioStatus> passedScenarios = [];
-  List<ScenarioStatus> skippedScenarios = [];
-  List<ScenarioStatus> failedScenarios = [];
+  Set<ScenarioStatus> passedScenarios = {};
+  Set<ScenarioStatus> skippedScenarios = {};
+  Set<ScenarioStatus> failedScenarios = {};
 
   int get passedScenariosCount => passedScenarios.length;
 
@@ -144,19 +144,19 @@ class FeatureStatus extends StepsExecutionStatus {
   int get failedScenariosCount => failedScenarios.length;
 
   /// Undefined steps
-  List<StepStatus> get undefinedSteps {
-    List<StepStatus> list = [];
+  Set<StepStatus> get undefinedSteps {
+    Set<StepStatus> steps = {};
     for (ScenarioStatus scenario in scenarios) {
-      list.addAll(scenario.undefinedSteps);
+      steps.addAll(scenario.undefinedSteps);
     }
-    return list;
+    return steps;
   }
 
   int get undefinedStepsCount => undefinedSteps.length;
 
   /// Failures
-  List<StepFailure?> get failures {
-    List<StepFailure?> _failures = [];
+  Set<StepFailure?> get failures {
+    Set<StepFailure?> _failures = {};
     for (ScenarioStatus scenario in scenarios) {
       if (scenario.failed) {
         _failures.addAll(scenario.failures);
@@ -198,16 +198,16 @@ class ScenarioStatus extends StepsExecutionStatus {
   bool get failed => failedStepsCount > 0;
 
   /// Steps.
-  List<StepStatus> get steps {
-    List<StepStatus> all = [];
+  Set<StepStatus> get steps {
+    Set<StepStatus> all = {};
     all.addAll(passedSteps);
     all.addAll(failedSteps);
     return all;
   }
 
-  List<StepStatus> passedSteps = [];
-  List<StepStatus> failedSteps = [];
-  List<StepStatus> undefinedSteps = [];
+  Set<StepStatus> passedSteps = {};
+  Set<StepStatus> failedSteps = {};
+  Set<StepStatus> undefinedSteps = {};
 
   int get passedStepsCount => passedSteps.length;
 
@@ -215,8 +215,8 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   int get undefinedStepsCount => undefinedSteps.length;
 
-  List<StepFailure?> get failures {
-    List<StepFailure?> _failures = [];
+  Set<StepFailure?> get failures {
+    Set<StepFailure?> _failures = {};
     for (StepStatus stepStatus in steps) {
       if (stepStatus.failed) {
         _failures.add(stepStatus.failure);
