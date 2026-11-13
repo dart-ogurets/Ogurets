@@ -55,7 +55,8 @@ class IntellijFormatter implements Formatter {
       "$teamcityPrefix[customProgressStatus type = 'testFinished' timestamp = '%s']";
 
   IntellijFormatter(this.buffer) {
-    _basicFormatter = BasicFormatter(buffer);
+    // IntelliJ shows failures in its own test tree, so skip the console summary
+    _basicFormatter = BasicFormatter(buffer, failureSummary: false);
     out(templateEnterTheMatrix, [getCurrentTime()]);
     out(templateScenarioCountingStarted, ["0", getCurrentTime()]);
 

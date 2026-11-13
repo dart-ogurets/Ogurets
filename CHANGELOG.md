@@ -16,6 +16,14 @@
   `TEMPLATE_TEST_STARTED` -> `templateTestStarted`, etc.)
 * Generated boilerplate for missing steps now uses lowerCamelCase method names, `void` return types
   and typed parameters, so it passes the recommended lints
+* The console (non-IntelliJ) output now ends with a "Failed scenarios" section that reprints every failed
+  scenario, including its background and example row: passed steps in green, the failed step in red with its
+  error and stack trace, skipped steps in gray and undefined steps in yellow. Failing hooks are shown too.
+  Use `BasicFormatter(buffer, failureSummary: false)` to turn it off.
+* The console output's scenario and feature pass/skip/fail counts are now printed once, as totals for the
+  whole run, after the failed scenarios and missing steps (previously scenario counts were printed per feature)
+* `RunStatus.passedScenarios` / `skippedScenarios` / `failedScenarios` no longer throw when no features ran
+* `ScenarioStatus.executedSteps` lists every step, background step and hook of a scenario in execution order
 * Replaced the custom Gherkin parser with the official Cucumber parser,
   [cucumber_gherkin](https://pub.dev/packages/cucumber_gherkin):
   * New: `*` steps, every Gherkin language (`# language: xx`), `Example` / `Scenario Template` keywords,

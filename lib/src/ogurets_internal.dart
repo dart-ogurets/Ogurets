@@ -195,6 +195,7 @@ class OguretsState {
               ..decodedVerbiage =
                   "$hookTypeName - ${_decodeSymbol(methodName)}";
 
+            scenarioStatus.executedSteps.add(stepStatus);
             scenarioStatus.fmt!.step(stepStatus);
 
             log.fine("Executing $methodName hook with params: $params");

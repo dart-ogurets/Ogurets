@@ -168,11 +168,17 @@ Feature: simple addition feature # test/features/add.feature:1
 		the total should be 7	 # test/features/add.feature:6
 
 -------------------
-Scenarios passed: 1
+Feature time: 3 ms
 
 ==================
+Scenarios passed: 1
 Features passed: 1
+Run time: 12 ms
 ```
+
+The totals at the end are for the whole run. If any scenario fails, a "Failed scenarios" section is printed
+just before them, repeating each failed scenario with its passed steps in green, the failed step in red with its
+error and stack trace, and skipped steps in gray. When run from IntelliJ, failures are shown in its test tree instead.
 
 You can also use *Scenario Outline* style Gherkin tests to achieve the same effect, but in a table.  
 

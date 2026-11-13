@@ -19,6 +19,12 @@ class SampleSteps {
     assert(table.gherkinRows()[1].contains('<') == false);
   }
 
+  @Given("a passing step")
+  void aPassingStep() {}
+
+  @Given("a passing step with {string}")
+  void aPassingStepWith(String value) {}
+
   @Given(r'this step fails with an exception')
   void thisStepFails() async {
     throw Exception('step failed');

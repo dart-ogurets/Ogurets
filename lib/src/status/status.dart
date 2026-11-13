@@ -71,13 +71,13 @@ class RunStatus extends StepsExecutionStatus {
   }
 
   int get passedScenarios =>
-      features.map((f) => f.passedScenariosCount).reduce((i1, i2) => i1 + i2);
+      features.fold(0, (total, f) => total + f.passedScenariosCount);
 
   int get skippedScenarios =>
-      features.map((f) => f.skippedScenariosCount).reduce((i1, i2) => i1 + i2);
+      features.fold(0, (total, f) => total + f.skippedScenariosCount);
 
   int get failedScenarios =>
-      features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
+      features.fold(0, (total, f) => total + f.failedScenariosCount);
 
   /// Undefined steps
   @override
@@ -210,6 +210,10 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   Set<StepStatus> passedSteps = {};
   Set<StepStatus> failedSteps = {};
+
+  /// Every step that was run, skipped or not found for this scenario, including
+  /// background steps and hooks, in the order they started.
+  final List<StepStatus> executedSteps = [];
   @override
   Set<StepStatus> undefinedSteps = {};
 
@@ -240,6 +244,7 @@ class ScenarioStatus extends StepsExecutionStatus {
   void mergeBackground(ScenarioStatus other, {isFirst = true}) {
     if (other.scenario is GherkinBackground) {
       background = other.scenario as GherkinBackground?;
+      executedSteps.addAll(other.executedSteps);
       passedSteps.addAll(other.passedSteps);
       failedSteps.addAll(other.failedSteps);
       undefinedSteps.addAll(other.undefinedSteps);

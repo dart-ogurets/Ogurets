@@ -129,6 +129,7 @@ class GherkinScenario {
           ..step = step
           ..decodedVerbiage = step.decodeVerbiage(step.verbiage, exampleRow);
 
+        scenarioStatus.executedSteps.add(stepStatus);
         state.fmt!.step(stepStatus);
 
         var found = state.stepRunners.keys.firstWhereOrNull(
