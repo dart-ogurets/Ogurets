@@ -3,6 +3,9 @@ library;
 import "dart:async";
 import "dart:collection";
 import 'dart:io';
+// ogurets discovers step definitions and hooks via reflection, which
+// requires dart:mirrors (deprecated as of Dart 3.14).
+// ignore: deprecated_member_use
 import "dart:mirrors";
 
 import "package:ansicolor/ansicolor.dart";
