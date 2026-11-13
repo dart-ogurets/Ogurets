@@ -1,5 +1,3 @@
-
-
 import 'package:ogurets/ogurets.dart';
 
 // ignore: avoid_relative_lib_imports
@@ -12,8 +10,7 @@ void main() async {
     ..step(Expressions)
     ..hooks(Hooks)
     ..feature("example/gherkin/cuke_expression.feature")
-    ..debug()
-  ;
+    ..debug();
 
   await def.run();
 }

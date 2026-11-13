@@ -1,9 +1,8 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 /// Formatter that will filter out certain types of messages.
 /// Useful for reducing the logs when running large amounts of features.
 class FilteredFormatter implements Formatter {
-
   final Set<Formatter> formatters;
 
   final Set<Filter> filters;
@@ -11,15 +10,20 @@ class FilteredFormatter implements Formatter {
   FilteredFormatter(this.formatters, this.filters);
 
   @override
-  void background(_Background background) {
-    if (!filters.contains(Filter.scenarios) && !filters.contains(Filter.backgrounds)) {
-      formatters.forEach((f) => f.background(background));
+  void background(GherkinBackground background) {
+    if (!filters.contains(Filter.scenarios) &&
+        !filters.contains(Filter.backgrounds)) {
+      for (var f in formatters) {
+        f.background(background);
+      }
     }
   }
 
   @override
   void close() {
-    formatters.forEach((f) => f.close());
+    for (var f in formatters) {
+      f.close();
+    }
   }
 
   @override
@@ -36,61 +40,77 @@ class FilteredFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(_Scenario endScenario) {
+  void endOfScenarioLifeCycle(GherkinScenario endScenario) {
     if (!filters.contains(Filter.scenarios)) {
-      formatters.forEach((f) => f.endOfScenarioLifeCycle(endScenario));
+      for (var f in formatters) {
+        f.endOfScenarioLifeCycle(endScenario);
+      }
     }
   }
 
   @override
   void eof(RunStatus status) {
-    formatters.forEach((f) => f.eof(status));
+    for (var f in formatters) {
+      f.eof(status);
+    }
   }
 
   @override
   void examples(GherkinTable examples) {
-    formatters.forEach((f) => f.examples(examples));
+    for (var f in formatters) {
+      f.examples(examples);
+    }
   }
 
   @override
   void feature(FeatureStatus featureStatus) {
     if (!filters.contains(Filter.features)) {
-      formatters.forEach((f) => f.feature(featureStatus));
+      for (var f in formatters) {
+        f.feature(featureStatus);
+      }
     }
   }
 
   @override
   void scenario(ScenarioStatus scenario) {
     if (!filters.contains(Filter.scenarios)) {
-      formatters.forEach((f) => f.scenario(scenario));
+      for (var f in formatters) {
+        f.scenario(scenario);
+      }
     }
   }
 
   @override
-  void startOfScenarioLifeCycle(_Scenario startScenario) {
+  void startOfScenarioLifeCycle(GherkinScenario startScenario) {
     if (!filters.contains(Filter.scenarios)) {
-      formatters.forEach((f) => f.startOfScenarioLifeCycle(startScenario));
+      for (var f in formatters) {
+        f.startOfScenarioLifeCycle(startScenario);
+      }
     }
   }
 
   @override
   void step(StepStatus step) {
     if (!filters.contains(Filter.steps)) {
-      formatters.forEach((f) => f.step(step));
+      for (var f in formatters) {
+        f.step(step);
+      }
     }
   }
 
   @override
   void syntaxError(
-      String var1, String var2, List<String> var3, String var4, int var5) {
-    formatters.forEach((f) => f.syntaxError(var1, var2, var3, var4, var5));
+    String var1,
+    String var2,
+    List<String> var3,
+    String var4,
+    int var5,
+  ) {
+    for (var f in formatters) {
+      f.syntaxError(var1, var2, var3, var4, var5);
+    }
   }
 }
 
 /// Values used for filtering out certain messages.
-enum Filter {
-  steps,
-  scenarios,
-  backgrounds,
-  features,
-}
+enum Filter { steps, scenarios, backgrounds, features }

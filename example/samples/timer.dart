@@ -1,4 +1,4 @@
-library ogurets_example;
+library;
 
 import 'package:ogurets/ogurets.dart';
 
@@ -17,5 +17,4 @@ Future<RunStatus> timerSample() async {
     ..step(Hooks);
 
   return await def.run();
-
 }

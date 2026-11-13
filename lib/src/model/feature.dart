@@ -1,19 +1,21 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
-class _Feature {
+class GherkinFeature {
   String? name;
   List<String?>? tags;
 
-  _Scenario? background;
+  GherkinScenario? background;
 
-  List<_Scenario?> scenarios = [];
+  List<GherkinScenario?> scenarios = [];
 
   Location location;
 
-  _Feature(this.name, this.location);
+  GherkinFeature(this.name, this.location);
 
-  Future<FeatureStatus> execute(OguretsState state,
-      {bool debug = false}) async {
+  Future<FeatureStatus> execute(
+    OguretsState state, {
+    bool debug = false,
+  }) async {
     FeatureStatus featureStatus = FeatureStatus(state.fmt)..feature = this;
     bool negativeTagsMatch = state.negativeTagsMatch(tags);
 
@@ -21,16 +23,17 @@ class _Feature {
       state.fmt!.feature(featureStatus);
 
       bool isFirstScenario = true;
-      for (_Scenario? scenario in scenarios) {
+      for (GherkinScenario? scenario in scenarios) {
         state.log.fine(
-            "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario!.tags}.");
+          "Requested tags: ${state.runTags}, negative tags: ${state.negativeTags}.  Scenario is tagged with: ${scenario!.tags}.",
+        );
 
         // skip if it doesn't match the scenario name (when present), is excluded by the tags or doesn't match when tags are present
         // assumption is that if you specify a scenario, you wouldn't exclude it by tags
         var skip = state.scenarioToRun != null
             ? !(state.scenarioToRun == scenario.name)
             : (state.negativeTagsMatch(scenario.tags) ||
-                !state.tagsMatch(scenario.tags));
+                  !state.tagsMatch(scenario.tags));
 
         if (!skip) {
           state.log.fine("Executing scenario: ${scenario.name}");
@@ -39,10 +42,13 @@ class _Feature {
         }
 
         scenario.background = background;
-        List<ScenarioStatus> scenarioStatuses = await scenario.execute(state,
-            isFirstOfFeature: isFirstScenario, skip: skip);
+        List<ScenarioStatus> scenarioStatuses = await scenario.execute(
+          state,
+          isFirstOfFeature: isFirstScenario,
+          skip: skip,
+        );
 
-        scenarioStatuses.forEach((scenarioStatus) {
+        for (var scenarioStatus in scenarioStatuses) {
           if (scenarioStatus.failed ||
               (state.failOnMissingSteps &&
                   scenarioStatus.undefinedSteps.isNotEmpty)) {
@@ -52,7 +58,7 @@ class _Feature {
           } else {
             featureStatus.passedScenarios.add(scenarioStatus);
           }
-        });
+        }
       }
 
       featureStatus.sw.stop();
@@ -69,7 +75,8 @@ class _Feature {
   }
 
   /// Converts to printable format
+  @override
   String toString() {
-    return "$name ${tags == null ? "" : tags}\n $background \n$scenarios";
+    return "$name ${tags ?? ""}\n $background \n$scenarios";
   }
 }

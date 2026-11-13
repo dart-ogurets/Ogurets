@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../ogurets.dart';
 
 class GherkinParserTask {
   List<String> contents;
@@ -10,7 +10,7 @@ class GherkinParserTask {
   /// Returns a Future to a fully populated Feature,
   /// from the Gherkin feature statements in [contents],
   /// which is a List of lines.
-  Future<_Feature?> execute() async {
+  Future<GherkinFeature?> execute() async {
     return _GherkinParser().parse(log, contents, filePath: filePath);
   }
 }

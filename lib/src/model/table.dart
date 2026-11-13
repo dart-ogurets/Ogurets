@@ -1,13 +1,15 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class GherkinTable extends IterableBase<Map<dynamic, dynamic>> {
-  final String _SPACER = "\t\t  ";
+  final String _spacer = "\t\t  ";
 
-  List<String> _columnNames = [];
-  List<Map> _table = [];
+  final List<String> _columnNames = [];
+  final List<Map> _table = [];
 
+  @override
   Iterator<Map<dynamic, dynamic>> get iterator => _table.iterator;
 
+  @override
   int get length => _table.length;
 
   bool get empty => _table.isEmpty;
@@ -16,7 +18,7 @@ class GherkinTable extends IterableBase<Map<dynamic, dynamic>> {
 
   List<String> get names => _columnNames;
 
-  void addRow(row) {
+  void addRow(List<String> row) {
     if (_columnNames.isEmpty) {
       _columnNames.addAll(row);
     } else {
@@ -29,16 +31,17 @@ class GherkinTable extends IterableBase<Map<dynamic, dynamic>> {
     List<String> rows = [];
 
     if (_table.isNotEmpty) {
-      rows.add("$_SPACER|${_columnNames.join(" | ")}|");
+      rows.add("$_spacer|${_columnNames.join(" | ")}|");
 
       for (var row in _table) {
-        rows.add("$_SPACER|${row.values.join(" | ")}|");
+        rows.add("$_spacer|${row.values.join(" | ")}|");
       }
     }
 
     return rows;
   }
 
+  @override
   String toString() {
     return _table.toString();
   }

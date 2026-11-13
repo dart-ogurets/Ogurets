@@ -1,8 +1,7 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class OguretsScenarioSession {
-  Map<Type, InstanceMirror> _scenarioInstances = {};
-  Map<Type, InstanceMirror> _sharedInstances = {};
+  final Map<Type, InstanceMirror> _scenarioInstances;
 
   OguretsScenarioSession(this._scenarioInstances);
 
@@ -17,14 +16,19 @@ class OguretsScenarioSession {
   List<MethodMirror> _constructors(ClassMirror mirror) {
     return mirror.declarations.values
         .whereType<MethodMirror>()
-        .where((MethodMirror declare) =>
-            declare.isConstructor || declare.isFactoryConstructor)
-        .sorted((MethodMirror a, MethodMirror b) =>
-            (a.isFactoryConstructor ? 'a' : 'b')
-                .compareTo(b.isFactoryConstructor ? 'a' : 'b'));
+        .where(
+          (MethodMirror declare) =>
+              declare.isConstructor || declare.isFactoryConstructor,
+        )
+        .sorted(
+          (MethodMirror a, MethodMirror b) =>
+              (a.isFactoryConstructor ? 'a' : 'b').compareTo(
+                b.isFactoryConstructor ? 'a' : 'b',
+              ),
+        );
   }
 
-  List<ParameterMirror> _params(var methodMirror) {
+  List<ParameterMirror> _params(Object methodMirror) {
     if (methodMirror is MethodMirror) {
       return methodMirror.parameters;
     } else {
@@ -32,10 +36,12 @@ class OguretsScenarioSession {
     }
   }
 
-// recursively construct the object if necessary and stick each one into
-// the instances map
+  // recursively construct the object if necessary and stick each one into
+  // the instances map
   InstanceMirror _newInstance(
-      ClassMirror cm, Map<Type, InstanceMirror> instances) {
+    ClassMirror cm,
+    Map<Type, InstanceMirror> instances,
+  ) {
     InstanceMirror newInst;
 
     // In case of abstract class type parameter, try to get a subclass to instantiate
@@ -64,7 +70,7 @@ class OguretsScenarioSession {
       // find the positional arguments in the existing instances map, and if they aren't
       // there try and recursively create them. This will of course explode with a stack overflow
       // if we have a circular situation.
-      params.forEach((p) {
+      for (var p in params) {
         InstanceMirror? inst = instances[p.type.reflectedType];
         if (inst == null) {
           // Check if we already have a concrete subclass available before instantiating a new one
@@ -74,13 +80,18 @@ class OguretsScenarioSession {
               break;
             }
           }
-          inst = inst ?? _newInstance(reflectClass(p.type.reflectedType), instances);
+          inst =
+              inst ??
+              _newInstance(reflectClass(p.type.reflectedType), instances);
         }
         positionalArgs.add(inst.reflectee);
-      });
+      }
 
       if (constructor.isFactoryConstructor) {
-        newInst = mirror.newInstance(constructor.constructorName, positionalArgs);
+        newInst = mirror.newInstance(
+          constructor.constructorName,
+          positionalArgs,
+        );
       } else {
         Symbol constName = constructor.simpleName == mirror.simpleName
             ? const Symbol("")
@@ -102,9 +113,7 @@ class OguretsScenarioSession {
   InstanceMirror getInstance(Type type) {
     InstanceMirror? im = _scenarioInstances[type];
 
-    if (im == null) {
-      im = _newInstance(reflectClass(type), _scenarioInstances);
-    }
+    im ??= _newInstance(reflectClass(type), _scenarioInstances);
 
     return im;
   }

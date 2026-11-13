@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../ogurets.dart';
 
 RegExp tagsPattern = RegExp(r"(@[^@\r\n\t ]+)");
 RegExp featurePattern = RegExp(r"\s*Feature\s*:\s*(.+)");
@@ -7,8 +7,10 @@ RegExp backgroundPattern = RegExp(r"^\s*Background\s*:\s*(.*)\s*$");
 RegExp commentPattern = RegExp(r"^\s*#");
 RegExp examplesPattern = RegExp(r"^\s*Examples\s*:\s*");
 RegExp tablePattern = RegExp(r"\|?\s*([^|\s]+?)\s*\|\s*");
-RegExp stepPattern =
-    RegExp(r"^\s*(given|when|then|and|but)\s+(.+)", caseSensitive: false);
+RegExp stepPattern = RegExp(
+  r"^\s*(given|when|then|and|but)\s+(.+)",
+  caseSensitive: false,
+);
 RegExp pyStringPattern = RegExp(r'^\s*("""|```)\s*$');
 
 /// Could this hold the above regexes and misc vocabulary, so
@@ -18,7 +20,7 @@ RegExp pyStringPattern = RegExp(r'^\s*("""|```)\s*$');
 class GherkinVocabulary {}
 
 class GherkinSyntaxError extends StateError {
-  GherkinSyntaxError(String msg) : super(msg);
+  GherkinSyntaxError(super.msg);
 }
 
 class _GherkinParser {
@@ -26,10 +28,10 @@ class _GherkinParser {
   /// from the Gherkin feature statements in [contents].
   /// If [contents] come from a File, you may provide a [filePath]
   /// that will be used as helper in the output.
-  _Feature? parse(Logger log, List<String> contents, {filePath}) {
-    _Feature? feature;
-    _Scenario? currentScenario;
-    _Step? currentStep;
+  GherkinFeature? parse(Logger log, List<String> contents, {filePath}) {
+    GherkinFeature? feature;
+    GherkinScenario? currentScenario;
+    GherkinStep? currentStep;
     late GherkinTable currentTable;
     String pyString;
 
@@ -59,7 +61,10 @@ class _GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         log.fine("Adding feature: ${match.group(1)}");
-        feature = _Feature(match.group(1), Location(filePath, lineCounter));
+        feature = GherkinFeature(
+          match.group(1),
+          Location(filePath, lineCounter),
+        );
         feature.tags = tags;
         tags = [];
       }
@@ -69,8 +74,10 @@ class _GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         log.fine("Adding scenario: ${match.group(1)}");
-        currentScenario =
-            _Scenario(match.group(1), Location(filePath, lineCounter));
+        currentScenario = GherkinScenario(
+          match.group(1),
+          Location(filePath, lineCounter),
+        );
 
         //Add all of our feature tags to the scenario, since they apply to each
         if (feature!.tags!.isNotEmpty) {
@@ -88,8 +95,10 @@ class _GherkinParser {
       while (iter.moveNext()) {
         var match = iter.current;
         log.fine("Adding background: ${match.group(1)}");
-        currentScenario =
-            _Background(match.group(1), Location(filePath, lineCounter));
+        currentScenario = GherkinBackground(
+          match.group(1),
+          Location(filePath, lineCounter),
+        );
         feature!.background = currentScenario;
       }
 
@@ -97,8 +106,12 @@ class _GherkinParser {
       iter = stepPattern.allMatches(line).iterator;
       while (iter.moveNext()) {
         var match = iter.current;
-        currentStep = _Step(match.group(1), match.group(2),
-            Location(filePath, lineCounter), currentScenario);
+        currentStep = GherkinStep(
+          match.group(1),
+          match.group(2),
+          Location(filePath, lineCounter),
+          currentScenario,
+        );
         currentTable = currentStep.table;
         currentScenario!.addStep(currentStep);
       }
@@ -112,7 +125,7 @@ class _GherkinParser {
           if (pyStringPattern.hasMatch(line)) {
             foundClosingTag = true;
           } else {
-            pyString += line + "\n";
+            pyString += "$line\n";
           }
         }
         if (foundClosingTag) {

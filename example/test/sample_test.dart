@@ -1,4 +1,3 @@
-
 import 'package:test/test.dart';
 import '../samples/timer.dart' as timer;
 
@@ -15,7 +14,7 @@ void main() {
     expect(failed.addendum['after-all-step-counter'], 5);
 
     var passedScenario = status.failedFeatures.first.passedScenarios.first;
-    
+
     expect(passedScenario.addendum['timer check'], true);
     expect(passedScenario.addendum['after timer'], true);
     expect(passedScenario.addendum['after timer2'], true);

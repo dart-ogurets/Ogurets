@@ -1,4 +1,4 @@
-library ogurets;
+library;
 
 import "dart:async";
 import "dart:collection";
@@ -32,4 +32,3 @@ part 'src/output/intellij_formatter.dart';
 part 'src/output/output.dart';
 part "src/status/status.dart";
 part 'src/task.dart';
-

@@ -1,3 +1,22 @@
+5.0.0
+=====
+* Requires Dart SDK 3.10 or later (`sdk: ^3.10.0`)
+* Updated dependencies to latest: `intl` ^0.20.2, `sprintf` ^7.0.0, `logging` ^1.3.0, `args` ^2.7.0,
+  `ansicolor` ^2.0.3, `collection` ^1.19.0
+* Replaced the discontinued `pedantic` with `lints` (recommended set) and cleaned up all analyzer issues
+* Fixed `OguretsOpts.steps(folder)`: step definition files are now fully loaded (awaited) before the run starts
+* Breaking: some previously untyped public signatures are now typed, e.g. the deprecated `run(List<String> args)`,
+  `ResultBuffer.write/writeln(String? message, {String? color})`, `GherkinTable.addRow(List<String> row)`
+  and `StepFailure(Object e, String? s)`
+* Breaking: the internal model types used in the formatter/status API are now public and renamed:
+  `_Feature` -> `GherkinFeature`, `_Scenario` -> `GherkinScenario`, `_Background` -> `GherkinBackground`,
+  `_Step` -> `GherkinStep`. Custom `Formatter` implementations need to use the new names.
+* Breaking: `LogLevel` values are now lowerCamelCase (`LogLevel.FINE` -> `LogLevel.fine`, etc.)
+* Breaking: `IntellijFormatter` constants are now lowerCamelCase (`TEAMCITY_PREFIX` -> `teamcityPrefix`,
+  `TEMPLATE_TEST_STARTED` -> `templateTestStarted`, etc.)
+* Generated boilerplate for missing steps now uses lowerCamelCase method names, `void` return types
+  and typed parameters, so it passes the recommended lints
+
 4.0.6
 =====
 * Make sure failed "dependency injection" results in failed steps/scenarios/features

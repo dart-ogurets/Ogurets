@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class BasicFormatter implements Formatter {
   final ResultBuffer buffer;
@@ -6,7 +6,7 @@ class BasicFormatter implements Formatter {
   BasicFormatter(this.buffer);
 
   @override
-  void background(_Background background) {}
+  void background(GherkinBackground background) {}
 
   @override
   void close() {}
@@ -15,23 +15,29 @@ class BasicFormatter implements Formatter {
   void done(Object? status) {
     if (status is FeatureStatus) {
       buffer.writeln("-------------------");
-      buffer.writeln("Scenarios passed: ${status.passedScenariosCount}",
-          color: 'green');
+      buffer.writeln(
+        "Scenarios passed: ${status.passedScenariosCount}",
+        color: 'green',
+      );
 
       if (status.skippedScenariosCount > 0) {
-        buffer.writeln("Scenarios skipped: ${status.skippedScenariosCount}",
-            color: 'gray');
+        buffer.writeln(
+          "Scenarios skipped: ${status.skippedScenariosCount}",
+          color: 'gray',
+        );
       }
 
       if (status.failedScenariosCount > 0) {
-        buffer.writeln("Scenarios failed: ${status.failedScenariosCount}",
-            color: 'red');
+        buffer.writeln(
+          "Scenarios failed: ${status.failedScenariosCount}",
+          color: 'red',
+        );
       }
 
       buffer.write("Feature time: ${status.duration.inMilliseconds} ms");
     } else if (status is ScenarioStatus) {
       // only write for the whole scenario - background will be reflected in the scenario status
-      if (!(status.scenario is _Background)) {
+      if (status.scenario is! GherkinBackground) {
         if ((status.failed || status.undefinedStepsCount > 0)) {
           buffer.writeln("Scenario failed!", color: 'red');
         } else {
@@ -78,11 +84,11 @@ class BasicFormatter implements Formatter {
         var counter = 0;
         buffer.write("\n");
         var rows = status.step!.table.gherkinRows();
-        rows.forEach((row) {
+        for (var row in rows) {
           buffer.write(row, color: counter == 0 ? 'magenta' : 'cyan');
           counter < rows.length - 1 ? buffer.write("\n") : null;
           counter++;
-        });
+        }
       }
 
       if (failureMessage.isNotEmpty) {
@@ -101,7 +107,7 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(_Scenario endScenario) {}
+  void endOfScenarioLifeCycle(GherkinScenario endScenario) {}
 
   @override
   void eof(RunStatus runStatus) {
@@ -109,18 +115,24 @@ class BasicFormatter implements Formatter {
 
     // Tally the passed / skipped / failed features
     if (runStatus.passedFeaturesCount > 0) {
-      buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}",
-          color: "green");
+      buffer.writeln(
+        "Features passed: ${runStatus.passedFeaturesCount}",
+        color: "green",
+      );
     }
 
     if (runStatus.skippedFeaturesCount > 0) {
-      buffer.writeln("Features skipped: ${runStatus.skippedFeaturesCount}",
-          color: "gray");
+      buffer.writeln(
+        "Features skipped: ${runStatus.skippedFeaturesCount}",
+        color: "gray",
+      );
     }
 
     if (runStatus.failedFeaturesCount > 0) {
-      buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}",
-          color: "red");
+      buffer.writeln(
+        "Features failed: ${runStatus.failedFeaturesCount}",
+        color: "red",
+      );
     }
 
     buffer.writeln("Run time: ${runStatus.duration.inMilliseconds} ms");
@@ -155,14 +167,15 @@ class BasicFormatter implements Formatter {
   void scenario(ScenarioStatus startScenario) {
     if (startScenario.exampleTable.isValid) {
       buffer.write(
-          "\n\t${startScenario.scenario!.gherkinKeyword}: ${startScenario.decodedName}");
+        "\n\t${startScenario.scenario!.gherkinKeyword}: ${startScenario.decodedName}",
+      );
       buffer.writeln("${startScenario.scenario!.location}", color: 'gray');
     }
   }
 
   @override
-  void startOfScenarioLifeCycle(_Scenario scenario) {
-    if (scenario is _Background) {
+  void startOfScenarioLifeCycle(GherkinScenario scenario) {
+    if (scenario is GherkinBackground) {
       buffer.write("\t");
     } else {
       buffer.write("\n");
@@ -177,7 +190,12 @@ class BasicFormatter implements Formatter {
 
   @override
   void syntaxError(
-      String var1, String var2, List<String> var3, String var4, int var5) {
+    String var1,
+    String var2,
+    List<String> var3,
+    String var4,
+    int var5,
+  ) {
     // TODO: implement syntaxError
   }
 

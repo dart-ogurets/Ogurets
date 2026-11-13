@@ -1,9 +1,9 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 abstract class ResultBuffer {
-  void write(message, {color});
+  void write(String? message, {String? color});
 
-  void writeln(message, {color});
+  void writeln(String? message, {String? color});
 
   void merge(ResultBuffer buffer);
 
@@ -21,14 +21,17 @@ class ColoredBufferFragment {
 class ColoredFragmentsBuffer implements ResultBuffer {
   List<ColoredBufferFragment> fragments = [];
 
-  void write(message, {color}) {
+  @override
+  void write(String? message, {String? color}) {
     fragments.add(ColoredBufferFragment(message, color));
   }
 
-  void writeln(message, {color}) {
-    write(message + "\n", color: color);
+  @override
+  void writeln(String? message, {String? color}) {
+    write("${message ?? ""}\n", color: color);
   }
 
+  @override
   void merge(ResultBuffer buffer) {
     if (buffer is ColoredFragmentsBuffer) {
       fragments.addAll(buffer.fragments);
@@ -37,6 +40,7 @@ class ColoredFragmentsBuffer implements ResultBuffer {
     }
   }
 
+  @override
   void flush() {
     throw UnsupportedError("ColoredBuffer does not flush().");
   }

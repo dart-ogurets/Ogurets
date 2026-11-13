@@ -1,11 +1,10 @@
-library ogurets_example;
+library;
 
 import 'package:ogurets/ogurets.dart';
 
-
 import '../steps/steps1.dart';
 
-void main(args) async {
+void main(List<String> args) async {
   var def = OguretsOpts()
     ..feature("example/gherkin/test_feature.feature")
     ..step(SampleSteps);
@@ -16,6 +15,5 @@ void main(args) async {
     throw Exception("missing steps should be failing feature.");
   }
 
-//  def.run();
-
+  //  def.run();
 }

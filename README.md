@@ -372,7 +372,7 @@ Such a function can take any number of positional parameters, and up to three op
 
 ````dart
 @And("I am a table step \"(\\w+?)\"")
-i_am_a_table(arg1, {exampleRow, table, out}) {
+iAmATable(arg1, {exampleRow, table, out}) {
    out.writeln("Executing...${exampleRow['column2']}");
 }
 ````

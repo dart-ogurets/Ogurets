@@ -4,7 +4,7 @@ import 'package:ogurets/ogurets.dart';
 import '../lib/shared_instance.dart';
 
 class SharedInstanceStepdef {
-  SharedInstance _sharedInstance;
+  final SharedInstance _sharedInstance;
 
   SharedInstanceStepdef(this._sharedInstance);
 
@@ -12,7 +12,8 @@ class SharedInstanceStepdef {
   void stillOne() {
     if (_sharedInstance.count != 1) {
       throw Exception(
-          "new instances of the shared instance are being created by the construction injection ${_sharedInstance.count} and should be 1.");
+        "new instances of the shared instance are being created by the construction injection ${_sharedInstance.count} and should be 1.",
+      );
     }
   }
 }

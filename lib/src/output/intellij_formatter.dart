@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 /*
 
@@ -17,47 +17,47 @@ class IntellijFormatter implements Formatter {
   late BasicFormatter _basicFormatter;
   String? _currentDirectory;
 
-  static const String TEAMCITY_PREFIX = "##teamcity";
+  static const String teamcityPrefix = "##teamcity";
 
-  static DateFormat DATE_FORMAT = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+  static DateFormat dateFormat = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-  static const String FILE_RESOURCE_PREFIX = "file://";
+  static const String fileResourcePrefix = "file://";
 
-  static const String TEMPLATE_TEST_STARTED = TEAMCITY_PREFIX +
-      "[testStarted timestamp = '%s' locationHint = 'file://%s' captureStandardOutput = 'true' name = '%s']";
-  static const String TEMPLATE_TEST_FAILED = TEAMCITY_PREFIX +
-      "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
-  static const String TEMPLATE_COMPARISON_TEST_FAILED = TEAMCITY_PREFIX +
-      "[testFailed timestamp = '%s' details = '%s' message = '%s' expected='%s' actual='%s' name = '%s' %s]";
-  static const String TEMPLATE_SCENARIO_FAILED = TEAMCITY_PREFIX +
-      "[customProgressStatus timestamp='%s' type='testFailed']";
-  static const String TEMPLATE_TEST_PENDING = TEAMCITY_PREFIX +
-      "[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";
+  static const String templateTestStarted =
+      "$teamcityPrefix[testStarted timestamp = '%s' locationHint = 'file://%s' captureStandardOutput = 'true' name = '%s']";
+  static const String templateTestFailed =
+      "$teamcityPrefix[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
+  static const String templateComparisonTestFailed =
+      "$teamcityPrefix[testFailed timestamp = '%s' details = '%s' message = '%s' expected='%s' actual='%s' name = '%s' %s]";
+  static const String templateScenarioFailed =
+      "$teamcityPrefix[customProgressStatus timestamp='%s' type='testFailed']";
+  static const String templateTestPending =
+      "$teamcityPrefix[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";
 
-  static const String TEMPLATE_TEST_FINISHED = TEAMCITY_PREFIX +
-      "[testFinished timestamp = '%s' duration = '%s' name = '%s']";
+  static const String templateTestFinished =
+      "$teamcityPrefix[testFinished timestamp = '%s' duration = '%s' name = '%s']";
 
-  static const String TEMPLATE_ENTER_THE_MATRIX =
-      TEAMCITY_PREFIX + "[enteredTheMatrix timestamp = '%s']";
+  static const String templateEnterTheMatrix =
+      "$teamcityPrefix[enteredTheMatrix timestamp = '%s']";
 
-  static const String TEMPLATE_TEST_SUITE_STARTED = TEAMCITY_PREFIX +
-      "[testSuiteStarted timestamp = '%s' locationHint = 'file://%s' name = '%s']";
-  static const String TEMPLATE_TEST_SUITE_FINISHED =
-      TEAMCITY_PREFIX + "[testSuiteFinished timestamp = '%s' name = '%s']";
+  static const String templateTestSuiteStarted =
+      "$teamcityPrefix[testSuiteStarted timestamp = '%s' locationHint = 'file://%s' name = '%s']";
+  static const String templateTestSuiteFinished =
+      "$teamcityPrefix[testSuiteFinished timestamp = '%s' name = '%s']";
 
-  static const String TEMPLATE_SCENARIO_COUNTING_STARTED = TEAMCITY_PREFIX +
-      "[customProgressStatus testsCategory = 'Scenarios' count = '%s' timestamp = '%s']";
-  static const String TEMPLATE_SCENARIO_COUNTING_FINISHED = TEAMCITY_PREFIX +
-      "[customProgressStatus testsCategory = '' count = '0' timestamp = '%s']";
-  static const String TEMPLATE_SCENARIO_STARTED = TEAMCITY_PREFIX +
-      "[customProgressStatus type = 'testStarted' timestamp = '%s']";
-  static const String TEMPLATE_SCENARIO_FINISHED = TEAMCITY_PREFIX +
-      "[customProgressStatus type = 'testFinished' timestamp = '%s']";
+  static const String templateScenarioCountingStarted =
+      "$teamcityPrefix[customProgressStatus testsCategory = 'Scenarios' count = '%s' timestamp = '%s']";
+  static const String templateScenarioCountingFinished =
+      "$teamcityPrefix[customProgressStatus testsCategory = '' count = '0' timestamp = '%s']";
+  static const String templateScenarioStarted =
+      "$teamcityPrefix[customProgressStatus type = 'testStarted' timestamp = '%s']";
+  static const String templateScenarioFinished =
+      "$teamcityPrefix[customProgressStatus type = 'testFinished' timestamp = '%s']";
 
   IntellijFormatter(this.buffer) {
-    this._basicFormatter = BasicFormatter(this.buffer);
-    out(TEMPLATE_ENTER_THE_MATRIX, [getCurrentTime()]);
-    out(TEMPLATE_SCENARIO_COUNTING_STARTED, ["0", getCurrentTime()]);
+    _basicFormatter = BasicFormatter(buffer);
+    out(templateEnterTheMatrix, [getCurrentTime()]);
+    out(templateScenarioCountingStarted, ["0", getCurrentTime()]);
 
     _currentDirectory = Directory.current.path;
   }
@@ -87,11 +87,12 @@ class IntellijFormatter implements Formatter {
     String featureHeader = feature.feature.name!;
     var lines = featureHeader.split("\n");
     lines.removeWhere(
-        (l) => l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'));
+      (l) => l.isEmpty || l[0] == '#' || l[0] == '@' || !l.contains(':'),
+    );
     if (lines.isNotEmpty) {
       return 'Feature: ${lines[0]}';
     } else {
-      return 'Feature: ${featureHeader}';
+      return 'Feature: $featureHeader';
     }
   }
 
@@ -101,11 +102,11 @@ class IntellijFormatter implements Formatter {
   }
 
   String getCurrentTime() {
-    return DATE_FORMAT.format(DateTime.now());
+    return dateFormat.format(DateTime.now());
   }
 
   @override
-  void background(_Background background) {
+  void background(GherkinBackground background) {
     _basicFormatter.background(background);
   }
 
@@ -119,39 +120,43 @@ class IntellijFormatter implements Formatter {
     _basicFormatter.done(status);
 
     if (status == currentFeature) {
-      out(TEMPLATE_TEST_SUITE_FINISHED,
-          [getCurrentTime(), _getFeatureName(currentFeature!)]);
+      out(templateTestSuiteFinished, [
+        getCurrentTime(),
+        _getFeatureName(currentFeature!),
+      ]);
     } else if (status is StepStatus) {
       StepStatus ss = status;
       if (ss.failed) {
-        out(TEMPLATE_TEST_FAILED, [
+        out(templateTestFailed, [
           getCurrentTime(),
           _location(ss.step!.location),
           ss.failure!.error.toString(),
           ss.decodedVerbiage,
-          ''
+          '',
         ]);
       } else if (ss.skipped) {
-        out(TEMPLATE_TEST_PENDING, [ss.decodedVerbiage, getCurrentTime()]);
+        out(templateTestPending, [ss.decodedVerbiage, getCurrentTime()]);
       }
 
-      out(TEMPLATE_TEST_FINISHED, [
+      out(templateTestFinished, [
         getCurrentTime(),
         ss.duration.inSeconds.toString(),
-        ss.decodedVerbiage
+        ss.decodedVerbiage,
       ]);
     } else if (status is GherkinTable) {
-      out(TEMPLATE_TEST_SUITE_FINISHED, [getCurrentTime(), "Examples:"]);
-      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
+      out(templateTestSuiteFinished, [getCurrentTime(), "Examples:"]);
+      out(templateScenarioFinished, [getCurrentTime()]);
     } else if (status is ScenarioStatus) {
       ScenarioStatus scenario = status;
       if (scenario.failed) {
-        out(TEMPLATE_SCENARIO_FAILED, [getCurrentTime()]);
+        out(templateScenarioFailed, [getCurrentTime()]);
       }
-      out(TEMPLATE_TEST_SUITE_FINISHED,
-          [getCurrentTime(), _getScenarioName(scenario)]);
+      out(templateTestSuiteFinished, [
+        getCurrentTime(),
+        _getScenarioName(scenario),
+      ]);
 
-      out(TEMPLATE_SCENARIO_FINISHED, [getCurrentTime()]);
+      out(templateScenarioFinished, [getCurrentTime()]);
     }
   }
 
@@ -161,10 +166,10 @@ class IntellijFormatter implements Formatter {
       done(currentFeature);
     }
     currentFeature = featureStatus;
-    out(TEMPLATE_TEST_SUITE_STARTED, [
+    out(templateTestSuiteStarted, [
       getCurrentTime(),
       _location(featureStatus.feature.location),
-      _getFeatureName(featureStatus)
+      _getFeatureName(featureStatus),
     ]);
 
     _basicFormatter.feature(featureStatus);
@@ -172,28 +177,28 @@ class IntellijFormatter implements Formatter {
 
   @override
   void examples(GherkinTable examples) {
-    out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-    out(TEMPLATE_TEST_SUITE_STARTED, [getCurrentTime(), "", "Examples:"]);
+    out(templateScenarioStarted, [getCurrentTime()]);
+    out(templateTestSuiteStarted, [getCurrentTime(), "", "Examples:"]);
     _basicFormatter.examples(examples);
   }
 
   @override
-  void startOfScenarioLifeCycle(_Scenario startScenario) {
+  void startOfScenarioLifeCycle(GherkinScenario startScenario) {
     _basicFormatter.startOfScenarioLifeCycle(startScenario);
   }
 
   @override
-  void endOfScenarioLifeCycle(_Scenario endScenario) {
+  void endOfScenarioLifeCycle(GherkinScenario endScenario) {
     _basicFormatter.endOfScenarioLifeCycle(endScenario);
   }
 
   @override
   void scenario(ScenarioStatus scenario) {
-    out(TEMPLATE_SCENARIO_STARTED, [getCurrentTime()]);
-    out(TEMPLATE_TEST_SUITE_STARTED, [
+    out(templateScenarioStarted, [getCurrentTime()]);
+    out(templateTestSuiteStarted, [
       getCurrentTime(),
       _location(scenario.scenario!.location),
-      _getScenarioName(scenario)
+      _getScenarioName(scenario),
     ]);
 
     _basicFormatter.scenario(scenario);
@@ -201,21 +206,26 @@ class IntellijFormatter implements Formatter {
 
   @override
   void step(StepStatus step) {
-    out(TEMPLATE_TEST_STARTED, [
+    out(templateTestStarted, [
       getCurrentTime(),
       _location(step.step!.location),
-      step.decodedVerbiage
+      step.decodedVerbiage,
     ]);
     _basicFormatter.step(step);
   }
 
   String _location(Location location) {
-    return "${_currentDirectory}/${location.srcFilePath}:${location.srcLineNumber}";
+    return "$_currentDirectory/${location.srcFilePath}:${location.srcLineNumber}";
   }
 
   @override
   void syntaxError(
-      String var1, String var2, List<String> var3, String var4, int var5) {
+    String var1,
+    String var2,
+    List<String> var3,
+    String var4,
+    int var5,
+  ) {
     _basicFormatter.syntaxError(var1, var2, var3, var4, var5);
   }
 

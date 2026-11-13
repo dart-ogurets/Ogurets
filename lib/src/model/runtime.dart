@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class StepDefUndefined implements Exception {}
 
@@ -6,16 +6,16 @@ class StepFailure {
   Exception? error;
   String? trace;
 
-  StepFailure(e, s) {
+  StepFailure(Object e, String? s) {
     if (e is Exception) {
-      this.error = e;
+      error = e;
     } else {
-      this.error = Exception(e.toString());
+      error = Exception(e.toString());
     }
-    this.trace = s;
+    trace = s;
   }
-// Note: StackTrace yields Illegal argument in isolate message.
-// maybe Location, too ?
+  // Note: StackTrace yields Illegal argument in isolate message.
+  // maybe Location, too ?
 }
 
 class Location {
@@ -24,6 +24,7 @@ class Location {
 
   Location(this.srcFilePath, this.srcLineNumber);
 
+  @override
   String toString() {
     return " # $srcFilePath:$srcLineNumber";
   }

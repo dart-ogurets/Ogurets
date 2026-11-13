@@ -1,4 +1,4 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class BufferedStatus {
   /// how long the item took to execute
@@ -23,23 +23,24 @@ abstract class StepsExecutionStatus extends BufferedStatus {
 
   String _generateBoilerplate() {
     String bp = '';
-    Set<_Step?> uniqueSteps = {};
-    for (StepStatus stepStatus in this.undefinedSteps) {
+    Set<GherkinStep?> uniqueSteps = {};
+    for (StepStatus stepStatus in undefinedSteps) {
       if (null ==
           uniqueSteps.firstWhere(
-              (_Step? s) => s!.verbiage == stepStatus.step!.verbiage,
-              orElse: () => null)) {
+            (GherkinStep? s) => s!.verbiage == stepStatus.step!.verbiage,
+            orElse: () => null,
+          )) {
         uniqueSteps.add(stepStatus.step);
       }
     }
-    for (_Step? step in uniqueSteps) {
+    for (GherkinStep? step in uniqueSteps) {
       bp += step!.boilerplate;
     }
 
     return bp;
   }
 
-  StepsExecutionStatus(Formatter? fmt) : super(fmt);
+  StepsExecutionStatus(super.fmt);
 }
 
 /// Feedback from a run of one or more features
@@ -79,6 +80,7 @@ class RunStatus extends StepsExecutionStatus {
       features.map((f) => f.failedScenariosCount).reduce((i1, i2) => i1 + i2);
 
   /// Undefined steps
+  @override
   Set<StepStatus> get undefinedSteps {
     Set<StepStatus> steps = {};
     for (FeatureStatus feature in features) {
@@ -91,13 +93,13 @@ class RunStatus extends StepsExecutionStatus {
 
   /// Failures
   Set<StepFailure?> get failures {
-    Set<StepFailure?> _failures = {};
+    Set<StepFailure?> failures = {};
     for (FeatureStatus feature in features) {
       if (feature.failed) {
-        _failures.addAll(feature.failures);
+        failures.addAll(feature.failures);
       }
     }
-    return _failures;
+    return failures;
   }
 
   String get trace =>
@@ -105,13 +107,13 @@ class RunStatus extends StepsExecutionStatus {
 
   String get error => failures.fold("", (p, n) => "$p${n!.error.toString()}\n");
 
-  RunStatus(Formatter? fmt) : super(fmt);
+  RunStatus(super.fmt);
 }
 
 /// Feedback from one feature's execution.
 class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
-  late _Feature feature;
+  late GherkinFeature feature;
 
   /// Was the whole [feature] [skipped] because of mismatching tags ?
   /// It does not care about internal scenario skipping.
@@ -144,6 +146,7 @@ class FeatureStatus extends StepsExecutionStatus {
   int get failedScenariosCount => failedScenarios.length;
 
   /// Undefined steps
+  @override
   Set<StepStatus> get undefinedSteps {
     Set<StepStatus> steps = {};
     for (ScenarioStatus scenario in scenarios) {
@@ -156,13 +159,13 @@ class FeatureStatus extends StepsExecutionStatus {
 
   /// Failures
   Set<StepFailure?> get failures {
-    Set<StepFailure?> _failures = {};
+    Set<StepFailure?> failures = {};
     for (ScenarioStatus scenario in scenarios) {
       if (scenario.failed) {
-        _failures.addAll(scenario.failures);
+        failures.addAll(scenario.failures);
       }
     }
-    return _failures;
+    return failures;
   }
 
   String get trace =>
@@ -170,14 +173,14 @@ class FeatureStatus extends StepsExecutionStatus {
 
   String get error => failures.fold("", (p, n) => "$p${n!.error.toString()}\n");
 
-  FeatureStatus(Formatter? fmt) : super(fmt);
+  FeatureStatus(super.fmt);
 }
 
 /// Feedback from one scenario's execution.
 class ScenarioStatus extends StepsExecutionStatus {
   /// The [scenario] that generated this status information.
   /// If this ScenarioStatus is one of a Background, it is here.
-  _Scenario? scenario;
+  GherkinScenario? scenario;
 
   /// this is information that a hook or step might wish to add to
   /// keep track of in reporting. We expect to be able to encode it in reports.
@@ -185,7 +188,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   /// An optional [background] that enriched this status information.
   /// Backgrounds have no [background].
-  _Background? background;
+  GherkinBackground? background;
   late GherkinTable exampleTable; // the examples for this scenario
   late Map example; // the example for this specific line
   /// Was the [scenario] [skipped] because of mismatching tags ?
@@ -207,6 +210,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 
   Set<StepStatus> passedSteps = {};
   Set<StepStatus> failedSteps = {};
+  @override
   Set<StepStatus> undefinedSteps = {};
 
   int get passedStepsCount => passedSteps.length;
@@ -216,35 +220,36 @@ class ScenarioStatus extends StepsExecutionStatus {
   int get undefinedStepsCount => undefinedSteps.length;
 
   Set<StepFailure?> get failures {
-    Set<StepFailure?> _failures = {};
+    Set<StepFailure?> failures = {};
     for (StepStatus stepStatus in steps) {
       if (stepStatus.failed) {
-        _failures.add(stepStatus.failure);
+        failures.add(stepStatus.failure);
       }
     }
-    return _failures;
+    return failures;
   }
 
   String? get decodedName => example.entries.fold(
-      scenario!.name,
-      (prevText, element) =>
-          prevText!.replaceAll('<${element.key}>', element.value));
+    scenario!.name,
+    (prevText, element) =>
+        prevText!.replaceAll('<${element.key}>', element.value),
+  );
 
-  ScenarioStatus(Formatter? fmt) : super(fmt);
+  ScenarioStatus(super.fmt);
 
   void mergeBackground(ScenarioStatus other, {isFirst = true}) {
-    if (other.scenario is _Background) {
-      background = other.scenario as _Background?;
+    if (other.scenario is GherkinBackground) {
+      background = other.scenario as GherkinBackground?;
       passedSteps.addAll(other.passedSteps);
       failedSteps.addAll(other.failedSteps);
       undefinedSteps.addAll(other.undefinedSteps);
-//      if (isFirst) {
+      //      if (isFirst) {
       // If we write to background within the worker task
       // the others don't have the updated value,
       // so we use the parameter isFirst.
       // background.bufferIsMerged = true;
-//        buffer.merge(other.buffer);
-//      }
+      //        buffer.merge(other.buffer);
+      //      }
     } else {
       throw Exception("$other is not a Background");
     }
@@ -254,7 +259,7 @@ class ScenarioStatus extends StepsExecutionStatus {
 /// Feedback from one step's execution.
 class StepStatus extends BufferedStatus {
   /// The [step] that generated this status information.
-  _Step? step;
+  GherkinStep? step;
 
   /// Has the [step] [passed] ?
   bool get passed => failure == null && !skipped;
@@ -263,7 +268,7 @@ class StepStatus extends BufferedStatus {
   bool get failed => failure != null;
 
   /// Has the [step] [crashed] ?
-  bool get crashed => failure != null && !(failure is AssertionError);
+  bool get crashed => failure != null && failure is! AssertionError;
 
   /// Was the [step] [defined] ?
   bool defined = true;
@@ -277,5 +282,5 @@ class StepStatus extends BufferedStatus {
 
   StringBuffer out = StringBuffer();
 
-  StepStatus(Formatter? fmt) : super(fmt);
+  StepStatus(super.fmt);
 }
