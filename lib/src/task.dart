@@ -10,7 +10,10 @@ class GherkinParserTask {
   /// Returns a Future to a fully populated Feature,
   /// from the Gherkin feature statements in [contents],
   /// which is a List of lines.
+  ///
+  /// Throws [GherkinSyntaxError] if [contents] is not valid Gherkin, and
+  /// [GherkinUnsupportedError] if it uses Gherkin that ogurets cannot run yet.
   Future<GherkinFeature?> execute() async {
-    return _GherkinParser().parse(log, contents, filePath: filePath);
+    return _GherkinParser(log, filePath).parse(contents.join('\n'));
   }
 }

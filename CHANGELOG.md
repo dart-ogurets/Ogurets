@@ -16,6 +16,20 @@
   `TEMPLATE_TEST_STARTED` -> `templateTestStarted`, etc.)
 * Generated boilerplate for missing steps now uses lowerCamelCase method names, `void` return types
   and typed parameters, so it passes the recommended lints
+* Replaced the custom Gherkin parser with the official Cucumber parser,
+  [cucumber_gherkin](https://pub.dev/packages/cucumber_gherkin):
+  * New: `*` steps, every Gherkin language (`# language: xx`), `Example` / `Scenario Template` keywords,
+    several `Examples` blocks per outline, and escaped table cells (`\|`, `\\`, `\n`)
+  * Invalid feature files now throw `GherkinSyntaxError` listing every error with its location;
+    the old parser silently ignored lines it did not understand
+  * `GherkinScenario.gherkinKeyword` is now the keyword used in the file (e.g. `Scenario Outline`)
+  * Doc strings have their indentation removed relative to the opening `"""`, as in other Cucumber implementations
+  * Step line numbers after a doc string are now correct
+  * Placeholders for Gherkin that ogurets cannot run yet: `Rule` (scenarios are flattened into the feature,
+    with a warning), a `Background` inside a `Rule` (throws `GherkinUnsupportedError`), tags on `Examples`
+    and doc string media types (ignored, with a warning)
+  * Breaking: removed the public `GherkinVocabulary` class and the regex top-level variables
+    (`tagsPattern`, `featurePattern`, `scenarioPattern`, ...)
 
 4.0.6
 =====

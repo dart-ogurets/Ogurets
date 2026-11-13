@@ -12,6 +12,8 @@ dependencies:
   intl: ^0.20.2
   sprintf: ^7.0.0
   collection: ^1.19.0
+  cucumber_gherkin: ^43.0.0
+  cucumber_messages: ^35.0.0
 
 dev_dependencies:
   lints: ^6.0.0

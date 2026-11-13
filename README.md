@@ -15,6 +15,28 @@ under this organisational banner - with Flutter and IntelliJ support.
 ogurets (like dherkin2) supports standard syntax, scenario outlines with data tables, examples and hooks. It also adds
 support for (and preference for) _Cucumber Expressions_.
 
+#### Gherkin support
+
+Since 5.0.0, feature files are parsed with the official Cucumber parser,
+[cucumber_gherkin](https://pub.dev/packages/cucumber_gherkin), so ogurets accepts exactly the Gherkin
+that other Cucumber implementations do, and reports invalid files as a `GherkinSyntaxError` with
+the file, line and column of each problem.
+
+Supported:
+
+- `Feature`, `Background`, `Scenario` / `Example`, `Scenario Outline` / `Scenario Template`
+- `Examples` tables (several `Examples` blocks on one outline are merged), step data tables and doc strings
+- tags on features and scenarios (scenarios inherit the feature's tags)
+- `*` steps, comments, and every Gherkin language (`# language: fr`, ...)
+
+Not supported yet:
+
+- `Rule`: scenarios inside a rule run as if they were directly in the feature (they inherit the rule's tags),
+  and a warning is logged. A `Background` inside a `Rule` is rejected with a `GherkinUnsupportedError`.
+- tags on an `Examples` block are ignored (all rows run), and a warning is logged.
+- doc string media types (`` ```json ``) are ignored; the content is passed as a plain string.
+- descriptions (free text under a keyword) and `Examples` names are ignored.
+
 #### authors
 
 This is based on the original work of Dherkin2, along with some modifications made to make it 
@@ -26,16 +48,17 @@ The current authors are:
 
 ## Important Note
 
-The Dart Authors have indicated that Dart::Mirrors is obsolete and will be removed. This is causing grief for many
-projects and will cause grief for this project as well as it used runtime checking to find your methods. We will
-be moving to a 5.x version which will require code generation to resolve the issue as we use Ogurets heavily in
-our testing at FeatureHub.IO (https://featurehub.io)
+ogurets finds your step definitions, hooks and injected instances at runtime using `dart:mirrors`, which is
+deprecated as of Dart 3.14. It still works on the Dart VM, which is where `dart test` runs, and ogurets 5.x
+continues to use it. A future major version will replace `dart:mirrors` with code generation, which will
+require a build step in projects that use ogurets. We use ogurets heavily in our testing at
+FeatureHub.IO (https://featurehub.io).
 
 # an overview of ogurets
 
 ogurets carries on from dherkin2 in a number of ways:
 
-- ogurets is based on Dart 2.2+ and is entirely async/await aware. It expects your functions to be async
+- ogurets requires Dart 3.10+ and is entirely async/await aware. It expects your functions to be async
 functions. 
 - offers support for Cucumber expressions of {string}, {int} and {float} instead of having to write regular
 expressions.

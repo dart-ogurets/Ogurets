@@ -26,6 +26,17 @@ class GherkinTable extends IterableBase<Map<dynamic, dynamic>> {
     }
   }
 
+  /// Adds [rows] keyed by [header]. The first header added becomes [names];
+  /// later headers (e.g. from additional `Examples` blocks) only key their own rows.
+  void _addRows(List<String> header, Iterable<List<String>> rows) {
+    if (_columnNames.isEmpty) {
+      _columnNames.addAll(header);
+    }
+    for (final row in rows) {
+      _table.add(Map.fromIterables(header, row));
+    }
+  }
+
   /// Gherkin table
   List<String> gherkinRows() {
     List<String> rows = [];

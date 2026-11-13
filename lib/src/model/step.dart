@@ -77,7 +77,11 @@ class GherkinStep {
       if (named.isNotEmpty) "{${named.join(", ")}}",
     ];
 
-    return "\n@$verb(\"$matchString\")\n"
+    // `*` steps and non-English keywords have no matching annotation
+    const annotations = {"Given", "When", "Then", "And", "But"};
+    final annotation = annotations.contains(verb) ? verb : "StepDef";
+
+    return "\n@$annotation(\"$matchString\")\n"
         "void ${_generateFunctionName()}(${params.join(", ")}) {\n"
         "  // todo\n"
         "}\n";
