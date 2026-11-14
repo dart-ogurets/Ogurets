@@ -11,7 +11,6 @@ import "dart:mirrors";
 import "package:ansicolor/ansicolor.dart";
 import 'package:cucumber_gherkin/cucumber_gherkin.dart' as cucumber;
 import 'package:cucumber_messages/cucumber_messages.dart' as messages;
-import 'package:args/args.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:intl/intl.dart';
 import "package:logging/logging.dart";

@@ -209,7 +209,7 @@ You can tell it to not fail on missing steps, turn debug on, provide instances t
 NOTE: if you are using the Ogurets IntelliJ IDEA plugin, this will be automatically generated for you.
 
 ````dart
-void main(args) async {
+void main(List<String> args) async {
   var def = new OguretsOpts()
    ..feature("example/gherkin")
    ..debug()
@@ -220,7 +220,8 @@ void main(args) async {
    ..step(SharedInstanceStepdef)
    ..step(SampleSteps);
 
-  await def.run();
+  // passing args lets the command line add tags, e.g. --tags @smoke
+  await def.run(args: args);
 }
 ```` 
 
@@ -331,6 +332,25 @@ Feature: load the sample data via the api
       | Irina Southwell  | irina@mailinator.com   | password123 | superuser |
       | Richard Vowles   | richard@mailinator.com | password123 | superuser |
 ``` 
+
+#### Choosing tags at run time
+
+Tags set with `..tags("...")` can be added to when the tests are run:
+
+* on the command line, with `--tags "<tags>"` (or `--tags=<tags>`). This only works if `main` passes its
+  arguments on with `def.run(args: args)`. `--tags` can be repeated, and other arguments are ignored, so
+  `main`'s arguments can also be used for other things.
+* with the `OGURETS_TAGS` environment variable, e.g. `OGURETS_TAGS="@smoke" dart test`. Use this with
+  `dart test`, which does not pass command line arguments to your test.
+
+Command line and environment tags are **added** to the configured tags. To use only the command line /
+environment tags instead, pass `--replace-tags` or set `OGURETS_REPLACE_TAGS=true`. For example, with
+`..tags("~@slow")` configured:
+
+* `--tags @smoke` runs `@smoke` scenarios that are not `@slow`
+* `--replace-tags --tags @slow` runs only the `@slow` scenarios
+
+`--debug` turns on debug logging.
 
 #### Samples:
 

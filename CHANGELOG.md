@@ -23,6 +23,13 @@
 * The console output's scenario and feature pass/skip/fail counts are now printed once, as totals for the
   whole run, after the failed scenarios and missing steps (previously scenario counts were printed per feature)
 * `RunStatus.passedScenarios` / `skippedScenarios` / `failedScenarios` no longer throw when no features ran
+* Breaking: tags from the command line (`run(args: args)` with `--tags`) and from `OGURETS_TAGS` are now
+  **added** to the tags configured with `OguretsOpts.tags(...)` instead of replacing them. Pass `--replace-tags`
+  or set `OGURETS_REPLACE_TAGS=true` to get the old replacing behaviour. `--tags` can be given more than once
+  and also accepts `--tags=<tags>`
+* Unknown command line arguments are now ignored instead of throwing a `FormatException`, so `main`'s arguments
+  can be shared with other code. The `args` dependency has been removed
+* Fixed the deprecated top-level `run(args)`, which always crashed with a type cast error since null safety
 * `ScenarioStatus.executedSteps` lists every step, background step and hook of a scenario in execution order
 * Replaced the custom Gherkin parser with the official Cucumber parser,
   [cucumber_gherkin](https://pub.dev/packages/cucumber_gherkin):

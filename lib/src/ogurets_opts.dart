@@ -7,22 +7,18 @@ Future<void> run(List<String> args) async {
   var options = _parseArguments(args);
 
   // Use this to run with argument in IDE. Useful for debug.
-  if (options.arguments.isEmpty) {
-    var hardcodedArg = ['example/gherkin/test_feature.feature'];
-    options = _parseArguments(hardcodedArg);
+  if (args.isEmpty) {
+    options = _parseArguments(['example/gherkin/test_feature.feature']);
   }
 
-  final debug = options["debug"];
+  final debug = options.debug;
   if (debug) {
     Logger.root.level = Level.FINE;
   } else {
     Logger.root.level = Level.INFO;
   }
 
-  List<String>? runTags = [];
-  if (options["tags"] != null) {
-    runTags = options["tags"].split(",");
-  }
+  List<String>? runTags = options.tags;
 
   final featureFiles = options.rest;
   final log = Logger('ogurets');
@@ -34,9 +30,10 @@ Future<void> run(List<String> args) async {
 
   for (String filePath in featureFiles) {
     List<String> contents = await File(filePath).readAsLines();
-    GherkinFeature feature =
-        await (GherkinParserTask(log, contents, filePath).execute()
-            as FutureOr<GherkinFeature>);
+    final feature = await GherkinParserTask(log, contents, filePath).execute();
+    if (feature == null) {
+      continue; // no Feature in this file
+    }
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
@@ -51,14 +48,58 @@ Future<void> run(List<String> args) async {
   state.fmt!.eof(runStatus);
 }
 
-/// Parses command line arguments.
+/// The command line options ogurets understands.
+class _OguretsArgs {
+  /// Tags from every `--tags` option, in order.
+  final List<String> tags = [];
 
-ArgResults _parseArguments(List<String> args) {
-  var argParser = ArgParser();
-  argParser.addFlag('debug', defaultsTo: false);
-  argParser.addOption("tags");
-  return argParser.parse(args);
+  /// `--debug`: log at FINE level.
+  bool debug = false;
+
+  /// `--replace-tags`: use only the command line / environment tags, instead of
+  /// adding them to the tags configured with [OguretsOpts.tags].
+  bool replaceTags = false;
+
+  /// Arguments that are not options (feature files for the deprecated top-level `run`).
+  final List<String> rest = [];
 }
+
+/// Parses the options ogurets understands out of [args]:
+/// `--tags <tags>` / `--tags=<tags>` (repeatable), `--replace-tags` and `--debug`.
+///
+/// Anything else is ignored rather than rejected, so `main`'s arguments can be
+/// shared with other code.
+_OguretsArgs _parseArguments(List<String> args) {
+  final options = _OguretsArgs();
+
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == '--') {
+      options.rest.addAll(args.skip(i + 1));
+      break;
+    } else if (arg == '--debug') {
+      options.debug = true;
+    } else if (arg == '--replace-tags') {
+      options.replaceTags = true;
+    } else if (arg == '--tags') {
+      if (i + 1 < args.length) {
+        options.tags.addAll(_splitTags(args[++i]));
+      }
+    } else if (arg.startsWith('--tags=')) {
+      options.tags.addAll(_splitTags(arg.substring('--tags='.length)));
+    } else if (!arg.startsWith('-')) {
+      options.rest.add(arg);
+    }
+  }
+
+  return options;
+}
+
+/// Splits a comma separated list of tags, dropping empty entries.
+List<String> _splitTags(String? tags) => [
+  for (final tag in (tags ?? '').split(','))
+    if (tag.trim().isNotEmpty) tag.trim(),
+];
 
 class OguretsOpts {
   List<String?> _features = [];
@@ -178,6 +219,11 @@ class OguretsOpts {
   /// Tags in a comma-separated string
   /// @TagName would be a tag to limit
   /// ~@TagName would be a tag to exclude
+  ///
+  /// Tags given on the command line (`--tags`, when [run] is passed `args`)
+  /// or in the `OGURETS_TAGS` environment variable are added to these, unless
+  /// `--replace-tags` or `OGURETS_REPLACE_TAGS=true` is set, in which case
+  /// only the command line / environment tags are used.
   void tags(String tags) {
     _tags = tags;
   }
@@ -289,6 +335,14 @@ class OguretsOpts {
     return files;
   }
 
+  bool _isTrue(String? value) =>
+      value != null && const {'true', '1', 'yes'}.contains(value.toLowerCase());
+
+  /// Runs the configured features.
+  ///
+  /// Pass `main`'s [args] to let the command line add tags (`--tags "@a,~@b"`),
+  /// replace the configured tags (`--replace-tags`) or turn on `--debug`.
+  /// Other arguments are ignored.
   Future<RunStatus> run({List<String>? args}) async {
     Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
@@ -307,28 +361,25 @@ class OguretsOpts {
       Logger.root.level = Level.INFO;
     }
 
-    List<String>? runTags = _tags == null
-        ? []
-        : _tags!.split(",").map((t) => t.trim()).toList();
-
-    // command line overrides
-    if (args != null) {
-      var options = _parseArguments(args);
-      if (options["tags"] != null) {
-        runTags = options["tags"].split(",").map((t) => t.trim()).toList();
-      }
-
-      if (options["debug"]) {
-        Logger.root.level = Level.FINE;
-      }
+    final options = _parseArguments(args ?? const []);
+    if (options.debug) {
+      Logger.root.level = Level.FINE;
     }
 
-    if (Platform.environment['OGURETS_TAGS'] != null) {
-      runTags = Platform.environment['OGURETS_TAGS']!
-          .split(",")
-          .map((t) => t.trim())
-          .toList();
-    }
+    // command line and environment tags are added to the configured ones,
+    // unless asked to replace them
+    final extraTags = [
+      ...options.tags,
+      ..._splitTags(Platform.environment['OGURETS_TAGS']),
+    ];
+    final replaceTags =
+        options.replaceTags ||
+        _isTrue(Platform.environment['OGURETS_REPLACE_TAGS']);
+
+    List<String>? runTags = {
+      if (!replaceTags) ..._splitTags(_tags),
+      ...extraTags,
+    }.toList();
 
     _log.info("Tags used are $runTags");
 
