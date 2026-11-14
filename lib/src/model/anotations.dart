@@ -36,6 +36,11 @@ class AfterRun {
   const AfterRun({this.order});
 }
 
+/// The base class of the step annotations, which ogurets uses to find steps.
+///
+/// Don't annotate steps with `@StepDef` - it is not a standard Gherkin keyword,
+/// and Cucumber tooling such as the IntelliJ plugin won't recognise it. Use
+/// [Given], [When], [Then], [And] or [But] instead.
 class StepDef {
   final String verbiage;
 

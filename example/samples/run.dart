@@ -2,17 +2,11 @@ library;
 
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/shared_instance.dart';
-// ignore: avoid_relative_lib_imports
+import 'package:ogurets_examples/shared_instance.dart';
 import '../steps/backgrounds.dart';
-// ignore: avoid_relative_lib_imports
 import '../steps/expressions.dart';
-// ignore: avoid_relative_lib_imports
 import '../steps/shared_instance_stepdef.dart';
-// ignore: avoid_relative_lib_imports
 import '../steps/steps1.dart';
-// ignore: avoid_relative_lib_imports
 import '../steps/sum.dart';
 
 void main(List<String> args) async {
@@ -28,5 +22,5 @@ void main(List<String> args) async {
     ..step(Sum)
     ..step(SampleSteps);
 
-  await def.run();
+  await def.run(args: args);
 }

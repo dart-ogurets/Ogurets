@@ -1,7 +1,6 @@
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/scenario_session.dart';
+import 'package:ogurets_examples/scenario_session.dart';
 
 class Sum {
   final ScenarioSession _scenarioSession;

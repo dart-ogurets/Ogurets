@@ -2,11 +2,8 @@ library;
 
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/hooks.dart';
-// ignore: avoid_relative_lib_imports
-import '../lib/shared_instance.dart';
-// ignore: avoid_relative_lib_imports
+import 'package:ogurets_examples/hooks.dart';
+import 'package:ogurets_examples/shared_instance.dart';
 import '../steps/sum.dart';
 
 Future<RunStatus> timerSample() async {
@@ -14,7 +11,9 @@ Future<RunStatus> timerSample() async {
     ..feature("../example/gherkin/time.feature")
     ..instance(SharedInstance())
     ..step(Sum)
-    ..step(Hooks);
+    ..step(Hooks)
+    // the feature fails on purpose - keep the test run's exit code clean
+    ..failOnError(false);
 
   return await def.run();
 }

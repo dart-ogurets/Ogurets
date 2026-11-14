@@ -29,6 +29,16 @@
   and also accepts `--tags=<tags>`
 * Unknown command line arguments are now ignored instead of throwing a `FormatException`, so `main`'s arguments
   can be shared with other code. The `args` dependency has been removed
+* Breaking: a failed run now sets the process `exitCode` to 1 (it does not call `exit()`). Turn this off with
+  `OguretsOpts.failOnError(false)`, `--no-fail-on-error` or `OGURETS_FAIL_ON_ERROR=false`
+* `@StepDef` should not be used to annotate steps, as it is not a standard Gherkin keyword: use `@Given`,
+  `@When`, `@Then`, `@And` or `@But`. The examples now do, and missing-step boilerplate for `*` steps now
+  suggests `@Given` instead of `@StepDef`
+* Removed the `bin/cucumberd.dart` runner. It only looked in a hard-coded `example/steps` folder and always
+  exited with 0; use `OguretsOpts` with `..steps(folder)` instead
+* Running `OguretsOpts.run()` several times in one process no longer prints every log line once per run
+* The example project's tests now run every example feature and sample and check each passes or fails as
+  intended, including the exit codes of the samples
 * Fixed the deprecated top-level `run(args)`, which always crashed with a type cast error since null safety
 * `ScenarioStatus.executedSteps` lists every step, background step and hook of a scenario in execution order
 * Replaced the custom Gherkin parser with the official Cucumber parser,

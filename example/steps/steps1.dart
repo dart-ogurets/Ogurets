@@ -45,29 +45,29 @@ class SampleSteps {
     out.writeln("ROW: $exampleRow");
   }
 
-  @StepDef("I {string} table with example {string}")
+  @Given("I {string} table with example {string}")
   void iEvaluateTableWith(String verb, String col2, {exampleRow, table, out}) {
     out.writeln("Step with table on scenario with example");
     out.writeln("TABLE: $table");
   }
 
-  @And("I am a table step \"(\\w+?)\"")
-  void iAmATable(dynamic arg1, {dynamic table}) {}
+  @And("I am a table step {string}")
+  void iAmATable(String arg1, {dynamic table}) {}
 
-  @StepDef("the \"(\\w+?)\" of the \"(\\w+?)\" is \"(\\w+?)\"")
+  @Given("the \"(\\w+?)\" of the \"(\\w+?)\" is \"(\\w+?)\"")
   void thePhaseOfThe(dynamic arg1, dynamic arg2, dynamic arg3) {}
 
-  @StepDef("I read {string}")
+  @Given("I read {string}")
   void iReadColumn1(String name, {out}) {
     out.writeln("I'm reading a $name");
   }
 
-  @StepDef("I read another {string}")
+  @Given("I read another {string}")
   void iReadAnotherColumn1(String name, {out}) {
     out.writeln("I'm reading another $name");
   }
 
-  @StepDef("I am a \"(\\w+?)\" step executed")
+  @Given("I am a \"(\\w+?)\" step executed")
   void iAmATableStep2(dynamic arg1, {dynamic table, dynamic out}) {
     out.writeln("$arg1 $table");
   }

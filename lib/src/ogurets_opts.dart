@@ -46,6 +46,10 @@ Future<void> run(List<String> args) async {
   }
 
   state.fmt!.eof(runStatus);
+
+  if (runStatus.failed && _failOnErrorAllowed(options)) {
+    exitCode = 1;
+  }
 }
 
 /// The command line options ogurets understands.
@@ -60,12 +64,16 @@ class _OguretsArgs {
   /// adding them to the tags configured with [OguretsOpts.tags].
   bool replaceTags = false;
 
+  /// `--no-fail-on-error`: don't set a non-zero exit code when the run fails.
+  bool noFailOnError = false;
+
   /// Arguments that are not options (feature files for the deprecated top-level `run`).
   final List<String> rest = [];
 }
 
 /// Parses the options ogurets understands out of [args]:
-/// `--tags <tags>` / `--tags=<tags>` (repeatable), `--replace-tags` and `--debug`.
+/// `--tags <tags>` / `--tags=<tags>` (repeatable), `--replace-tags`,
+/// `--no-fail-on-error` and `--debug`.
 ///
 /// Anything else is ignored rather than rejected, so `main`'s arguments can be
 /// shared with other code.
@@ -81,6 +89,8 @@ _OguretsArgs _parseArguments(List<String> args) {
       options.debug = true;
     } else if (arg == '--replace-tags') {
       options.replaceTags = true;
+    } else if (arg == '--no-fail-on-error') {
+      options.noFailOnError = true;
     } else if (arg == '--tags') {
       if (i + 1 < args.length) {
         options.tags.addAll(_splitTags(args[++i]));
@@ -94,6 +104,18 @@ _OguretsArgs _parseArguments(List<String> args) {
 
   return options;
 }
+
+bool _isTrue(String? value) =>
+    value != null && const {'true', '1', 'yes'}.contains(value.toLowerCase());
+
+bool _isFalse(String? value) =>
+    value != null && const {'false', '0', 'no'}.contains(value.toLowerCase());
+
+/// Whether a failed run should set a non-zero exit code: not when
+/// `--no-fail-on-error` was passed or `OGURETS_FAIL_ON_ERROR` is false.
+bool _failOnErrorAllowed(_OguretsArgs options) =>
+    !options.noFailOnError &&
+    !_isFalse(Platform.environment['OGURETS_FAIL_ON_ERROR']);
 
 /// Splits a comma separated list of tags, dropping empty entries.
 List<String> _splitTags(String? tags) => [
@@ -113,9 +135,11 @@ class OguretsOpts {
   bool _debug = false;
   String? _tags;
   bool _failedOnMissingSteps = true;
+  bool _failOnError = true;
   bool _useAsserts = true;
   bool _parallel = false;
   final Logger _log = Logger('ogurets');
+  static StreamSubscription<LogRecord>? _logSubscription;
 
   /// Add a [List<String>] that are locations of folders
   /// that contain feature files (recursed), specific paths to feature files
@@ -233,6 +257,16 @@ class OguretsOpts {
     _failedOnMissingSteps = f;
   }
 
+  /// Whether a failed run sets a non-zero [exitCode] (1), so CI and scripts
+  /// can tell it failed. On by default. It can also be turned off with
+  /// `--no-fail-on-error` or `OGURETS_FAIL_ON_ERROR=false`.
+  ///
+  /// Only [exitCode] is set - the process is never ended with `exit()`, so
+  /// code after [run] (and [AfterRun] hooks) still runs.
+  void failOnError(bool f) {
+    _failOnError = f;
+  }
+
   /// Name of a specific scenario to run
   void scenario(String s) {
     _scenario = s;
@@ -335,16 +369,15 @@ class OguretsOpts {
     return files;
   }
 
-  bool _isTrue(String? value) =>
-      value != null && const {'true', '1', 'yes'}.contains(value.toLowerCase());
-
   /// Runs the configured features.
   ///
   /// Pass `main`'s [args] to let the command line add tags (`--tags "@a,~@b"`),
-  /// replace the configured tags (`--replace-tags`) or turn on `--debug`.
-  /// Other arguments are ignored.
+  /// replace the configured tags (`--replace-tags`), keep a failed run from
+  /// setting a non-zero exit code (`--no-fail-on-error`, see [failOnError]) or
+  /// turn on `--debug`. Other arguments are ignored.
   Future<RunStatus> run({List<String>? args}) async {
-    Logger.root.onRecord.listen((LogRecord rec) {
+    // listen once, so running several times in one process doesn't repeat logs
+    _logSubscription ??= Logger.root.onRecord.listen((LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
 
@@ -420,6 +453,10 @@ class OguretsOpts {
       state.fmt!.eof(runStatus);
 
       state.resultBuffer.flush();
+
+      if (_failOnError && _failOnErrorAllowed(options) && runStatus.failed) {
+        exitCode = 1;
+      }
 
       return runStatus;
     } finally {

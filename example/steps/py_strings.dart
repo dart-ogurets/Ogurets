@@ -10,12 +10,12 @@ line 1
 line 2
 """;
 
-@StepDef("I have the following PyString:")
+@Given("I have the following PyString:")
 void iHaveTheFollowingPystring(dynamic pyString) {
   actualPyString = pyString;
 }
 
-@StepDef("the above Step should have the PyString as last parameter.")
+@Given("the above Step should have the PyString as last parameter.")
 void theAboveStepdefShouldHaveThePystring() {
   // maybe we could use the `matchers` package ? Assertions make sense here.
   // also, dherkin could recognize crash errors from assertions errors using core's AssertionError

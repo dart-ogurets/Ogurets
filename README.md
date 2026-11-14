@@ -58,8 +58,8 @@ FeatureHub.IO (https://featurehub.io).
 
 ogurets carries on from dherkin2 in a number of ways:
 
-- ogurets requires Dart 3.10+ and is entirely async/await aware. It expects your functions to be async
-functions. 
+- ogurets requires Dart 3.10+ and is entirely async/await aware. Steps and hooks can be ordinary functions or
+`async` ones - if they return a `Future`, ogurets waits for it before moving on.
 - offers support for Cucumber expressions of {string}, {int} and {float} instead of having to write regular
 expressions.
 - supports an Object (OguretsOpts) that defines what features are run, what steps to use and shared instances
@@ -87,6 +87,13 @@ your tests, and navigate through test codebase.
 
 Ogurets based Cucumber tests are closely modeled on Java style Step-def classes with annotations. There is `@Given`,
 `@When`, `@Then`, `@And` and `@But`, all of which aid you in writing your standard Cucumber based set of tests.
+
+As in other Cucumber implementations, the keyword only affects how the step reads: a step annotated with `@Given`
+also matches a `When`, `Then`, `And`, `But` or `*` step with the same text.
+
+Don't use `@StepDef`. It is the base class of these annotations, not a Gherkin keyword, so Cucumber tooling (such
+as the IntelliJ plugin) doesn't recognise steps annotated with it. Older ogurets and dherkin2 code often used
+it - replace it with the keyword that reads best, e.g. `@Given`.
 
 An example of a Cucumber feature in _Ogurets_:
 
@@ -133,7 +140,7 @@ And get _Ogurets_ to create it for each scenario run and pass it to us, the whol
 ```dart
 import 'package:ogurets/ogurets.dart';
 
-import '../lib/scenario_state.dart';
+import 'package:my_project/scenario_state.dart';
 
 class MyStepdefs {
   final ScenarioState state;
@@ -152,21 +159,21 @@ class MyStepdefs {
 }
 ``` 
 
+Always import your own library files with `package:` imports. A relative import like `'../lib/scenario_state.dart'`
+makes Dart load a second copy of the library, so ogurets ends up with two different `ScenarioState` types and
+the instance it injects won't be the one you expect.
 
 When run using _Ogurets_, this gives something like this:
 
 ```bash
 Feature: simple addition feature # test/features/add.feature:1
 
-
 	Scenario: A simple addition example # test/features/add.feature:3
-
 		I add 4	 # test/features/add.feature:4
-
 		I add 3	 # test/features/add.feature:5
-
 		the total should be 7	 # test/features/add.feature:6
-
+Scenario passed!
+Scenario time: 2 ms
 -------------------
 Feature time: 3 ms
 
@@ -176,7 +183,7 @@ Features passed: 1
 Run time: 12 ms
 ```
 
-The totals at the end are for the whole run. If any scenario fails, a "Failed scenarios" section is printed
+Any hooks that run are listed between the steps too. The totals at the end are for the whole run. If any scenario fails, a "Failed scenarios" section is printed
 just before them, repeating each failed scenario with its passed steps in green, the failed step in red with its
 error and stack trace, and skipped steps in gray. When run from IntelliJ, failures are shown in its test tree instead.
 
@@ -252,7 +259,7 @@ NOTE: You cannot include anything in the constructor that it does not know about
 ### parallel runs
 
 If you are doing API testing, you can tell Ogurets to run using parallel features, and it is considerably
-faster. for your OguretsOpts object, add `.parallel()`. If you are using IntelliJ IDEA, then use an
+faster. For your OguretsOpts object, add `..parallelize()`. If you are using IntelliJ IDEA, then use an
 environment variable `CUCUMBER_PARALLEL=true`. This option does work in IDEA, but the reporting is pretty
 terrible and will take a while to get sorted. 
 
@@ -262,7 +269,7 @@ Hooks work largely like you would expect them to. You can:
 
 - specify a tag or not (in the annotation). If not, then the before or after will run on every scenario triggered.
 - specify instances to be injected, including the `ScenarioStatus` that holds details about the current scenario. The
-`ScenarioStatus` object holds a map called 'augments' which allows you to put in Scenario related things (such as references
+`ScenarioStatus` object holds a map called `addendum` which allows you to put in Scenario related things (such as references
 to screen shots, or json objects or whatever you like) so you will be able to build custom reports that output those
 things.
 
@@ -311,8 +318,9 @@ class Hooks {
 Tags also work as per the Cucumber style, where they can be on a feature or on a scenario. If tags are passed they
 are specifically honoured, if they aren't then all scenarios will be run.
  
-Using the ~@tag syntax prevents the tagged scenario or feature from being run, leaving all others open. Combining
-~@tag and @tags leads to non-deterministic behaviour. 
+Using the ~@tag syntax prevents the tagged scenario or feature from being run, leaving all others open. When
+~@tags and @tags are combined, the ~@tags are applied first, and a scenario that is not excluded runs if it has
+*any* of the @tags (scenarios inherit their feature's tags).
 
 ```gherkin
 @dataload
@@ -352,12 +360,22 @@ environment tags instead, pass `--replace-tags` or set `OGURETS_REPLACE_TAGS=tru
 
 `--debug` turns on debug logging.
 
+#### Exit code
+
+If any feature fails (including scenarios with missing steps, unless `..failOnMissingSteps(false)`), `run()`
+sets the process `exitCode` to 1, so CI and scripts see the failure. It only sets `exitCode` and never calls
+`exit()`, so `AfterRun` hooks and code after `run()` still run, and the `RunStatus` is still returned.
+
+To keep the exit code at 0 for a failed run, use `..failOnError(false)`, pass `--no-fail-on-error` or set
+`OGURETS_FAIL_ON_ERROR=false`. Do this when calling `run()` from inside `dart test` on features that are
+*meant* to fail, as `exitCode` belongs to the whole test process.
+
 #### Samples:
 
 * running with the command line: `--tags @dataload` would run all features here, 
 * running with `--tags @superuserload` would run the scenario, ignoring the tag on the feature.
 * running with `--tags ~@superuserload` would run the scenarios in the feature but it would not run the `@superuserload`
-tagged feature.
+tagged scenario.
 * running with `--tags ~@dataload` would ignore the whole feature and it wouldn't be otherwise examined for positive
 tags.  
  
@@ -376,53 +394,37 @@ assertion library like Fest Assert is largely unnecessary.
 
 The more detailed `expect` library provide by the Dart Test library is heavily tied to that library and not usable elsewhere.
 
-#### cucumberd
+#### Deprecated top-level `run`
 
-Library comes with an executable runner script **cucumberd** in bin/ directory.
-Create symbolic link in a directory on your path, like /usr/local/bin:
-
-````bash
-cd /usr/local/bin
-ln -s path/to/ogurets/bin/cucumberd.dart cucumberd
-cd
-````
-
-Execute:
-````bash
-cucumberd example/gherkin/test_feature.feature
-````
-
-Note: **cucumberd** will auto-include all step definitions in *steps/* sub-directory.
-Ability to add steps source locations via command-line arguments is planned.
-
-#### ogurets style Custom Runner
-
-Alternatively, you might opt for writing your own script:
+The top-level `run(args)` function from dherkin2 still exists, but is deprecated. It takes the feature files
+as arguments, and finds step definitions that are **top-level functions** in any library your script imports
+(step classes, hooks and injected instances are not supported):
 
 ````dart
-   library my_bdd_runner;
+import 'package:ogurets/ogurets.dart';
+import 'my_step_defs.dart'; // steps must be imported, nothing is scanned
 
-   import 'package:ogurets/ogurets.dart';
-   import 'my_step_defs.dart'; // import stepdefs, mandatory since no auto-scanning happens
-
-   main(args) {
-     run(args);
-   }
-
-   // write your StepDefs below
+void main(List<String> args) {
+  // ignore: deprecated_member_use
+  run(args);
+}
 ````
 
-Invoke the runner : `$ dart my_bdd_runner.dart my_gherkin.feature`
+Invoke the runner: `dart --enable-asserts my_bdd_runner.dart my_gherkin.feature`
+
+Unlike `OguretsOpts`, it does **not** fail scenarios that have missing steps; they are reported as passed. Use
+`OguretsOpts` instead.
 
 ### Anatomy of a stepdef
 
-A stepdef is a top-level function annotated with one of Gherkin keywords.
-Such a function can take any number of positional parameters, and up to three optional named parameters.
+A stepdef is a method in a step class (see above) or a top-level function, annotated with one of the Gherkin
+keywords. It takes one positional parameter for each value captured from the step text, and can also take up
+to three optional named parameters:
 
 ````dart
-@And("I am a table step \"(\\w+?)\"")
-iAmATable(arg1, {exampleRow, table, out}) {
-   out.writeln("Executing...${exampleRow['column2']}");
+@And("I am a table step {string}")
+void iAmATable(String arg1, {Map? exampleRow, GherkinTable? table, StringBuffer? out}) {
+  out!.writeln("Executing...${exampleRow!['column2']}");
 }
 ````
 Table found on the step will be passed in as **table**.

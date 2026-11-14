@@ -9,7 +9,7 @@ void main(List<String> args) async {
     ..feature("example/gherkin/test_feature.feature")
     ..step(SampleSteps);
 
-  var run = await def.run();
+  var run = await def.run(args: args);
 
   if (run.failedFeatures.length != 1) {
     throw Exception("missing steps should be failing feature.");

@@ -2,8 +2,7 @@ library;
 
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/scenario_session.dart';
+import 'package:ogurets_examples/scenario_session.dart';
 
 /// BACKGROUNDS ----------------------------------------------------------------
 
@@ -16,14 +15,14 @@ class Backgrounds {
     session.sharedStepData[background] = 'not_set';
   }
 
-  @StepDef(
+  @Given(
     "I have a background setting a variable to a (default|different) value",
   )
   void iHaveABackgroundSettingAVariable(dynamic defaultOrDifferent) {
     iSetTheBackgroundSetupVariable(defaultOrDifferent);
   }
 
-  @StepDef("I set the background-setup variable to a (default|different) value")
+  @When("I set the background-setup variable to a (default|different) value")
   void iSetTheBackgroundSetupVariable(
     dynamic defaultOrDifferent, {
     dynamic col1,
@@ -32,7 +31,7 @@ class Backgrounds {
     session.sharedStepData[background] = defaultOrDifferent;
   }
 
-  @StepDef(
+  @Given(
     "the background-setup variable should hold the (default|different) value",
   )
   void theBackgroundSetupVariableShouldHold(
@@ -51,6 +50,6 @@ class Backgrounds {
     }
   }
 
-  @StepDef("this scenario(?: outline example)? has ran the background first")
+  @Given("this scenario(?: outline example)? has ran the background first")
   void thisScenarioHasRanTheBackgroundFirst({dynamic col1, dynamic col2}) {} // gherkin sugar
 }

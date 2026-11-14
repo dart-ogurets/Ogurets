@@ -50,10 +50,7 @@ Feature: Basics
     expect(scenario.tags, ['@feature', '@scenario']);
     expect(scenario.steps.map((s) => s!.verb), ['Given', '*']);
     expect(scenario.steps.last!.location.srcLineNumber, 9);
-    expect(
-      scenario.steps.last!.boilerplate,
-      contains('@StepDef("a star step")'),
-    );
+    expect(scenario.steps.last!.boilerplate, contains('@Given("a star step")'));
   });
 
   test('doc strings drop indentation and keep a trailing newline', () async {

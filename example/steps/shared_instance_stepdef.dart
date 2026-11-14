@@ -1,7 +1,6 @@
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/shared_instance.dart';
+import 'package:ogurets_examples/shared_instance.dart';
 
 class SharedInstanceStepdef {
   final SharedInstance _sharedInstance;
