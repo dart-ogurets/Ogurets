@@ -1,7 +1,7 @@
 5.0.0
 =====
 * Requires Dart SDK 3.10 or later (`sdk: ^3.10.0`)
-* Updated dependencies to latest: `intl` ^0.20.2, `sprintf` ^7.0.0, `logging` ^1.3.0, `args` ^2.7.0,
+* Updated dependencies to latest: `intl` ^0.20.2, `sprintf` ^7.0.0, `logging` ^1.3.0,
   `ansicolor` ^2.0.3, `collection` ^1.19.0
 * Replaced the discontinued `pedantic` with `lints` (recommended set) and cleaned up all analyzer issues
 * Fixed `OguretsOpts.steps(folder)`: step definition files are now fully loaded (awaited) before the run starts
