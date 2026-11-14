@@ -2,9 +2,9 @@
 packages
 .project
 .settings
-.idea
+/.idea
 .settings
-*.iml
+/*.iml
 .packages
 .dart_tool/
 

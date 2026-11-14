@@ -1,3 +1,67 @@
+5.0.0
+=====
+* Requires Dart SDK 3.10 or later (`sdk: ^3.10.0`)
+* Updated dependencies to latest: `intl` ^0.20.2, `sprintf` ^7.0.0, `logging` ^1.3.0,
+  `ansicolor` ^2.0.3, `collection` ^1.19.0
+* Replaced the discontinued `pedantic` with `lints` (recommended set) and cleaned up all analyzer issues
+* Fixed `OguretsOpts.steps(folder)`: step definition files are now fully loaded (awaited) before the run starts
+* Breaking: some previously untyped public signatures are now typed, e.g. the deprecated `run(List<String> args)`,
+  `ResultBuffer.write/writeln(String? message, {String? color})`, `GherkinTable.addRow(List<String> row)`
+  and `StepFailure(Object e, String? s)`
+* Breaking: the internal model types used in the formatter/status API are now public and renamed:
+  `_Feature` -> `GherkinFeature`, `_Scenario` -> `GherkinScenario`, `_Background` -> `GherkinBackground`,
+  `_Step` -> `GherkinStep`. Custom `Formatter` implementations need to use the new names.
+* Breaking: `LogLevel` values are now lowerCamelCase (`LogLevel.FINE` -> `LogLevel.fine`, etc.)
+* Breaking: `IntellijFormatter` constants are now lowerCamelCase (`TEAMCITY_PREFIX` -> `teamcityPrefix`,
+  `TEMPLATE_TEST_STARTED` -> `templateTestStarted`, etc.)
+* Generated boilerplate for missing steps now uses lowerCamelCase method names, `void` return types
+  and typed parameters, so it passes the recommended lints
+* The console (non-IntelliJ) output now ends with a "Failed scenarios" section that reprints every failed
+  scenario, including its background and example row: passed steps in green, the failed step in red with its
+  error and stack trace, skipped steps in gray and undefined steps in yellow. Failing hooks are shown too.
+  Use `BasicFormatter(buffer, failureSummary: false)` to turn it off.
+* The console output's scenario and feature pass/skip/fail counts are now printed once, as totals for the
+  whole run, after the failed scenarios and missing steps (previously scenario counts were printed per feature)
+* A feature whose scenarios were all skipped (e.g. none matched the tags) now counts as a skipped feature, not
+  a passed one, and `FeatureStatus.passed` is false for a skipped feature
+* `RunStatus.passedScenarios` / `skippedScenarios` / `failedScenarios` no longer throw when no features ran
+* Breaking: tags from the command line (`run(args: args)` with `--tags`) and from `OGURETS_TAGS` are now
+  **added** to the tags configured with `OguretsOpts.tags(...)` instead of replacing them. Pass `--replace-tags`
+  or set `OGURETS_REPLACE_TAGS=true` to get the old replacing behaviour. `--tags` can be given more than once
+  and also accepts `--tags=<tags>`
+* Unknown command line arguments are now ignored instead of throwing a `FormatException`, so `main`'s arguments
+  can be shared with other code. The `args` dependency has been removed
+* Breaking: a step's output is now only shown when the step fails, unless the `ALWAYS_SHOW_OUT` environment
+  variable is set. Each step (and hook) runs in its own `Zone`, which captures what it writes to `out`, what it
+  `print`s and what it logs with `package:logging`, including after `await`s and in code it calls. Failed steps
+  show their output inline and in the "Failed scenarios" summary
+* Breaking: a failed run now sets the process `exitCode` to 1 (it does not call `exit()`). Turn this off with
+  `OguretsOpts.failOnError(false)`, `--no-fail-on-error` or `OGURETS_FAIL_ON_ERROR=false`
+* `@StepDef` should not be used to annotate steps, as it is not a standard Gherkin keyword: use `@Given`,
+  `@When`, `@Then`, `@And` or `@But`. The examples now do, and missing-step boilerplate for `*` steps now
+  suggests `@Given` instead of `@StepDef`
+* Removed the `bin/cucumberd.dart` runner. It only looked in a hard-coded `example/steps` folder and always
+  exited with 0; use `OguretsOpts` with `..steps(folder)` instead
+* Running `OguretsOpts.run()` several times in one process no longer prints every log line once per run
+* The example project's tests now run every example feature and sample and check each passes or fails as
+  intended, including the exit codes of the samples
+* Fixed the deprecated top-level `run(args)`, which always crashed with a type cast error since null safety
+* `ScenarioStatus.executedSteps` lists every step, background step and hook of a scenario in execution order
+* Replaced the custom Gherkin parser with the official Cucumber parser,
+  [cucumber_gherkin](https://pub.dev/packages/cucumber_gherkin):
+  * New: `*` steps, every Gherkin language (`# language: xx`), `Example` / `Scenario Template` keywords,
+    several `Examples` blocks per outline, and escaped table cells (`\|`, `\\`, `\n`)
+  * Invalid feature files now throw `GherkinSyntaxError` listing every error with its location;
+    the old parser silently ignored lines it did not understand
+  * `GherkinScenario.gherkinKeyword` is now the keyword used in the file (e.g. `Scenario Outline`)
+  * Doc strings have their indentation removed relative to the opening `"""`, as in other Cucumber implementations
+  * Step line numbers after a doc string are now correct
+  * Placeholders for Gherkin that ogurets cannot run yet: `Rule` (scenarios are flattened into the feature,
+    with a warning), a `Background` inside a `Rule` (throws `GherkinUnsupportedError`), tags on `Examples`
+    and doc string media types (ignored, with a warning)
+  * Breaking: removed the public `GherkinVocabulary` class and the regex top-level variables
+    (`tagsPattern`, `featurePattern`, `scenarioPattern`, ...)
+
 4.0.6
 =====
 * Make sure failed "dependency injection" results in failed steps/scenarios/features

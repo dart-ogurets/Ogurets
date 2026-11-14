@@ -1,7 +1,4 @@
-
-
 class ScenarioSession {
-
   ScenarioSession() {
     print("created scenario session");
   }

@@ -1,10 +1,8 @@
-
-
 class SharedInstance {
   static int instanceCount = 0;
 
   SharedInstance() {
-    instanceCount ++;
+    instanceCount++;
   }
 
   int get count {

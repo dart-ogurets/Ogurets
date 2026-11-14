@@ -13,7 +13,10 @@ void main() async {
     final result = await def.run();
 
     expect(result.failed, true);
-    expect(result.failedFeatures.first.failedScenarios.first.failedSteps.length, 1);
+    expect(
+      result.failedFeatures.first.failedScenarios.first.failedSteps.length,
+      1,
+    );
   });
 
   test('Failing test setup', () async {
@@ -25,7 +28,10 @@ void main() async {
     final result = await def.run();
 
     expect(result.failed, true);
-    expect(result.failedFeatures.first.failedScenarios.first.failedSteps.length, 1);
+    expect(
+      result.failedFeatures.first.failedScenarios.first.failedSteps.length,
+      1,
+    );
   });
 
   test('Failing test session', () async {
@@ -38,6 +44,9 @@ void main() async {
     final result = await def.run();
 
     expect(result.failed, true);
-    expect(result.failedFeatures.first.failedScenarios.first.failedSteps.length, 1);
+    expect(
+      result.failedFeatures.first.failedScenarios.first.failedSteps.length,
+      1,
+    );
   });
 }

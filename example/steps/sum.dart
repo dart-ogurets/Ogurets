@@ -1,10 +1,6 @@
-
-
-
 import 'package:ogurets/ogurets.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/scenario_session.dart';
+import 'package:ogurets_examples/scenario_session.dart';
 
 class Sum {
   final ScenarioSession _scenarioSession;
@@ -13,7 +9,8 @@ class Sum {
 
   @Given("I add {int}")
   void addAmount(int amt) {
-    _scenarioSession.sharedStepData["add"] = ((_scenarioSession.sharedStepData["add"] ?? 0) as int) + amt;
+    _scenarioSession.sharedStepData["add"] =
+        ((_scenarioSession.sharedStepData["add"] ?? 0) as int) + amt;
   }
 
   @Given("the total should be {int}")

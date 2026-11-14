@@ -1,30 +1,36 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
-class _Step {
+class GherkinStep {
   String? verb;
   String? verbiage;
   String? pyString;
-  _Scenario? scenario;
+  GherkinScenario? scenario;
   GherkinTable table = GherkinTable();
   Location location;
   bool hook;
 
   String get boilerplate => _generateBoilerplate();
 
-  _Step(this.verb, this.verbiage, this.location, this.scenario,
-      {this.hook = false});
+  GherkinStep(
+    this.verb,
+    this.verbiage,
+    this.location,
+    this.scenario, {
+    this.hook = false,
+  });
 
   // replace all instances of <column1> with 3 where example data has it as such
   String? decodeVerbiage(String? verbiage, Map exampleRow) {
     var text = verbiage;
 
     exampleRow.forEach((k, v) {
-      text = text!.replaceAll('<${k}>', v.toString());
+      text = text!.replaceAll('<$k>', v.toString());
     });
 
     return text;
   }
 
+  @override
   String toString() {
     if (pyString != null) {
       return "$verbiage\n\"\"\"\n$pyString\"\"\"\n$table";
@@ -53,34 +59,51 @@ class _Step {
   }
 
   String _generateBoilerplate() {
-    var matchString =
-        verbiage!.replaceAll(RegExp("\".+?\""), "\\\"(\\\\w+?)\\\"");
+    var matchString = verbiage!.replaceAll(
+      RegExp("\".+?\""),
+      "\\\"(\\\\w+?)\\\"",
+    );
 
-    var params = "";
-    var counter = 1;
-    "w\+\?".allMatches(matchString).forEach((_) {
-      params += "arg$counter,";
-      counter++;
-    });
+    final positional = [
+      for (var i = 1; i <= "w+?".allMatches(matchString).length; i++)
+        "dynamic arg$i",
+    ];
+    final named = [
+      if (scenario!.examples.length > 1) "dynamic exampleRow",
+      if (!table.empty) "GherkinTable? table",
+    ];
+    final params = [
+      ...positional,
+      if (named.isNotEmpty) "{${named.join(", ")}}",
+    ];
 
-    params = params.replaceAll(RegExp(",\$"), "");
+    // `*` steps and non-English keywords have no matching annotation; any of the
+    // keyword annotations matches any step, so suggest @Given
+    const annotations = {"Given", "When", "Then", "And", "But"};
+    final annotation = annotations.contains(verb) ? verb : "Given";
 
-    var columnsVerbiage = scenario!.examples.length > 1
-        ? "{exampleRow ${!table.empty ? ", table" : ""}}"
-        : "";
-    var tableVerbiage = columnsVerbiage.isEmpty && !table.empty
-        ? "${params.isNotEmpty && columnsVerbiage.isEmpty ? "," : ""}{table}"
-        : "";
-    var separator = params.isNotEmpty && columnsVerbiage.isNotEmpty ? ", " : "";
-    return ("\n@${verb}(\"$matchString\")\n${_generateFunctionName()}($params$separator$columnsVerbiage$tableVerbiage) {\n  // todo \n}\n");
+    return "\n@$annotation(\"$matchString\")\n"
+        "void ${_generateFunctionName()}(${params.join(", ")}) {\n"
+        "  // todo\n"
+        "}\n";
   }
 
+  /// Builds a lowerCamelCase method name from the first five words of the step.
   String _generateFunctionName() {
-    var chunks = verbiage!
-        .replaceAll(RegExp("\""), "")
-        .replaceAll(RegExp("[<>]"), r"$")
-        .split(RegExp(" "));
-    var end = chunks.length > 4 ? 5 : chunks.length;
-    return chunks.sublist(0, end).join("_").toLowerCase();
+    final words = verbiage!
+        .split(RegExp(r"\s+"))
+        .take(5)
+        .map((w) => w.replaceAll(RegExp(r"[^A-Za-z0-9]"), "").toLowerCase())
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty) {
+      return "undefinedStep";
+    }
+    final name =
+        words.first +
+        words.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+    return RegExp(r"^[0-9]").hasMatch(name)
+        ? "step${name[0].toUpperCase()}${name.substring(1)}"
+        : name;
   }
 }

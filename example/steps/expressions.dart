@@ -1,9 +1,9 @@
 import 'package:ogurets/ogurets.dart';
 
-import '../lib/scenario_session.dart';
+import 'package:ogurets_examples/scenario_session.dart';
 
 class Expressions {
-  ScenarioSession _session;
+  final ScenarioSession _session;
 
   Expressions(this._session);
 
@@ -17,7 +17,7 @@ class Expressions {
     _session.sharedStepData[s] = i;
   }
 
-//  @Then("{string} has a value of {string}")
+  //  @Then("{string} has a value of {string}")
   @Then("{string} has a value of {string}")
   void compare(String key, String value) {
     if (value != _session.sharedStepData[key]?.toString()) {

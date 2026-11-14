@@ -1,32 +1,28 @@
-part of ogurets;
+part of '../ogurets.dart';
 
 /// Runs specified gherkin files with provided flags. This is left for backwards compatibility.
 /// [args] may be a list of filepaths.
 @Deprecated("Left for backwards compatibility...")
-Future<void> run(args) async {
+Future<void> run(List<String> args) async {
   var options = _parseArguments(args);
 
   // Use this to run with argument in IDE. Useful for debug.
-  if (options.arguments.isEmpty) {
-    var hardcodedArg = ['example/gherkin/test_feature.feature'];
-    options = _parseArguments(hardcodedArg);
+  if (args.isEmpty) {
+    options = _parseArguments(['example/gherkin/test_feature.feature']);
   }
 
-  final debug = options["debug"];
+  final debug = options.debug;
   if (debug) {
     Logger.root.level = Level.FINE;
   } else {
     Logger.root.level = Level.INFO;
   }
 
-  List<String>? runTags = [];
-  if (options["tags"] != null) {
-    runTags = options["tags"].split(",");
-  }
+  List<String>? runTags = options.tags;
 
   final featureFiles = options.rest;
-  final _log = Logger('ogurets');
-  OguretsState state = OguretsState(_log, ConsoleBuffer(_log));
+  final log = Logger('ogurets');
+  OguretsState state = OguretsState(log, ConsoleBuffer(log));
   state.runTags = runTags;
   await state.build();
 
@@ -34,8 +30,10 @@ Future<void> run(args) async {
 
   for (String filePath in featureFiles) {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature feature = await (GherkinParserTask(_log, contents, filePath).execute()
-        as FutureOr<_Feature>);
+    final feature = await GherkinParserTask(log, contents, filePath).execute();
+    if (feature == null) {
+      continue; // no Feature in this file
+    }
     FeatureStatus featureStatus = await feature.execute(state, debug: debug);
     if (featureStatus.failed) {
       runStatus.failedFeatures.add(featureStatus);
@@ -48,32 +46,100 @@ Future<void> run(args) async {
   }
 
   state.fmt!.eof(runStatus);
+
+  if (runStatus.failed && _failOnErrorAllowed(options)) {
+    exitCode = 1;
+  }
 }
 
-/// Parses command line arguments.
+/// The command line options ogurets understands.
+class _OguretsArgs {
+  /// Tags from every `--tags` option, in order.
+  final List<String> tags = [];
 
-ArgResults _parseArguments(args) {
-  var argParser = ArgParser();
-  argParser.addFlag('debug', defaultsTo: false);
-  argParser.addOption("tags");
-  return argParser.parse(args);
+  /// `--debug`: log at FINE level.
+  bool debug = false;
+
+  /// `--replace-tags`: use only the command line / environment tags, instead of
+  /// adding them to the tags configured with [OguretsOpts.tags].
+  bool replaceTags = false;
+
+  /// `--no-fail-on-error`: don't set a non-zero exit code when the run fails.
+  bool noFailOnError = false;
+
+  /// Arguments that are not options (feature files for the deprecated top-level `run`).
+  final List<String> rest = [];
 }
+
+/// Parses the options ogurets understands out of [args]:
+/// `--tags <tags>` / `--tags=<tags>` (repeatable), `--replace-tags`,
+/// `--no-fail-on-error` and `--debug`.
+///
+/// Anything else is ignored rather than rejected, so `main`'s arguments can be
+/// shared with other code.
+_OguretsArgs _parseArguments(List<String> args) {
+  final options = _OguretsArgs();
+
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == '--') {
+      options.rest.addAll(args.skip(i + 1));
+      break;
+    } else if (arg == '--debug') {
+      options.debug = true;
+    } else if (arg == '--replace-tags') {
+      options.replaceTags = true;
+    } else if (arg == '--no-fail-on-error') {
+      options.noFailOnError = true;
+    } else if (arg == '--tags') {
+      if (i + 1 < args.length) {
+        options.tags.addAll(_splitTags(args[++i]));
+      }
+    } else if (arg.startsWith('--tags=')) {
+      options.tags.addAll(_splitTags(arg.substring('--tags='.length)));
+    } else if (!arg.startsWith('-')) {
+      options.rest.add(arg);
+    }
+  }
+
+  return options;
+}
+
+bool _isTrue(String? value) =>
+    value != null && const {'true', '1', 'yes'}.contains(value.toLowerCase());
+
+bool _isFalse(String? value) =>
+    value != null && const {'false', '0', 'no'}.contains(value.toLowerCase());
+
+/// Whether a failed run should set a non-zero exit code: not when
+/// `--no-fail-on-error` was passed or `OGURETS_FAIL_ON_ERROR` is false.
+bool _failOnErrorAllowed(_OguretsArgs options) =>
+    !options.noFailOnError &&
+    !_isFalse(Platform.environment['OGURETS_FAIL_ON_ERROR']);
+
+/// Splits a comma separated list of tags, dropping empty entries.
+List<String> _splitTags(String? tags) => [
+  for (final tag in (tags ?? '').split(','))
+    if (tag.trim().isNotEmpty) tag.trim(),
+];
 
 class OguretsOpts {
   List<String?> _features = [];
-  List<String> _stepdefLocs = [];
-  List<Type> _stepdefs = [];
+  final List<String> _stepdefLocs = [];
+  final List<Type> _stepdefs = [];
   String? _scenario;
-  Map<Type, InstanceMirror> _instances = {};
-  List<Object> _instanceObjects = [];
-  Set<Formatter> _formatters = <Formatter>{};
+  final Map<Type, InstanceMirror> _instances = {};
+  final List<Object> _instanceObjects = [];
+  final Set<Formatter> _formatters = <Formatter>{};
   Set<Filter> filters = {};
   bool _debug = false;
   String? _tags;
   bool _failedOnMissingSteps = true;
+  bool _failOnError = true;
   bool _useAsserts = true;
   bool _parallel = false;
-  Logger _log = Logger('ogurets');
+  final Logger _log = Logger('ogurets');
+  static StreamSubscription<LogRecord>? _logSubscription;
 
   /// Add a [List<String>] that are locations of folders
   /// that contain feature files (recursed), specific paths to feature files
@@ -103,7 +169,9 @@ class OguretsOpts {
   void step(Type clazz) {
     final ClassMirror lib = reflectClass(clazz);
     if (lib.isAbstract) {
-      _log.warning('Skipping abstract type ${lib.simpleName}, assuming a subclass will be present to pick up its step methods');
+      _log.warning(
+        'Skipping abstract type ${lib.simpleName}, assuming a subclass will be present to pick up its step methods',
+      );
     } else {
       _stepdefs.add(clazz);
     }
@@ -118,16 +186,36 @@ class OguretsOpts {
   void logLevel(LogLevel level) {
     hierarchicalLoggingEnabled = true;
     switch (level) {
-      case LogLevel.ALL : _log.level = Level.ALL; break;
-      case LogLevel.OFF : _log.level = Level.OFF; break;
-      case LogLevel.FINEST : _log.level = Level.FINEST; break;
-      case LogLevel.FINER : _log.level = Level.FINER; break;
-      case LogLevel.FINE : _log.level = Level.FINE; break;
-      case LogLevel.CONFIG : _log.level = Level.CONFIG; break;
-      case LogLevel.INFO : _log.level = Level.INFO; break;
-      case LogLevel.WARNING : _log.level = Level.WARNING; break;
-      case LogLevel.SEVERE : _log.level = Level.SEVERE; break;
-      case LogLevel.SHOUT : _log.level = Level.SHOUT; break;
+      case LogLevel.all:
+        _log.level = Level.ALL;
+        break;
+      case LogLevel.off:
+        _log.level = Level.OFF;
+        break;
+      case LogLevel.finest:
+        _log.level = Level.FINEST;
+        break;
+      case LogLevel.finer:
+        _log.level = Level.FINER;
+        break;
+      case LogLevel.fine:
+        _log.level = Level.FINE;
+        break;
+      case LogLevel.config:
+        _log.level = Level.CONFIG;
+        break;
+      case LogLevel.info:
+        _log.level = Level.INFO;
+        break;
+      case LogLevel.warning:
+        _log.level = Level.WARNING;
+        break;
+      case LogLevel.severe:
+        _log.level = Level.SEVERE;
+        break;
+      case LogLevel.shout:
+        _log.level = Level.SHOUT;
+        break;
     }
   }
 
@@ -155,6 +243,11 @@ class OguretsOpts {
   /// Tags in a comma-separated string
   /// @TagName would be a tag to limit
   /// ~@TagName would be a tag to exclude
+  ///
+  /// Tags given on the command line (`--tags`, when [run] is passed `args`)
+  /// or in the `OGURETS_TAGS` environment variable are added to these, unless
+  /// `--replace-tags` or `OGURETS_REPLACE_TAGS=true` is set, in which case
+  /// only the command line / environment tags are used.
   void tags(String tags) {
     _tags = tags;
   }
@@ -162,6 +255,16 @@ class OguretsOpts {
   /// Specify whether or not to log scenarios with missing steps as failures
   void failOnMissingSteps(bool f) {
     _failedOnMissingSteps = f;
+  }
+
+  /// Whether a failed run sets a non-zero [exitCode] (1), so CI and scripts
+  /// can tell it failed. On by default. It can also be turned off with
+  /// `--no-fail-on-error` or `OGURETS_FAIL_ON_ERROR=false`.
+  ///
+  /// Only [exitCode] is set - the process is never ended with `exit()`, so
+  /// code after [run] (and [AfterRun] hooks) still runs.
+  void failOnError(bool f) {
+    _failOnError = f;
   }
 
   /// Name of a specific scenario to run
@@ -198,10 +301,10 @@ class OguretsOpts {
   /// For the list of step definition locations, find the types in the files and add them
   /// to the current isolate so that the runner can resolve the steps
   /// Does not handle steps outside of classes
-  List<Type> _determineStepDefs() {
+  Future<List<Type>> _determineStepDefs() async {
     List<File> files = [];
 
-    _stepdefLocs.forEach((sl) {
+    for (var sl in _stepdefLocs) {
       FileSystemEntityType type = FileSystemEntity.typeSync(sl);
       if (type == FileSystemEntityType.directory) {
         Directory(sl).listSync(recursive: true, followLinks: true).forEach((f) {
@@ -212,12 +315,12 @@ class OguretsOpts {
           }
         });
       } else {
-        _log.severe("Cannot find ${sl}");
+        _log.severe("Cannot find $sl");
       }
-    });
+    }
 
     List<Type> classes = [];
-    files.forEach((f) async {
+    for (final f in files) {
       // load the found files into the current isolate
       var im = await currentMirrorSystem().isolate.loadUri(f.absolute.uri);
 
@@ -226,7 +329,7 @@ class OguretsOpts {
         _log.fine("Step class added: ${classMirror.reflectedType}");
         classes.add(classMirror.reflectedType);
       }
-    });
+    }
 
     return classes;
   }
@@ -236,7 +339,7 @@ class OguretsOpts {
   List<String?> _determineFeatureFiles() {
     List<String?> files = [];
 
-    _features.forEach((ff) {
+    for (var ff in _features) {
       FileSystemEntityType type = FileSystemEntity.typeSync(ff!);
       if (type == FileSystemEntityType.directory) {
         Directory(ff).listSync(recursive: true, followLinks: true).forEach((f) {
@@ -249,25 +352,36 @@ class OguretsOpts {
         });
       } else if (type == FileSystemEntityType.file) {
         if (ff.endsWith(".feature")) {
-          _log.info("Loaded feature: ${ff}");
+          _log.info("Loaded feature: $ff");
           files.add(ff);
         }
       } else {
-        _log.severe("Cannot find ${ff}");
+        _log.severe("Cannot find $ff");
       }
-    });
+    }
 
     if (files.isEmpty) {
       _log.severe(
-          "No feature files found, offset is ${Directory.current.path}");
+        "No feature files found, offset is ${Directory.current.path}",
+      );
     }
 
     return files;
   }
 
+  /// Runs the configured features.
+  ///
+  /// Pass `main`'s [args] to let the command line add tags (`--tags "@a,~@b"`),
+  /// replace the configured tags (`--replace-tags`), keep a failed run from
+  /// setting a non-zero exit code (`--no-fail-on-error`, see [failOnError]) or
+  /// turn on `--debug`. Other arguments are ignored.
   Future<RunStatus> run({List<String>? args}) async {
-    Logger.root.onRecord.listen((LogRecord rec) {
-      print('${rec.level.name}: ${rec.time}: ${rec.message}');
+    // listen once, so running several times in one process doesn't repeat logs
+    _logSubscription ??= Logger.root.onRecord.listen((LogRecord rec) {
+      // a step's own logs are kept with the step, and shown if it fails
+      if (_capturingStep(rec) == null) {
+        print('${rec.level.name}: ${rec.time}: ${rec.message}');
+      }
     });
 
     _checkForEnvOverride();
@@ -283,38 +397,36 @@ class OguretsOpts {
       Logger.root.level = Level.INFO;
     }
 
-    List<String>? runTags =
-        _tags == null ? [] : _tags!.split(",").map((t) => t.trim()).toList();
-
-    // command line overrides
-    if (args != null) {
-      var options = _parseArguments(args);
-      if (options["tags"] != null) {
-        runTags = options["tags"].split(",").map((t) => t.trim()).toList();
-      }
-
-      if (options["debug"]) {
-        Logger.root.level = Level.FINE;
-      }
+    final options = _parseArguments(args ?? const []);
+    if (options.debug) {
+      Logger.root.level = Level.FINE;
     }
 
-    if (Platform.environment['OGURETS_TAGS'] != null) {
-      runTags = Platform.environment['OGURETS_TAGS']!
-          .split(",")
-          .map((t) => t.trim())
-          .toList();
-    }
+    // command line and environment tags are added to the configured ones,
+    // unless asked to replace them
+    final extraTags = [
+      ...options.tags,
+      ..._splitTags(Platform.environment['OGURETS_TAGS']),
+    ];
+    final replaceTags =
+        options.replaceTags ||
+        _isTrue(Platform.environment['OGURETS_REPLACE_TAGS']);
+
+    List<String>? runTags = {
+      if (!replaceTags) ..._splitTags(_tags),
+      ...extraTags,
+    }.toList();
 
     _log.info("Tags used are $runTags");
 
     var featureFiles = _determineFeatureFiles();
     var steps = await _determineStepDefs();
-    this._stepdefs.addAll(steps);
+    _stepdefs.addAll(steps);
 
     OguretsState state = OguretsState(_log, ConsoleBuffer(_log));
-    state.steps = this._stepdefs;
-    state.failOnMissingSteps = this._failedOnMissingSteps;
-    state.scenarioToRun = this._scenario;
+    state.steps = _stepdefs;
+    state.failOnMissingSteps = _failedOnMissingSteps;
+    state.scenarioToRun = _scenario;
     state.existingInstances = _instances;
     state.formatters = _formatters;
     state.runTags = runTags;
@@ -345,6 +457,10 @@ class OguretsOpts {
 
       state.resultBuffer.flush();
 
+      if (_failOnError && _failOnErrorAllowed(options) && runStatus.failed) {
+        exitCode = 1;
+      }
+
       return runStatus;
     } finally {
       await state.executeRunHooks(AfterRun);
@@ -352,12 +468,19 @@ class OguretsOpts {
   }
 
   Future processFeatureFile(
-      String filePath, RunStatus runStatus, OguretsState state) async {
+    String filePath,
+    RunStatus runStatus,
+    OguretsState state,
+  ) async {
     List<String> contents = await File(filePath).readAsLines();
-    _Feature? feature = await GherkinParserTask(_log, contents, filePath).execute();
+    GherkinFeature? feature = await GherkinParserTask(
+      _log,
+      contents,
+      filePath,
+    ).execute();
 
     if (feature != null) {
-//    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
+      //    _log.info("Parsing took ${runStatus.sw.elapsedMilliseconds} ms");
       FeatureStatus featureStatus = await feature.execute(state, debug: _debug);
 
       if (featureStatus.failed) {
@@ -380,20 +503,21 @@ class OguretsOpts {
     }
 
     throw Exception(
-        "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}");
+      "Please enable asserts with --enable-asserts - arguments are ${Platform.executableArguments.toString()}",
+    );
   }
 }
 
 /// Abstraction of log levels so packages don't need to add the "logger" depencency
 enum LogLevel {
-  ALL,
-  OFF,
-  FINEST,
-  FINER,
-  FINE,
-  CONFIG,
-  INFO,
-  WARNING,
-  SEVERE,
-  SHOUT,
+  all,
+  off,
+  finest,
+  finer,
+  fine,
+  config,
+  info,
+  warning,
+  severe,
+  shout,
 }

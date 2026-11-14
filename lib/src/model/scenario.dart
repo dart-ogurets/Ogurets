@@ -1,6 +1,6 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
-class _Scenario {
+class GherkinScenario {
   // todo: Fetch this from GherkinVocabulary or something
   String gherkinKeyword = "Scenario";
 
@@ -8,23 +8,25 @@ class _Scenario {
 
   List<String?>? tags;
 
-  _Scenario? background;
+  GherkinScenario? background;
 
-  List<_Step?> steps = [];
+  List<GherkinStep?> steps = [];
 
   GherkinTable examples = GherkinTable();
 
   Location location;
 
-  _Scenario(this.name, this.location);
+  GherkinScenario(this.name, this.location);
 
   /// Will execute the background and the scenario.
   /// If this scenario has an example table, it will execute all the generated scenarios,
   /// each with its own background, but background will be added to this scenario's buffer only once.
-  Future<List<ScenarioStatus>> execute(OguretsState state,
-      {isFirstOfFeature = true,
-      OguretsScenarioSession? scenarioSession,
-      bool skip = false}) async {
+  Future<List<ScenarioStatus>> execute(
+    OguretsState state, {
+    isFirstOfFeature = true,
+    OguretsScenarioSession? scenarioSession,
+    bool skip = false,
+  }) async {
     var statuses = <ScenarioStatus>[];
 
     if (examples._table.isEmpty) {
@@ -44,9 +46,9 @@ class _Scenario {
     for (Map example in examples) {
       var scenarioStatus = ScenarioStatus(state.fmt)
         ..scenario = this
-        ..exampleTable = this.examples
+        ..exampleTable = examples
         ..example = example
-        ..background = this.background as _Background?;
+        ..background = background as GherkinBackground?;
 
       statuses.add(scenarioStatus);
 
@@ -55,9 +57,13 @@ class _Scenario {
         state.fmt!.scenario(scenarioStatus);
 
         try {
-          await _executeSubScenario(scenarioStatus, example, state,
-              isFirstOfFeature: isFirstOfFeature,
-              scenarioSession: scenarioSession);
+          await _executeSubScenario(
+            scenarioStatus,
+            example,
+            state,
+            isFirstOfFeature: isFirstOfFeature,
+            scenarioSession: scenarioSession,
+          );
         } finally {
           scenarioStatus.sw.stop();
           state.fmt!.done(scenarioStatus);
@@ -77,36 +83,43 @@ class _Scenario {
     return statuses;
   }
 
-  void addStep(_Step? step) {
+  void addStep(GherkinStep? step) {
     steps.add(step);
   }
 
+  @override
   String toString() {
-    return "${tags == null ? "" : tags} $name $steps \nExamples: $examples";
+    return "${tags ?? ""} $name $steps \nExamples: $examples";
   }
 
   Future<ScenarioStatus> _executeSubScenario(
-      ScenarioStatus scenarioStatus, exampleRow, OguretsState state,
-      {isFirstOfFeature = true,
-      OguretsScenarioSession? scenarioSession}) async {
+    ScenarioStatus scenarioStatus,
+    exampleRow,
+    OguretsState state, {
+    isFirstOfFeature = true,
+    OguretsScenarioSession? scenarioSession,
+  }) async {
     List<ScenarioStatus>? backgroundStatus;
 
-    if (scenarioSession == null) {
-      scenarioSession =
-          OguretsScenarioSession({}..addAll(state.existingInstances));
-    }
+    scenarioSession ??= OguretsScenarioSession(
+      {}..addAll(state.existingInstances),
+    );
 
     await state.runBeforeHooks(scenarioStatus, scenarioSession);
 
     try {
       if (background != null) {
-        backgroundStatus =
-            await background!.execute(state, scenarioSession: scenarioSession);
+        backgroundStatus = await background!.execute(
+          state,
+          scenarioSession: scenarioSession,
+        );
       }
 
       if (backgroundStatus != null && backgroundStatus.isNotEmpty) {
-        scenarioStatus.mergeBackground(backgroundStatus[0],
-            isFirst: isFirstOfFeature);
+        scenarioStatus.mergeBackground(
+          backgroundStatus[0],
+          isFirst: isFirstOfFeature,
+        );
       }
 
       var iter = steps.iterator;
@@ -116,10 +129,12 @@ class _Scenario {
           ..step = step
           ..decodedVerbiage = step.decodeVerbiage(step.verbiage, exampleRow);
 
+        scenarioStatus.executedSteps.add(stepStatus);
         state.fmt!.step(stepStatus);
 
         var found = state.stepRunners.keys.firstWhereOrNull(
-            (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage!));
+          (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage!),
+        );
 
         if (found == null) {
           stepStatus.defined = false;
@@ -138,7 +153,7 @@ class _Scenario {
         // Parameters from Regex
         var params = [];
         for (var i = 1; i <= match.groupCount; i++) {
-          params.add(_Step.unserialize(match.group(i)!));
+          params.add(GherkinStep.unserialize(match.group(i)!));
         }
         // PyString
         if (step.pyString != null) {
@@ -156,8 +171,15 @@ class _Scenario {
           // Replace placeholders with exampleRow values
           final newTable = GherkinTable();
           for (final oldRow in step.table.gherkinRows()) {
-            List<String> newRow = step.decodeVerbiage(oldRow, exampleRow)!.trim().split("|").map((e) => e.trim()).toList()
-              ..removeAt(0)..removeLast();
+            List<String> newRow =
+                step
+                    .decodeVerbiage(oldRow, exampleRow)!
+                    .trim()
+                    .split("|")
+                    .map((e) => e.trim())
+                    .toList()
+                  ..removeAt(0)
+                  ..removeLast();
             newTable.addRow(newRow);
           }
           moreParams["table"] = newTable;
@@ -168,9 +190,19 @@ class _Scenario {
           if (scenarioStatus.failed || scenarioStatus.undefinedStepsCount > 0) {
             stepStatus.skipped = true;
           } else {
-            // to actually run the step
-            await state.stepRunners[found]!(params, moreParams, scenarioSession,
-                scenarioStatus, stepStatus);
+            // to actually run the step, keeping its output (and that of its
+            // before/after step hooks) with the step
+            final session = scenarioSession;
+            await _captureStepOutput(
+              stepStatus,
+              () => state.stepRunners[found]!(
+                params,
+                moreParams,
+                session,
+                scenarioStatus,
+                stepStatus,
+              ),
+            );
           }
         } catch (e, s) {
           state.log.warning("Step failed: $step");

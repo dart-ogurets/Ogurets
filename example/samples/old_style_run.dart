@@ -1,6 +1,7 @@
-
 import 'package:ogurets/ogurets.dart';
 
-void main(args) {
+/// Demonstrates the legacy, deprecated `run` entry point.
+void main(List<String> args) {
+  // ignore: deprecated_member_use
   run(args);
 }

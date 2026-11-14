@@ -1,12 +1,16 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
 class BasicFormatter implements Formatter {
   final ResultBuffer buffer;
 
-  BasicFormatter(this.buffer);
+  /// Whether [eof] reprints every failed scenario, step by step with its
+  /// error and stack trace, so failures are easy to find in long runs.
+  final bool failureSummary;
+
+  BasicFormatter(this.buffer, {this.failureSummary = true});
 
   @override
-  void background(_Background background) {}
+  void background(GherkinBackground background) {}
 
   @override
   void close() {}
@@ -14,24 +18,12 @@ class BasicFormatter implements Formatter {
   @override
   void done(Object? status) {
     if (status is FeatureStatus) {
+      // pass/fail totals are written once for the whole run, in [eof]
       buffer.writeln("-------------------");
-      buffer.writeln("Scenarios passed: ${status.passedScenariosCount}",
-          color: 'green');
-
-      if (status.skippedScenariosCount > 0) {
-        buffer.writeln("Scenarios skipped: ${status.skippedScenariosCount}",
-            color: 'gray');
-      }
-
-      if (status.failedScenariosCount > 0) {
-        buffer.writeln("Scenarios failed: ${status.failedScenariosCount}",
-            color: 'red');
-      }
-
       buffer.write("Feature time: ${status.duration.inMilliseconds} ms");
     } else if (status is ScenarioStatus) {
       // only write for the whole scenario - background will be reflected in the scenario status
-      if (!(status.scenario is _Background)) {
+      if (status.scenario is! GherkinBackground) {
         if ((status.failed || status.undefinedStepsCount > 0)) {
           buffer.writeln("Scenario failed!", color: 'red');
         } else {
@@ -78,11 +70,11 @@ class BasicFormatter implements Formatter {
         var counter = 0;
         buffer.write("\n");
         var rows = status.step!.table.gherkinRows();
-        rows.forEach((row) {
+        for (var row in rows) {
           buffer.write(row, color: counter == 0 ? 'magenta' : 'cyan');
           counter < rows.length - 1 ? buffer.write("\n") : null;
           counter++;
-        });
+        }
       }
 
       if (failureMessage.isNotEmpty) {
@@ -90,8 +82,9 @@ class BasicFormatter implements Formatter {
       }
 
       // need to write out when it's done, or it won't have anything
-      // because fmt.step writes before execution
-      if (status.out.isNotEmpty) {
+      // because fmt.step writes before execution. Output is only shown for
+      // failed steps, unless ALWAYS_SHOW_OUT is set.
+      if (status.out.isNotEmpty && (status.failed || alwaysShowOut)) {
         buffer.write("\n");
         buffer.write(status.out.toString());
       }
@@ -101,29 +94,13 @@ class BasicFormatter implements Formatter {
   }
 
   @override
-  void endOfScenarioLifeCycle(_Scenario endScenario) {}
+  void endOfScenarioLifeCycle(GherkinScenario endScenario) {}
 
   @override
   void eof(RunStatus runStatus) {
-    buffer.writeln("==================");
-
-    // Tally the passed / skipped / failed features
-    if (runStatus.passedFeaturesCount > 0) {
-      buffer.writeln("Features passed: ${runStatus.passedFeaturesCount}",
-          color: "green");
+    if (failureSummary) {
+      _writeFailedScenarios(runStatus);
     }
-
-    if (runStatus.skippedFeaturesCount > 0) {
-      buffer.writeln("Features skipped: ${runStatus.skippedFeaturesCount}",
-          color: "gray");
-    }
-
-    if (runStatus.failedFeaturesCount > 0) {
-      buffer.writeln("Features failed: ${runStatus.failedFeaturesCount}",
-          color: "red");
-    }
-
-    buffer.writeln("Run time: ${runStatus.duration.inMilliseconds} ms");
 
     // Tally the missing stepdefs boilerplate
     if (runStatus.undefinedStepsCount > 0) {
@@ -131,7 +108,164 @@ class BasicFormatter implements Formatter {
       buffer.write(runStatus.boilerplate, color: "yellow");
     }
 
+    // totals for the whole run come last, so they are the final thing printed
+    buffer.writeln("\n==================");
+
+    buffer.writeln(
+      "Scenarios passed: ${runStatus.passedScenarios}",
+      color: 'green',
+    );
+
+    if (runStatus.skippedScenarios > 0) {
+      buffer.writeln(
+        "Scenarios skipped: ${runStatus.skippedScenarios}",
+        color: 'gray',
+      );
+    }
+
+    if (runStatus.failedScenarios > 0) {
+      buffer.writeln(
+        "Scenarios failed: ${runStatus.failedScenarios}",
+        color: 'red',
+      );
+    }
+
+    if (runStatus.passedFeaturesCount > 0) {
+      buffer.writeln(
+        "Features passed: ${runStatus.passedFeaturesCount}",
+        color: "green",
+      );
+    }
+
+    if (runStatus.skippedFeaturesCount > 0) {
+      buffer.writeln(
+        "Features skipped: ${runStatus.skippedFeaturesCount}",
+        color: "gray",
+      );
+    }
+
+    if (runStatus.failedFeaturesCount > 0) {
+      buffer.writeln(
+        "Features failed: ${runStatus.failedFeaturesCount}",
+        color: "red",
+      );
+    }
+
+    buffer.writeln("Run time: ${runStatus.duration.inMilliseconds} ms");
+
     buffer.flush();
+  }
+
+  /// Reprints each failed scenario: passed steps in green, the failed step in
+  /// red followed by its error and stack trace, skipped steps in gray and
+  /// undefined steps in yellow. Hooks are only shown when they failed.
+  void _writeFailedScenarios(RunStatus runStatus) {
+    final failedFeatures = runStatus.failedFeatures.where(
+      (f) => f.failedScenarios.isNotEmpty,
+    );
+    if (failedFeatures.isEmpty) {
+      return;
+    }
+
+    buffer.writeln("\nFailed scenarios:", color: 'red');
+
+    for (final featureStatus in failedFeatures) {
+      buffer.write("\nFeature: ${featureStatus.feature.name}");
+      buffer.writeln("${featureStatus.feature.location}", color: 'gray');
+
+      for (final scenarioStatus in featureStatus.failedScenarios) {
+        _writeFailedScenario(scenarioStatus);
+      }
+    }
+  }
+
+  void _writeFailedScenario(ScenarioStatus status) {
+    final scenario = status.scenario!;
+    buffer.write("\n\t${scenario.gherkinKeyword}: ${status.decodedName}");
+    buffer.writeln("${scenario.location}", color: 'gray');
+
+    if (status.exampleTable.isValid) {
+      final names = status.exampleTable.names;
+      buffer.writeln("\t  Example:", color: 'cyan');
+      buffer.writeln("\t\t  |${names.join(" | ")}|", color: 'magenta');
+      buffer.writeln(
+        "\t\t  |${names.map((n) => status.example[n] ?? '').join(" | ")}|",
+        color: 'cyan',
+      );
+    }
+
+    var inBackground = false;
+    for (final stepStatus in status.executedSteps) {
+      final step = stepStatus.step!;
+
+      // passing hooks are noise here, but a failing one is often the cause
+      if (step.hook && !stepStatus.failed) {
+        continue;
+      }
+
+      final isBackground = step.scenario is GherkinBackground;
+      if (isBackground != inBackground) {
+        inBackground = isBackground;
+        if (isBackground) {
+          buffer.writeln(
+            "\t  ${step.scenario!.gherkinKeyword}:",
+            color: 'gray',
+          );
+        }
+      }
+
+      final color = stepStatus.failed
+          ? 'red'
+          : !stepStatus.defined
+          ? 'yellow'
+          : stepStatus.skipped
+          ? 'gray'
+          : 'green';
+      final suffix = !stepStatus.defined ? " (undefined)" : "";
+
+      // background steps sit one level deeper, under their own heading
+      final indent = isBackground ? "\t\t  " : "\t\t";
+      buffer.write(
+        "$indent${step.hook ? "" : "${step.verb} "}${stepStatus.decodedVerbiage}$suffix",
+        color: color,
+      );
+      buffer.writeln("\t${step.location}", color: 'gray');
+
+      if (step.pyString != null) {
+        buffer.writeln('\t\t  """', color: color);
+        for (final line in step.pyString!.trimRight().split('\n')) {
+          buffer.writeln("\t\t  $line", color: color);
+        }
+        buffer.writeln('\t\t  """', color: color);
+      }
+
+      for (final row in step.table.gherkinRows()) {
+        buffer.writeln(row, color: color);
+      }
+
+      final failure = stepStatus.failure;
+      if (failure != null) {
+        _writeStepOutput(stepStatus);
+        buffer.writeln("\n${failure.error}", color: 'red');
+        final trace = failure.trace?.trimRight() ?? '';
+        if (trace.isNotEmpty) {
+          buffer.writeln("$trace\n");
+        }
+      }
+    }
+  }
+
+  /// The output a failed step captured (`out`, `print` and log messages).
+  void _writeStepOutput(StepStatus stepStatus) {
+    final output = stepStatus.out.toString().trimRight();
+    if (output.isEmpty) {
+      return;
+    }
+
+    buffer.writeln("\t\t  Output:", color: 'gray');
+    for (final line in output.split('\n')) {
+      buffer.writeln("\t\t  | $line", color: 'gray');
+    }
   }
 
   @override
@@ -155,14 +289,15 @@ class BasicFormatter implements Formatter {
   void scenario(ScenarioStatus startScenario) {
     if (startScenario.exampleTable.isValid) {
       buffer.write(
-          "\n\t${startScenario.scenario!.gherkinKeyword}: ${startScenario.decodedName}");
+        "\n\t${startScenario.scenario!.gherkinKeyword}: ${startScenario.decodedName}",
+      );
       buffer.writeln("${startScenario.scenario!.location}", color: 'gray');
     }
   }
 
   @override
-  void startOfScenarioLifeCycle(_Scenario scenario) {
-    if (scenario is _Background) {
+  void startOfScenarioLifeCycle(GherkinScenario scenario) {
+    if (scenario is GherkinBackground) {
       buffer.write("\t");
     } else {
       buffer.write("\n");
@@ -177,7 +312,12 @@ class BasicFormatter implements Formatter {
 
   @override
   void syntaxError(
-      String var1, String var2, List<String> var3, String var4, int var5) {
+    String var1,
+    String var2,
+    List<String> var3,
+    String var4,
+    int var5,
+  ) {
     // TODO: implement syntaxError
   }
 

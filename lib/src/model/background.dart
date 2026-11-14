@@ -1,10 +1,10 @@
-part of ogurets;
+part of '../../ogurets.dart';
 
-class _Background extends _Scenario {
+class GherkinBackground extends GherkinScenario {
   // todo: Fetch this from GherkinVocabulary or something
-  String gherkinKeyword = "Background";
-
   //bool bufferIsMerged = false;
 
-  _Background(name, location) : super(name, location);
+  GherkinBackground(super.name, super.location) {
+    gherkinKeyword = "Background";
+  }
 }

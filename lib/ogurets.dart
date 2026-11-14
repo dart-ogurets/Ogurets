@@ -1,12 +1,16 @@
-library ogurets;
+library;
 
 import "dart:async";
 import "dart:collection";
 import 'dart:io';
+// ogurets discovers step definitions and hooks via reflection, which
+// requires dart:mirrors (deprecated as of Dart 3.14).
+// ignore: deprecated_member_use
 import "dart:mirrors";
 
 import "package:ansicolor/ansicolor.dart";
-import 'package:args/args.dart';
+import 'package:cucumber_gherkin/cucumber_gherkin.dart' as cucumber;
+import 'package:cucumber_messages/cucumber_messages.dart' as messages;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:intl/intl.dart';
 import "package:logging/logging.dart";
@@ -31,5 +35,5 @@ part 'src/output/formatter.dart';
 part 'src/output/intellij_formatter.dart';
 part 'src/output/output.dart';
 part "src/status/status.dart";
+part 'src/step_output.dart';
 part 'src/task.dart';
-
