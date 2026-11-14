@@ -10,6 +10,14 @@ class SilentBuffer extends ColoredFragmentsBuffer {
   void flush() => fragments.clear();
 }
 
+/// Keeps everything written, as plain text.
+class TextBuffer extends ColoredFragmentsBuffer {
+  @override
+  void flush() {}
+
+  String get text => fragments.map((f) => f.contents).join();
+}
+
 /// Runs the tags feature and returns the names of the scenarios that ran.
 Future<List<String?>> ran({String? configured, List<String>? args}) async {
   final opts = OguretsOpts()
@@ -107,6 +115,57 @@ void main() {
         'OGURETS_REPLACE_TAGS': 'true',
       }),
       'C',
+    );
+  });
+
+  group('feature counts', () {
+    Future<RunStatus> runWith(String tags) =>
+        (OguretsOpts()
+              ..feature('test/features/tags.feature')
+              ..feature('test/features/test_examples_table.feature')
+              ..formatters({BasicFormatter(SilentBuffer())})
+              ..tags(tags)
+              ..step(steps.SampleSteps))
+            .run();
+
+    test('a feature whose scenarios are all skipped counts as skipped', () async {
+      // only tags.feature has @a; every scenario of the other feature is skipped
+      final status = await runWith('@a');
+      expect(status.passedFeaturesCount, 1);
+      expect(status.skippedFeaturesCount, 1);
+      expect(status.failedFeaturesCount, 0);
+      expect(
+        status.skippedFeatures.single.feature.name,
+        isNot('Tag selection'),
+      );
+      expect(status.skippedFeatures.single.passed, isFalse);
+      expect(status.passed, isTrue);
+    });
+
+    test('a feature with some skipped scenarios still passes', () async {
+      final status = await runWith('~@b');
+      expect(status.passedFeaturesCount, 2);
+      expect(status.skippedFeaturesCount, 0);
+      expect(status.skippedScenarios, 1);
+    });
+
+    test(
+      'nothing matching skips every feature, and the totals say so',
+      () async {
+        final buffer = TextBuffer();
+        final status =
+            await (OguretsOpts()
+                  ..feature('test/features/tags.feature')
+                  ..feature('test/features/test_examples_table.feature')
+                  ..formatters({BasicFormatter(buffer)})
+                  ..tags('@nothing')
+                  ..step(steps.SampleSteps))
+                .run();
+        expect(status.skippedFeaturesCount, 2);
+        expect(status.passedFeaturesCount, 0);
+        expect(buffer.text, contains('Features skipped: 2'));
+        expect(buffer.text, isNot(contains('Features passed')));
+      },
     );
   });
 }

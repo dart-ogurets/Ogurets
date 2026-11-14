@@ -61,6 +61,14 @@ class GherkinFeature {
         }
       }
 
+      // a feature whose scenarios were all skipped (e.g. by tags) was skipped,
+      // it didn't pass
+      if (featureStatus.skippedScenarios.isNotEmpty &&
+          featureStatus.passedScenarios.isEmpty &&
+          featureStatus.failedScenarios.isEmpty) {
+        featureStatus.skipped = true;
+      }
+
       featureStatus.sw.stop();
       state.fmt!.done(featureStatus);
 

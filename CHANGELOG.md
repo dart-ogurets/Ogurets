@@ -22,6 +22,8 @@
   Use `BasicFormatter(buffer, failureSummary: false)` to turn it off.
 * The console output's scenario and feature pass/skip/fail counts are now printed once, as totals for the
   whole run, after the failed scenarios and missing steps (previously scenario counts were printed per feature)
+* A feature whose scenarios were all skipped (e.g. none matched the tags) now counts as a skipped feature, not
+  a passed one, and `FeatureStatus.passed` is false for a skipped feature
 * `RunStatus.passedScenarios` / `skippedScenarios` / `failedScenarios` no longer throw when no features ran
 * Breaking: tags from the command line (`run(args: args)` with `--tags`) and from `OGURETS_TAGS` are now
   **added** to the tags configured with `OguretsOpts.tags(...)` instead of replacing them. Pass `--replace-tags`

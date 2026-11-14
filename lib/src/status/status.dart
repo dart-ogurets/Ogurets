@@ -115,13 +115,12 @@ class FeatureStatus extends StepsExecutionStatus {
   /// The feature that generated this status information.
   late GherkinFeature feature;
 
-  /// Was the whole [feature] [skipped] because of mismatching tags ?
-  /// It does not care about internal scenario skipping.
-  /// idea: if all scenarios are individually skipped, mark feature as skipped ?
+  /// Was the whole [feature] [skipped]? Either its tags excluded it, or every
+  /// one of its scenarios was skipped.
   bool skipped = false;
 
-  /// Has the [feature] [passed] ? (all scenarios passed)
-  bool get passed => failedScenariosCount == 0;
+  /// Has the [feature] [passed] ? (not skipped, and no scenario failed)
+  bool get passed => !skipped && failedScenariosCount == 0;
 
   /// Has the [feature] [failed] ? (any scenario failed)
   bool get failed => failedScenariosCount > 0;
