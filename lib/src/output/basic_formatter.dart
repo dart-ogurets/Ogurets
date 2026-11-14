@@ -82,8 +82,9 @@ class BasicFormatter implements Formatter {
       }
 
       // need to write out when it's done, or it won't have anything
-      // because fmt.step writes before execution
-      if (status.out.isNotEmpty) {
+      // because fmt.step writes before execution. Output is only shown for
+      // failed steps, unless ALWAYS_SHOW_OUT is set.
+      if (status.out.isNotEmpty && (status.failed || alwaysShowOut)) {
         buffer.write("\n");
         buffer.write(status.out.toString());
       }
@@ -244,12 +245,26 @@ class BasicFormatter implements Formatter {
 
       final failure = stepStatus.failure;
       if (failure != null) {
+        _writeStepOutput(stepStatus);
         buffer.writeln("\n${failure.error}", color: 'red');
         final trace = failure.trace?.trimRight() ?? '';
         if (trace.isNotEmpty) {
           buffer.writeln("$trace\n");
         }
       }
+    }
+  }
+
+  /// The output a failed step captured (`out`, `print` and log messages).
+  void _writeStepOutput(StepStatus stepStatus) {
+    final output = stepStatus.out.toString().trimRight();
+    if (output.isEmpty) {
+      return;
+    }
+
+    buffer.writeln("\t\t  Output:", color: 'gray');
+    for (final line in output.split('\n')) {
+      buffer.writeln("\t\t  | $line", color: 'gray');
     }
   }
 

@@ -432,9 +432,35 @@ A scenario outline row will be passed in as **exampleRow**
 
 ### Output
 
-Due to asynchronous nature of execution, output of *print* statements will not appear near the gherkin step that ran them.
-For that purpose, optional named parameter **out** will be injected if the stepdef function states that it takes it. Please
-use the reporters if you wish to override the syntax.
+Each step keeps its own output, and it is only shown if that step fails. That way a failure comes with the
+messages that explain it, and passing steps keep the console quiet. A step's output is:
 
+- anything written to the optional named parameter **out** (a `StringBuffer`), if the step takes it
+- anything it `print`s
+- anything it logs with [package:logging](https://pub.dev/packages/logging), from any logger and any class.
+  The level set on the logger still applies: `Logger.root.level` is `INFO` unless `..debug()` or `--debug` is used.
 
+Output is captured even after an `await` and from code the step calls, because each step runs in its own
+`Zone`, which also keeps parallel runs apart. Output from before/after step hooks belongs to the step they ran
+around. Before/after scenario hooks have their own output, shown if the hook fails.
 
+````dart
+final _log = Logger('payments');
+
+@When("I pay {int} dollars")
+Future<void> iPay(int amount, {StringBuffer? out}) async {
+  out!.writeln("paying $amount");
+  final response = await api.pay(amount);
+  _log.info("response: ${response.body}"); // shown only if this step fails
+  assert(response.statusCode == 200);
+}
+````
+
+When a step fails, its output is printed below it, and again in the "Failed scenarios" summary at the end of
+the run. In IntelliJ it appears in the failed step's output.
+
+To show every step's output as it happens instead, as earlier versions of ogurets did, set the
+`ALWAYS_SHOW_OUT` environment variable (e.g. `ALWAYS_SHOW_OUT=true`). Output is then not captured at all.
+
+Logs from the `ogurets` logger itself are never captured. Log listeners you add yourself to `Logger.root` still
+receive every record as it happens.

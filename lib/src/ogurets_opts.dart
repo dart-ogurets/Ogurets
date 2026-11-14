@@ -378,7 +378,10 @@ class OguretsOpts {
   Future<RunStatus> run({List<String>? args}) async {
     // listen once, so running several times in one process doesn't repeat logs
     _logSubscription ??= Logger.root.onRecord.listen((LogRecord rec) {
-      print('${rec.level.name}: ${rec.time}: ${rec.message}');
+      // a step's own logs are kept with the step, and shown if it fails
+      if (_capturingStep(rec) == null) {
+        print('${rec.level.name}: ${rec.time}: ${rec.message}');
+      }
     });
 
     _checkForEnvOverride();

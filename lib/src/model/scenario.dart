@@ -190,13 +190,18 @@ class GherkinScenario {
           if (scenarioStatus.failed || scenarioStatus.undefinedStepsCount > 0) {
             stepStatus.skipped = true;
           } else {
-            // to actually run the step
-            await state.stepRunners[found]!(
-              params,
-              moreParams,
-              scenarioSession,
-              scenarioStatus,
+            // to actually run the step, keeping its output (and that of its
+            // before/after step hooks) with the step
+            final session = scenarioSession;
+            await _captureStepOutput(
               stepStatus,
+              () => state.stepRunners[found]!(
+                params,
+                moreParams,
+                session,
+                scenarioStatus,
+                stepStatus,
+              ),
             );
           }
         } catch (e, s) {

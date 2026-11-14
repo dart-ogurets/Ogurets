@@ -61,6 +61,7 @@ class OguretsState {
   OguretsState(this.log, this.resultBuffer);
 
   Future<void> build() async {
+    _captureStepLogs();
     await _findMethodStyleStepRunners();
     await _findClassStyleStepRunners();
 
@@ -201,11 +202,13 @@ class OguretsState {
             log.fine("Executing $methodName hook with params: $params");
 
             try {
-              final invoke = instance.invoke(methodName, params);
+              await _captureStepOutput(stepStatus, () async {
+                final invoke = instance.invoke(methodName, params);
 
-              if (invoke.reflectee is Future) {
-                await Future.sync(() => invoke.reflectee as Future);
-              }
+                if (invoke.reflectee is Future) {
+                  await Future.sync(() => invoke.reflectee as Future);
+                }
+              });
             } catch (e, s) {
               var failure = StepFailure(e, s.toString());
 

@@ -31,6 +31,10 @@
   and also accepts `--tags=<tags>`
 * Unknown command line arguments are now ignored instead of throwing a `FormatException`, so `main`'s arguments
   can be shared with other code. The `args` dependency has been removed
+* Breaking: a step's output is now only shown when the step fails, unless the `ALWAYS_SHOW_OUT` environment
+  variable is set. Each step (and hook) runs in its own `Zone`, which captures what it writes to `out`, what it
+  `print`s and what it logs with `package:logging`, including after `await`s and in code it calls. Failed steps
+  show their output inline and in the "Failed scenarios" summary
 * Breaking: a failed run now sets the process `exitCode` to 1 (it does not call `exit()`). Turn this off with
   `OguretsOpts.failOnError(false)`, `--no-fail-on-error` or `OGURETS_FAIL_ON_ERROR=false`
 * `@StepDef` should not be used to annotate steps, as it is not a standard Gherkin keyword: use `@Given`,

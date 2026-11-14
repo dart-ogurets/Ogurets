@@ -35,4 +35,5 @@ part 'src/output/formatter.dart';
 part 'src/output/intellij_formatter.dart';
 part 'src/output/output.dart';
 part "src/status/status.dart";
+part 'src/step_output.dart';
 part 'src/task.dart';
