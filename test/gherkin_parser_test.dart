@@ -53,6 +53,20 @@ Feature: Basics
     expect(scenario.steps.last!.boilerplate, contains('@Given("a star step")'));
   });
 
+  test('boilerplate for missing steps uses Cucumber Expressions', () async {
+    final step = (await parse(r'''
+Feature: Snippets
+  Scenario: Params
+    Given I pay 12 dollars to "Bob" (with $ signs)
+'''))!.scenarios.single!.steps.single!;
+
+    expect(
+      step.boilerplate,
+      contains(r'@Given("I pay {int} dollars to {string} \\(with \$ signs)")'),
+    );
+    expect(step.boilerplate, contains('(int int, String string)'));
+  });
+
   test('doc strings drop indentation and keep a trailing newline', () async {
     final step = (await parse('''
 Feature: Doc strings

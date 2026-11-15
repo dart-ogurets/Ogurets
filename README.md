@@ -60,8 +60,16 @@ ogurets carries on from dherkin2 in a number of ways:
 
 - ogurets requires Dart 3.10+ and is entirely async/await aware. Steps and hooks can be ordinary functions or
 `async` ones - if they return a `Future`, ogurets waits for it before moving on.
-- offers support for Cucumber expressions of {string}, {int} and {float} instead of having to write regular
-expressions.
+- supports [Cucumber Expressions](https://cucumber.io/docs/cucumber/cucumber-expressions) (via the standard
+`cucumber_expressions` package) - `{int}`, `{float}`, `{word}`, `{string}`, `{}`, optional text `(s)` and alternatives
+`a/b` - instead of having to write regular expressions. As in other Cucumber implementations, a step definition that
+starts with `^` or ends with `$` is treated as a regular expression instead.
+
+  Before 6.0, any step text was an implicitly anchored regular expression. To migrate existing step definitions run
+  `dart run ogurets:migrate_steps` (a dry run that lists each change) and then `dart run ogurets:migrate_steps --write`.
+  It converts regexes to Cucumber Expressions where that is safe, e.g. `"the \"(\\w+?)\" value"` becomes
+  `"the {string} value"`, and otherwise anchors them, e.g. `"a (default|different) value"` becomes
+  `r"^a (default|different) value$"`. Run it once, before upgrading: it assumes all step text is legacy.
 - supports an Object (OguretsOpts) that defines what features are run, what steps to use and shared instances
 - supports steps in classes that have positional instances and shared instances passed to them. This allows you
 to have a global variable that stays for the entire run and ones that get recreated for each session (such as a
@@ -237,7 +245,8 @@ that folder into the scan list for hooks and steps (thanks to tobindh).
 
 Your classes can be constructed so as to take classes that are either defined in the `OguretsOpts` or they are
 dynamically constructed at runtime. If they themselves depend on a class it will cycle through creating the entire
-tree. "Cucumber Expressions" will be turned into regexs as the code is walked through.
+tree. Step text is parsed as a Cucumber Expression unless it starts with `^` or ends with `$`, in which case it is a
+regular expression.
 
 
 e.g.
@@ -429,6 +438,38 @@ void iAmATable(String arg1, {Map? exampleRow, GherkinTable? table, StringBuffer?
 ````
 Table found on the step will be passed in as **table**.
 A scenario outline row will be passed in as **exampleRow**
+
+#### Custom parameter types
+
+As well as the built-in `{int}`, `{float}`, `{word}`, `{string}` and `{}`, you can register your own parameter
+types, which convert the matched text into whatever your steps want:
+
+````dart
+enum Color { red, green, blue }
+
+class BallSteps {
+  @Given("a {color} ball")
+  void aBall(Color color) {}
+}
+
+void main(List<String> args) async {
+  await (OguretsOpts()
+        ..feature('test/features')
+        ..step(BallSteps)
+        ..parameterType(ParameterType<Color>(
+          'color',                    // the name used in steps: {color}
+          r'red|green|blue',          // the text it matches: a String, RegExp or a list of them
+          'Color',                    // the Dart type, used in the snippets for missing steps
+          (groups) => Color.values.byName(groups.first!),
+        )))
+      .run(args: args);
+}
+````
+
+The transformer is passed the text of each capture group in the regexp (or the whole match if it has none).
+A regular expression step gets the converted value too, when one of its capture groups is exactly one of the
+parameter type's regexps, e.g. `r"^a (red|green|blue) cube$"`. A step that uses a parameter type that isn't
+registered fails at start-up.
 
 ### Output
 
