@@ -16,13 +16,13 @@ class Backgrounds {
   }
 
   @Given(
-    "I have a background setting a variable to a (default|different) value",
+    r"^I have a background setting a variable to a (default|different) value$",
   )
   void iHaveABackgroundSettingAVariable(dynamic defaultOrDifferent) {
     iSetTheBackgroundSetupVariable(defaultOrDifferent);
   }
 
-  @When("I set the background-setup variable to a (default|different) value")
+  @When(r"^I set the background-setup variable to a (default|different) value$")
   void iSetTheBackgroundSetupVariable(
     dynamic defaultOrDifferent, {
     dynamic col1,
@@ -32,7 +32,7 @@ class Backgrounds {
   }
 
   @Given(
-    "the background-setup variable should hold the (default|different) value",
+    r"^the background-setup variable should hold the (default|different) value$",
   )
   void theBackgroundSetupVariableShouldHold(
     dynamic defaultOrDifferent, {
@@ -50,6 +50,6 @@ class Backgrounds {
     }
   }
 
-  @Given("this scenario(?: outline example)? has ran the background first")
+  @Given(r"this scenario( outline example) has ran the background first")
   void thisScenarioHasRanTheBackgroundFirst({dynamic col1, dynamic col2}) {} // gherkin sugar
 }

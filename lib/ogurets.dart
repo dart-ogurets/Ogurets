@@ -1,5 +1,8 @@
 library;
 
+export 'package:cucumber_expressions/cucumber_expressions.dart'
+    show ParameterType, Transformer;
+
 import "dart:async";
 import "dart:collection";
 import 'dart:io';
@@ -9,6 +12,7 @@ import 'dart:io';
 import "dart:mirrors";
 
 import "package:ansicolor/ansicolor.dart";
+import 'package:cucumber_expressions/cucumber_expressions.dart';
 import 'package:cucumber_gherkin/cucumber_gherkin.dart' as cucumber;
 import 'package:cucumber_messages/cucumber_messages.dart' as messages;
 import 'package:collection/collection.dart' show IterableExtension;

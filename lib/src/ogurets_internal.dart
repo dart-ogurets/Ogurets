@@ -18,7 +18,17 @@ typedef StepFunc =
     );
 
 class OguretsState {
-  Map<RegExp, StepFunc> stepRunners = {};
+  Map<Expression, StepFunc> stepRunners = {};
+
+  /// The parameter types available to Cucumber Expressions in step definitions.
+  final ParameterTypeRegistry parameterTypeRegistry = ParameterTypeRegistry();
+
+  /// Custom parameter types, registered in [parameterTypeRegistry] by [build].
+  List<ParameterType<Object?>> parameterTypes = [];
+
+  late final ExpressionFactory _expressionFactory = ExpressionFactory(
+    parameterTypeRegistry,
+  );
 
   // all lists of hooks are sorted into order
   Map<String?, List<HookFunc>> namedBeforeTagHooks = {};
@@ -62,6 +72,7 @@ class OguretsState {
 
   Future<void> build() async {
     _captureStepLogs();
+    _defineParameterTypes();
     await _findMethodStyleStepRunners();
     await _findClassStyleStepRunners();
 
@@ -106,23 +117,34 @@ class OguretsState {
 
   final TypeMirror _stringMirror = reflectType(String);
 
-  String _transformCucumberExpression(String stepName) {
-    if (stepName.startsWith("^") &&
-        !(stepName.contains("{string}") ||
-            stepName.contains("{int}") ||
-            stepName.contains("{float}"))) {
-      return stepName;
+  void _defineParameterTypes() {
+    for (final parameterType in parameterTypes) {
+      try {
+        parameterTypeRegistry.defineParameterType(parameterType);
+      } on CucumberExpressionException catch (e) {
+        throw ArgumentError(
+          "Cannot register parameter type {${parameterType.name}}: ${e.message}",
+        );
+      }
+      log.fine("Registered parameter type {${parameterType.name}}");
     }
+  }
 
-    final pattern = stepName
-        .replaceAll("{string}", "\"([^\"]*)\"")
-        .replaceAll("{int}", "([-+]?\\d+)")
-        .replaceAll("{float}", "([-+]?[0-9]*\\.?[0-9]+)");
-    String nameIs = "^$pattern\$";
-
-    log.info("Transformed step: $stepName to $nameIs");
-
-    return nameIs;
+  /// Turns a step definition's text into an [Expression].
+  ///
+  /// Following the Cucumber convention, text that starts with `^` or ends
+  /// with `$` is a regular expression; anything else is a Cucumber Expression.
+  Expression _createStepExpression(String stepName, MethodMirror mm) {
+    try {
+      if (stepName.startsWith("^") || stepName.endsWith(r"$")) {
+        return _expressionFactory.createExpression(RegExp(stepName));
+      }
+      return _expressionFactory.createExpression(stepName);
+    } catch (e) {
+      throw ArgumentError(
+        "Invalid step definition \"$stepName\" on ${_decodeSymbol(mm.qualifiedName)}: $e",
+      );
+    }
   }
 
   String _decodeSymbol(Symbol s) {
@@ -287,9 +309,7 @@ class OguretsState {
         );
         for (InstanceMirror im in filteredMetadata) {
           log.fine("Found step runner: ${im.reflectee.verbiage}");
-          stepRunners[RegExp(
-                _transformCucumberExpression(im.reflectee.verbiage),
-              )] =
+          stepRunners[_createStepExpression(im.reflectee.verbiage, mm)] =
               (
                 params,
                 Map namedParams,
@@ -331,9 +351,7 @@ class OguretsState {
         );
         for (InstanceMirror im in filteredMetadata) {
           log.fine("Found class runner: ${im.reflectee.verbiage}");
-          stepRunners[RegExp(
-                _transformCucumberExpression(im.reflectee.verbiage),
-              )] =
+          stepRunners[_createStepExpression(im.reflectee.verbiage, mm)] =
               (
                 List params,
                 Map namedParams,

@@ -131,6 +131,7 @@ class OguretsOpts {
   final Map<Type, InstanceMirror> _instances = {};
   final List<Object> _instanceObjects = [];
   final Set<Formatter> _formatters = <Formatter>{};
+  final List<ParameterType<Object?>> _parameterTypes = [];
   Set<Filter> filters = {};
   bool _debug = false;
   String? _tags;
@@ -175,6 +176,28 @@ class OguretsOpts {
     } else {
       _stepdefs.add(clazz);
     }
+  }
+
+  /// Registers a custom parameter type for use in step definitions' Cucumber
+  /// Expressions, alongside the built-in `{int}`, `{float}`, `{word}`,
+  /// `{string}`, `{}` etc.
+  ///
+  /// ```dart
+  /// ..parameterType(ParameterType<Color>(
+  ///   'color',                      // used as {color}
+  ///   r'red|green|blue',            // what it matches (a String, RegExp or a list of them)
+  ///   'Color',                      // the Dart type, used in snippets for missing steps
+  ///   (groups) => Color.values.byName(groups.first!),
+  /// ))
+  /// ```
+  ///
+  /// with a step such as `@Given("a {color} ball") void ball(Color c)`.
+  ///
+  /// The transformer gets the text of each capture group in the regexp, or just
+  /// the matched text if it has none. Regular expression steps get the value
+  /// too when a capture group is exactly one of the type's regexps.
+  void parameterType<T>(ParameterType<T> parameterType) {
+    _parameterTypes.add(parameterType);
   }
 
   /// Add a [Type] with defined hook definitions
@@ -432,6 +455,7 @@ class OguretsOpts {
     state.runTags = runTags;
     state.parallelRun = _parallel;
     state.formatFilters = filters;
+    state.parameterTypes = _parameterTypes;
 
     await state.build();
     await state.executeRunHooks(BeforeRun);

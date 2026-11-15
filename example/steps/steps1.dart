@@ -11,7 +11,7 @@ class SampleSteps {
   @But("I run dherkin")
   void iRunDherkin() {}
 
-  @When("everything \"(\\w+?)\"")
+  @When(r"everything {string}")
   void everythingWorks(dynamic worksArg, StringBuffer out) {
     out.writeln("Everything Works $worksArg");
   }
@@ -54,7 +54,7 @@ class SampleSteps {
   @And("I am a table step {string}")
   void iAmATable(String arg1, {dynamic table}) {}
 
-  @Given("the \"(\\w+?)\" of the \"(\\w+?)\" is \"(\\w+?)\"")
+  @Given(r"the {string} of the {string} is {string}")
   void thePhaseOfThe(dynamic arg1, dynamic arg2, dynamic arg3) {}
 
   @Given("I read {string}")
@@ -67,7 +67,7 @@ class SampleSteps {
     out.writeln("I'm reading another $name");
   }
 
-  @Given("I am a \"(\\w+?)\" step executed")
+  @Given(r"I am a {string} step executed")
   void iAmATableStep2(dynamic arg1, {dynamic table, dynamic out}) {
     out.writeln("$arg1 $table");
   }

@@ -58,15 +58,27 @@ class GherkinStep {
     return parameter;
   }
 
-  String _generateBoilerplate() {
-    var matchString = verbiage!.replaceAll(
-      RegExp("\".+?\""),
-      "\\\"(\\\\w+?)\\\"",
-    );
+  /// The parameter types used to generate the [boilerplate], set when the
+  /// step turns out to be undefined. The built-in types if not set.
+  ParameterTypeRegistry? parameterTypeRegistry;
 
+  static final ParameterTypeRegistry _defaultParameterTypes =
+      ParameterTypeRegistry();
+
+  String _generateBoilerplate() {
+    final generated = CucumberExpressionGenerator(
+      parameterTypeRegistry ?? _defaultParameterTypes,
+    ).generateExpressions(verbiage!).first;
+    // escape the expression so it is valid inside a double-quoted Dart string
+    final matchString = generated.source
+        .replaceAll(r"\", r"\\")
+        .replaceAll('"', r'\"')
+        .replaceAll(r"$", r"\$");
+
+    final parameterNames = generated.parameterNames;
     final positional = [
-      for (var i = 1; i <= "w+?".allMatches(matchString).length; i++)
-        "dynamic arg$i",
+      for (var i = 0; i < parameterNames.length; i++)
+        "${generated.parameterTypes[i].type ?? "dynamic"} ${parameterNames[i]}",
     ];
     final named = [
       if (scenario!.examples.length > 1) "dynamic exampleRow",

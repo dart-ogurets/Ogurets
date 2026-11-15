@@ -1,3 +1,24 @@
+6.0.0
+=====
+* Step definitions are now parsed with the standard `cucumber_expressions` package instead of Ogurets' own
+  `{string}`/`{int}`/`{float}` to regex conversion. All Cucumber Expression features are available: `{word}`, `{}`,
+  `{double}`, `{biginteger}` etc., optional text `(s)`, alternatives `a/b` and escaping. Parameters arrive typed
+  (`{int}` -> `int`, `{float}` -> `double`, `{string}` -> `String` and accepts single or double quotes).
+* Breaking: step text is a regular expression only if it starts with `^` or ends with `$` (the standard Cucumber rule).
+  Previously any text was an (implicitly anchored) regex, so unanchored regex steps such as
+  `@Given("the \"(\\w+?)\" value")` or `@When("a (default|different) value")` must now be written as
+  `r"^...$"` regexes or converted to Cucumber Expressions (`@Given("the {string} value")`). Invalid Cucumber
+  Expressions now fail at start-up with the offending step definition named.
+* Added `dart run ogurets:migrate_steps [--write] [paths]` (and the `LegacyStepMigrator` class in
+  `package:ogurets/legacy_steps.dart`) to rewrite legacy step definitions: regex groups with a Cucumber equivalent
+  become `{string}`, `{int}`, `{float}`, `{word}`, `{}` or optional text; anything else becomes an anchored
+  `^...$` regex with the same meaning as before. Run it once, before upgrading - it treats all input as legacy.
+* Boilerplate for missing steps is generated with Cucumber Expressions (`{int}`, `{string}`, ...) and typed parameters
+* Added custom parameter types: register a `ParameterType` with `OguretsOpts.parameterType(...)` and use it as
+  `{name}` in step definitions. `ParameterType` is exported from `package:ogurets/ogurets.dart`. Snippets for
+  missing steps use custom types too
+* `OguretsState.stepRunners` is now keyed by `Expression` rather than `RegExp`
+
 5.0.0
 =====
 * Requires Dart SDK 3.10 or later (`sdk: ^3.10.0`)

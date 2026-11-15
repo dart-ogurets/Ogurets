@@ -132,29 +132,36 @@ class GherkinScenario {
         scenarioStatus.executedSteps.add(stepStatus);
         state.fmt!.step(stepStatus);
 
-        var found = state.stepRunners.keys.firstWhereOrNull(
-          (RegExp key) => key.hasMatch(stepStatus.decodedVerbiage!),
-        );
+        Expression? found;
+        List<Argument<Object?>>? arguments;
+        for (final expression in state.stepRunners.keys) {
+          arguments = expression.match(stepStatus.decodedVerbiage!);
+          if (arguments != null) {
+            found = expression;
+            break;
+          }
+        }
 
         if (found == null) {
+          step.parameterTypeRegistry = state.parameterTypeRegistry;
           stepStatus.defined = false;
           state.fmt!.done(stepStatus);
           scenarioStatus.undefinedSteps.add(stepStatus);
           continue;
         }
 
-        var match = found.firstMatch(stepStatus.decodedVerbiage!)!;
-
-        // (unrelated) Notes :
-        // The FeatureContext class approach for stepdefs makes sense :
-        // - you implement methods and wrap them with annotations.
-        // - you use properties as you want as context shared by steps.
-
-        // Parameters from Regex
-        var params = [];
-        for (var i = 1; i <= match.groupCount; i++) {
-          params.add(GherkinStep.unserialize(match.group(i)!));
-        }
+        // Parameters from the Cucumber Expression / regular expression. Typed
+        // parameters ({int} -> int, custom types, ...) are used as they are;
+        // regex capture groups that aren't a known parameter type are
+        // converted to int/num where possible.
+        var params = [
+          for (final argument in arguments!)
+            switch (argument.getValue()) {
+              final String value when argument.parameterType.name == null =>
+                GherkinStep.unserialize(value),
+              final value => value,
+            },
+        ];
         // PyString
         if (step.pyString != null) {
           params.add(step.pyString);
